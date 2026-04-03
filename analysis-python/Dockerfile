@@ -7,15 +7,15 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     libsndfile1 \
     curl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip and install build tools
+RUN pip install --upgrade pip setuptools wheel
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Download Whisper model (tiny for fast MVP)
-# This runs during build to cache the model in the Docker layer
-RUN python -c "import whisper; whisper.load_model('tiny')" || true
 
 # Copy application code
 COPY app ./app

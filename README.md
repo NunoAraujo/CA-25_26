@@ -8,8 +8,8 @@ A Portuguese-first journaling platform where users record short daily audio entr
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    React SPA Frontend                        │
-│         (Tailwind, Vite, audio capture, charts)              │
+│                  Next.js App Frontend                         │
+│      (Tailwind v4, App Router, audio capture, charts)        │
 └────────────────────────┬────────────────────────────────────┘
                          │ HTTPS
 ┌────────────────────────▼────────────────────────────────────┐
@@ -34,7 +34,7 @@ A Portuguese-first journaling platform where users record short daily audio entr
 
 ### Stack Components
 
-- **Frontend:** React 18, Vite, TailwindCSS 3, Recharts for visualization
+- **Frontend:** Next.js 15, TailwindCSS 4, Recharts for visualization
 - **API Backend:** Node.js 20 LTS, Express, TypeScript, Prisma ORM
 - **Analysis Engine:** Python 3.11, FastAPI, OpenAI Whisper, transformers
 - **Database:** PostgreSQL 16
@@ -53,6 +53,7 @@ A Portuguese-first journaling platform where users record short daily audio entr
 ## Quick Start
 
 ### Prerequisites
+
 ```bash
 # macOS with Homebrew
 brew install docker node@20 python@3.11
@@ -105,15 +106,14 @@ docker compose down
 
 ```
 .
-├── frontend/                 # React SPA with Tailwind
-│   ├── src/
-│   │   ├── components/      # UI components
-│   │   ├── pages/           # Page components
-│   │   ├── hooks/           # React hooks
-│   │   └── App.tsx          # Main app
+├── frontend/                 # Next.js app with Tailwind v4
+│   ├── app/
+│   │   ├── layout.tsx       # Root layout
+│   │   ├── page.tsx         # Home page
+│   │   └── globals.css      # Tailwind styles
 │   ├── package.json
 │   ├── Dockerfile
-│   └── vite.config.ts
+│   └── next.config.ts
 ├── api-node/                # Node.js Express API
 │   ├── src/
 │   │   ├── routes/          # API endpoints
@@ -148,41 +148,48 @@ docker compose down
 ## Development Workflow
 
 ### Phase 1: Foundation (Current)
+
 - [x] Monorepo structure bootstrap
 - [ ] Docker Compose with all services
 - [ ] Environment templates and health checks
 - [ ] Validate startup and dependency order
 
 ### Phase 2: Data Model & Contracts
+
 - [ ] PostgreSQL schema design
 - [ ] API contract definitions
 - [ ] Service integration contracts
 
 ### Phase 3: Ingestion Pipeline
+
 - [ ] Frontend audio recording/upload
 - [ ] Node multipart upload endpoint
 - [ ] Redis queue integration
 - [ ] Job status lifecycle
 
 ### Phase 4: Analysis Engine
+
 - [ ] Whisper transcription (Portuguese)
 - [ ] Prosody feature extraction
 - [ ] Emotion classification
 - [ ] Fusion and callback
 
 ### Phase 5: Trends & Recommendations
+
 - [ ] Weekly aggregation scheduler
 - [ ] Recommendation engine logic
 - [ ] Personalization rules
 - [ ] API endpoints
 
 ### Phase 6: Frontend Dashboard
+
 - [ ] Emotion evolution chart
 - [ ] Recommendations panel
 - [ ] Journal timeline
 - [ ] Mobile-first responsive UX
 
 ### Phase 7: QA & Hardening
+
 - [ ] Integration tests
 - [ ] Model smoke tests
 - [ ] Structured logging
@@ -191,6 +198,7 @@ docker compose down
 ## Privacy & Compliance
 
 **MVP Policy:**
+
 - Audio storage: MinIO local (unencrypted, acceptable for local MVP)
 - Retention: Keep all audio for MVP (supports re-analysis and debugging)
 - Deletion: Soft-delete endpoint available; hard-delete as admin operation
@@ -199,10 +207,10 @@ docker compose down
 
 ## Resources
 
-- [Architecture Decisions](/docs/architecture.md)
+- [Architecture Decisions](/docs/ARCHITECTURE.md)
 - [Database Schema](/docs/schema.md)
 - [API Contracts](/docs/contracts/)
-- [Phased Implementation Plan](/docs/phased-plan.md)
+- [Phased Implementation Plan](/docs/PHASED_PLAN.md)
 
 ## License
 

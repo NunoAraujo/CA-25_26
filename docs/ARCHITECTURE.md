@@ -6,8 +6,8 @@ The Audio Journaling MVP uses a **three-tier microservices-lite architecture** o
 
 ### Service Layer
 
-1. **Frontend (React + Vite + Tailwind)**
-   - Browser-based SPA for recording and dashboard visualization
+1. **Frontend (Next.js + Tailwind v4)**
+   - Browser-based web app (App Router) for recording and dashboard visualization
    - Handles audio capture, UI state, charting
    - Calls Node API for data and status
 
@@ -60,30 +60,30 @@ Dashboard displays charts + activity suggestions
 
 ## Technology Stack
 
-| Layer | Component | Technology |
-|---|---|---|
-| Frontend | Framework | React 18 + TypeScript |
-|  | Build Tool | Vite |
-|  | Styling | Tailwind CSS 3 |
-|  | State | Zustand |
-|  | Charts | Recharts |
-|  | HTTP | Axios + React Query |
-| API | Runtime | Node.js 20 LTS |
-|  | Framework | Express 4 |
-|  | Language | TypeScript 5 |
-|  | ORM | Prisma 5 |
-|  | Queue | Bull 4 (Redis backend) |
-|  | Logging | Pino 8 |
-| Analysis | Runtime | Python 3.11 |
-|  | Framework | FastAPI 0.109 |
-|  | Transcription | OpenAI Whisper |
-|  | Audio Processing | librosa 0.10 |
-|  | ML | transformers 4.37 (HuggingFace) |
-| Data | Database | PostgreSQL 16 |
-|  | Cache/Queue | Redis 7 |
-|  | Storage | MinIO (S3-compatible) |
-| Infra | Orchestration | Docker Compose 3.9 |
-|  | Containers | Docker |
+| Layer    | Component        | Technology                      |
+| -------- | ---------------- | ------------------------------- |
+| Frontend | Framework        | Next.js 15 + TypeScript         |
+|          | Build Tool       | Next.js runtime/build pipeline  |
+|          | Styling          | Tailwind CSS 4                  |
+|          | State            | Zustand                         |
+|          | Charts           | Recharts                        |
+|          | HTTP             | Axios + React Query             |
+| API      | Runtime          | Node.js 20 LTS                  |
+|          | Framework        | Express 4                       |
+|          | Language         | TypeScript 5                    |
+|          | ORM              | Prisma 5                        |
+|          | Queue            | Bull 4 (Redis backend)          |
+|          | Logging          | Pino 8                          |
+| Analysis | Runtime          | Python 3.11                     |
+|          | Framework        | FastAPI 0.109                   |
+|          | Transcription    | OpenAI Whisper                  |
+|          | Audio Processing | librosa 0.10                    |
+|          | ML               | transformers 4.37 (HuggingFace) |
+| Data     | Database         | PostgreSQL 16                   |
+|          | Cache/Queue      | Redis 7                         |
+|          | Storage          | MinIO (S3-compatible)           |
+| Infra    | Orchestration    | Docker Compose 3.9              |
+|          | Containers       | Docker                          |
 
 ## Database Schema (Phase 2 Detail)
 
@@ -131,6 +131,7 @@ GET    /health                        # Service health
 ## MVP Boundaries
 
 ### Included
+
 - Single-user journaling (no auth)
 - Portuguese-first transcription and emotion analysis
 - Local Docker Compose stack for development
@@ -139,6 +140,7 @@ GET    /health                        # Service health
 - Full Docker containerization
 
 ### Excluded
+
 - Multi-user authentication
 - Social sharing features
 - Advanced crisis intervention flows
@@ -149,9 +151,9 @@ GET    /health                        # Service health
 ## Development Workflow
 
 1. **Local machine**: Run `docker compose up --build`
-2. **Auto-reload**: Frontend (Vite), Node (nodemon), Python (FastAPI reload)
+2. **Auto-reload**: Frontend (Next.js dev), Node (nodemon/ts-node), Python (FastAPI reload)
 3. **Logs**: `docker compose logs -f <service-name>`
-4. **Database**: Access via pgAdmin (http://localhost:5050) or `psql` CLI
+4. **Database**: Access via pgAdmin (http://localhost:5051) or `psql` CLI
 5. **Storage**: MinIO console (http://localhost:9001)
 
 ## Performance Targets (MVP)
