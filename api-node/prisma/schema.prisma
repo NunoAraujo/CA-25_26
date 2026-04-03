@@ -1,0 +1,18 @@
+// Placeholder for Prisma schema
+// This will be populated in Phase 2 with full data model
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Placeholder models - to be expanded in Phase 2
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updated
+}

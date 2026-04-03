@@ -1,0 +1,194 @@
+version: '3.9'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: journaling-app-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000/api}
+      VITE_ENV: ${VITE_ENV:-development}
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      api:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+
+  api:
+    build:
+      context: ./api-node
+      dockerfile: Dockerfile
+    container_name: journaling-app-api
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@postgres:5432/journaling_db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-journals}
+      ANALYSIS_API_URL: ${ANALYSIS_API_URL:-http://analysis:8000}
+      ANALYSIS_CALLBACK_URL: ${ANALYSIS_CALLBACK_URL:-http://api:3000/api/journals}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-prod}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      PORT: 3000
+    volumes:
+      - ./api-node/src:/app/src
+      - ./api-node/prisma:/app/prisma
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    command: npm run dev
+    stdin_open: true
+    tty: true
+
+  analysis:
+    build:
+      context: ./analysis-python
+      dockerfile: Dockerfile
+    container_name: journaling-app-analysis
+    ports:
+      - "8000:8000"
+    environment:
+      PYTHONUNBUFFERED: 1
+      PYTHON_LOG_LEVEL: ${PYTHON_LOG_LEVEL:-debug}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-journals}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@postgres:5432/journaling_db}
+      WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
+      TORCH_HOME: /tmp/torch-models
+      HF_HOME: /tmp/hf-models
+    volumes:
+      - ./analysis-python/app:/app/app
+      - torch-cache:/tmp/torch-models
+      - hf-cache:/tmp/hf-models
+      - audio-temp:/tmp/audio-temp
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: journaling-app-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-journaling_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-journaling_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    stdin_open: true
+    tty: true
+
+  redis:
+    image: redis:7-alpine
+    container_name: journaling-app-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+
+  minio:
+    image: minio/minio:latest
+    container_name: journaling-app-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/minio-data
+    networks:
+      - app-network
+    command: minio server /minio-data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    stdin_open: true
+    tty: true
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: journaling-app-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+  torch-cache:
+  hf-cache:
+  audio-temp:
