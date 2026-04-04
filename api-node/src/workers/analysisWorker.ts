@@ -32,10 +32,14 @@ function inferAudioFormat(audioObjectKey: string) {
 }
 
 analysisQueue.process("analyze-journal", async (job) => {
-  const { journalId, audioUrl, durationSeconds, language, audioObjectKey } = job.data;
+  const { journalId, audioUrl, durationSeconds, language, audioObjectKey } =
+    job.data;
   const audioFormat = inferAudioFormat(audioObjectKey);
 
-  logger.info({ journalId, jobId: job.id, audioFormat }, "Dispatching analysis job");
+  logger.info(
+    { journalId, jobId: job.id, audioFormat },
+    "Dispatching analysis job",
+  );
 
   await prisma.journal.update({
     where: { id: journalId },
@@ -79,8 +83,10 @@ analysisQueue.on("failed", (job, error) => {
     return;
   }
 
-  const configuredAttempts = typeof job.opts.attempts === "number" ? job.opts.attempts : 1;
-  const attemptsMade = typeof job.attemptsMade === "number" ? job.attemptsMade : 0;
+  const configuredAttempts =
+    typeof job.opts.attempts === "number" ? job.opts.attempts : 1;
+  const attemptsMade =
+    typeof job.attemptsMade === "number" ? job.attemptsMade : 0;
   const finalAttemptReached = attemptsMade >= configuredAttempts;
 
   if (!finalAttemptReached) {
