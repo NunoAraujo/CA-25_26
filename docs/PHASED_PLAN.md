@@ -72,7 +72,7 @@ Phase 2 is complete enough to proceed. Remaining work now belongs to Phase 3 imp
 - [x] 3.2 Node upload endpoint implemented (multer validation + MinIO upload + journal create).
 - [x] 3.3 Queue + worker scaffolding implemented (Bull queue, Redis wiring, worker service in Docker Compose).
 - [ ] 3.4 Lifecycle hardening in progress (worker now updates `transcribing → analyzing` and persists final failures + dead-letter records; callback alignment still pending).
-- [ ] End-to-end ingestion verification pending stable local disk availability.
+- [x] End-to-end ingestion validation completed (upload persistence, queue dispatch, happy-path status advance, failure-path retries + dead-letter evidence).
 
 ### Implemented Notes
 
@@ -80,7 +80,7 @@ Phase 2 is complete enough to proceed. Remaining work now belongs to Phase 3 imp
 - API startup now verifies object storage and reports it in `/api/health`.
 - Frontend replaced placeholder page with the first recording/upload experience.
 - Worker lifecycle handling now marks `analyzing` after dispatch and captures final retry exhaustion in a dead-letter queue.
-- Initial smoke tests succeeded for build and service health; upload persistence hit intermittent local Docker disk-space constraints.
+- Runtime validation now confirmed both happy path (`queued → analyzing`) and failure path (`queued → transcribing → failed` after retries).
 
 ### 3.1 Frontend Audio Capture
 
