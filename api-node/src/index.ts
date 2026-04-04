@@ -9,6 +9,7 @@ import trendsRouter from "./routes/trends";
 import recommendationsRouter from "./routes/recommendations";
 import { prisma } from "./lib/prisma";
 import { redis } from "./lib/redis";
+import { ensureBucketExists, minioBucket, minioClient } from "./lib/minio";
 
 dotenv.config();
 
@@ -34,11 +35,13 @@ app.get("/api/health", async (_req: Request, res: Response) => {
   const services = {
     database: "down",
     redis: "down",
+    objectStorage: "down",
     pythonAnalysis: "down",
   } as const;
 
   let databaseStatus: "ok" | "down" = "down";
   let redisStatus: "ok" | "down" = "down";
+  let objectStorageStatus: "ok" | "down" = "down";
   let analysisStatus: "ok" | "down" = "down";
 
   try {
@@ -56,6 +59,13 @@ app.get("/api/health", async (_req: Request, res: Response) => {
   }
 
   try {
+    const bucketExists = await minioClient.bucketExists(minioBucket);
+    objectStorageStatus = bucketExists ? "ok" : "down";
+  } catch (error) {
+    logger.error({ err: error }, "Object storage health check failed");
+  }
+
+  try {
     const response = await axios.get(analysisUrl, { timeout: 3000 });
     if (response.status === 200) {
       analysisStatus = "ok";
@@ -65,7 +75,10 @@ app.get("/api/health", async (_req: Request, res: Response) => {
   }
 
   const allHealthy =
-    databaseStatus === "ok" && redisStatus === "ok" && analysisStatus === "ok";
+    databaseStatus === "ok" &&
+    redisStatus === "ok" &&
+    objectStorageStatus === "ok" &&
+    analysisStatus === "ok";
 
   res.status(allHealthy ? 200 : 503).json({
     status: allHealthy ? "healthy" : "degraded",
@@ -74,6 +87,7 @@ app.get("/api/health", async (_req: Request, res: Response) => {
       ...services,
       database: databaseStatus,
       redis: redisStatus,
+      objectStorage: objectStorageStatus,
       pythonAnalysis: analysisStatus,
     },
   });
@@ -101,10 +115,25 @@ app.use((err: any, _req: Request, res: Response, _next: unknown) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  logger.info(`API server running on http://0.0.0.0:${PORT}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || "development"}`);
+async function startServer() {
+  try {
+    await ensureBucketExists();
+  } catch (error) {
+    logger.warn(
+      { err: error },
+      "Object storage bootstrap failed, starting API in degraded mode",
+    );
+  }
+
+  app.listen(PORT, () => {
+    logger.info(`API server running on http://0.0.0.0:${PORT}`);
+    logger.info(`Environment: ${process.env.NODE_ENV || "development"}`);
+  });
+}
+
+startServer().catch((error) => {
+  logger.error({ err: error }, "Failed to start API server");
+  process.exit(1);
 });
 
 export default app;

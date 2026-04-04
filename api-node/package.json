@@ -7,7 +7,8 @@
     "dev": "ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "migrate": "prisma migrate deploy"
+    "migrate": "prisma migrate deploy",
+    "worker:analysis": "ts-node src/workers/analysisWorker.ts"
   },
   "keywords": [
     "journaling",
@@ -29,7 +30,8 @@
     "bull": "latest",
     "ioredis": "latest",
     "node-cron": "latest",
-    "axios": "latest"
+    "axios": "latest",
+    "minio": "latest"
   },
   "devDependencies": {
     "@types/cors": "latest",

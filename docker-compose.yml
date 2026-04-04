@@ -35,6 +35,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@postgres:5432/journaling_db}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-http://localhost:9000}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
       MINIO_BUCKET: ${MINIO_BUCKET:-journals}
@@ -62,6 +63,42 @@ services:
       retries: 3
       start_period: 30s
     command: npm run dev
+    stdin_open: true
+    tty: true
+
+  api-worker:
+    build:
+      context: ./api-node
+      dockerfile: Dockerfile
+    container_name: journaling-app-api-worker
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@postgres:5432/journaling_db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-http://localhost:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-journals}
+      ANALYSIS_API_URL: ${ANALYSIS_API_URL:-http://analysis:8000}
+      ANALYSIS_CALLBACK_URL: ${ANALYSIS_CALLBACK_URL:-http://api:3000/api/journals}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-prod}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+    volumes:
+      - ./api-node/src:/app/src
+      - ./api-node/prisma:/app/prisma
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      analysis:
+        condition: service_healthy
+    command: npm run worker:analysis
     stdin_open: true
     tty: true
 
