@@ -71,7 +71,7 @@ Phase 2 is complete enough to proceed. Remaining work now belongs to Phase 3 imp
 - [x] 3.1 Frontend audio capture page implemented (MediaRecorder + timer + upload UI).
 - [x] 3.2 Node upload endpoint implemented (multer validation + MinIO upload + journal create).
 - [x] 3.3 Queue + worker scaffolding implemented (Bull queue, Redis wiring, worker service in Docker Compose).
-- [ ] 3.4 Lifecycle hardening in progress (status progression, failure handling, dead-letter strategy).
+- [ ] 3.4 Lifecycle hardening in progress (worker now updates `transcribing → analyzing` and persists final failures + dead-letter records; callback alignment still pending).
 - [ ] End-to-end ingestion verification pending stable local disk availability.
 
 ### Implemented Notes
@@ -79,6 +79,7 @@ Phase 2 is complete enough to proceed. Remaining work now belongs to Phase 3 imp
 - Added `api-worker` service to Docker Compose and worker entry script.
 - API startup now verifies object storage and reports it in `/api/health`.
 - Frontend replaced placeholder page with the first recording/upload experience.
+- Worker lifecycle handling now marks `analyzing` after dispatch and captures final retry exhaustion in a dead-letter queue.
 - Initial smoke tests succeeded for build and service health; upload persistence hit intermittent local Docker disk-space constraints.
 
 ### 3.1 Frontend Audio Capture
@@ -252,7 +253,7 @@ After Phase 1 completion:
 
 ## Immediate Next Steps (Phase 3)
 
-1. Finalize job lifecycle transitions in worker/callback (`queued → transcribing → analyzing → complete/failed`).
+1. Align callback path and worker transitions to complete full lifecycle guarantees (`queued → transcribing → analyzing → complete/failed`).
 2. Add first seed data for `ActivityLibrary` and wire a simple seed command.
 3. Re-run end-to-end upload test after clearing local Docker disk pressure.
 4. Start Phase 4.1 transcription logic integration in Python service.
