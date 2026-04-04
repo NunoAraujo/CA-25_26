@@ -8,6 +8,8 @@ dotenv.config();
 
 const logger = pino();
 const analysisApiUrl = process.env.ANALYSIS_API_URL ?? "http://analysis:8000";
+const analysisCallbackBaseUrl =
+  process.env.ANALYSIS_CALLBACK_URL ?? "http://api:3000/api/journals";
 
 function inferAudioFormat(audioObjectKey: string) {
   const extension = audioObjectKey.split(".").pop()?.toLowerCase();
@@ -35,6 +37,7 @@ analysisQueue.process("analyze-journal", async (job) => {
   const { journalId, audioUrl, durationSeconds, language, audioObjectKey } =
     job.data;
   const audioFormat = inferAudioFormat(audioObjectKey);
+  const callbackUrl = `${analysisCallbackBaseUrl}/${journalId}/analysis-callback`;
 
   logger.info(
     { journalId, jobId: job.id, audioFormat },
@@ -56,6 +59,7 @@ analysisQueue.process("analyze-journal", async (job) => {
     audioFormat,
     duration: durationSeconds,
     language,
+    callbackUrl,
   });
 
   await prisma.journal.update({
