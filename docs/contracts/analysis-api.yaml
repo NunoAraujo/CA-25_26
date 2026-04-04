@@ -1,0 +1,53 @@
+openapi: 3.0.3
+info:
+  title: Audio Journaling Analysis API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8000
+paths:
+  /health:
+    get:
+      summary: Health status of analysis service
+      responses:
+        "200":
+          description: Service health
+  /api/v1/analyze:
+    post:
+      summary: Submit audio for async analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jobId, journalId, audioUrl, duration]
+              properties:
+                jobId:
+                  type: string
+                journalId:
+                  type: string
+                audioUrl:
+                  type: string
+                audioFormat:
+                  type: string
+                  example: wav
+                duration:
+                  type: number
+                language:
+                  type: string
+                  example: pt-BR
+      responses:
+        "202":
+          description: Accepted for processing
+  /api/v1/analyze/{taskId}:
+    get:
+      summary: Query async analysis status/result
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Status response

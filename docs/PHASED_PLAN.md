@@ -7,15 +7,31 @@
 - [x] 1.1 Monorepo structure (frontend, api-node, analysis-python, infra, docs)
 - [x] 1.2 Docker Compose orchestration with all services
 - [x] 1.3 Environment templates and health checks
-- [ ] 1.4 Verify startup order and service discovery
+- [x] 1.4 Verify startup order and service discovery
 
 ### Status
 
-Skeleton complete. Ready for first Docker Compose test.
+Complete. Full stack boots healthy in Docker Compose (frontend, api, analysis, postgres, redis, minio, pgadmin).
+
+### Implemented Notes
+
+- Frontend stack migrated to Next.js App Router + Tailwind CSS v4.
+- Docker Compose ports and health checks stabilized.
+- API image adjusted for Prisma/OpenSSL compatibility on Alpine.
 
 ---
 
-## Phase 2: Data Model and Contracts 📋
+## Phase 2: Data Model and Contracts ✅
+
+### Status
+
+- [x] 2.1 PostgreSQL schema modeled in Prisma.
+- [x] 2.2 First migration created/applied.
+- [x] 2.3 API contracts drafted (Node API + Analysis API OpenAPI files).
+- [x] 2.4 Emotion taxonomy and score format aligned in schema/contracts.
+- [x] Backend route skeletons implemented for journals, trends, and recommendations.
+
+Phase 2 is complete enough to proceed. Remaining work now belongs to Phase 3 implementation and later refinement phases.
 
 ### 2.1 PostgreSQL Schema Design
 
@@ -30,12 +46,15 @@ Skeleton complete. Ready for first Docker Compose test.
 - Prisma migrations for version control
 - Index optimization for timeline/trend queries
 - SQL extensions (uuid-ossp) in postgres-init.sql
+- Initial migration generated and applied: `20260404003546_init_phase2_schema`
+- Prisma schema validates successfully in Docker.
 
 ### 2.3 API Contract Definitions
 
 - Frontend ↔ Node.js endpoints (upload, status, trends, recommendations)
 - Node.js ↔ Python FastAPI contract (analysis request/callback)
 - Request/response schemas with validation
+- Express route skeletons implemented and returning valid JSON responses.
 
 ### 2.4 Emotion Taxonomy & Scoring
 
@@ -140,6 +159,12 @@ Skeleton complete. Ready for first Docker Compose test.
 
 ## Phase 6: Frontend Insights Dashboard 💻
 
+### Current Frontend Base
+
+- [x] Next.js app shell running in Docker.
+- [x] Tailwind v4 base CSS wiring in place.
+- [ ] Dashboard feature pages/components (to be implemented in this phase).
+
 ### 6.1 Emotion Evolution Chart
 
 - Recharts ComposedChart with multiple series
@@ -207,6 +232,15 @@ After Phase 1 completion:
 2. **Emotion analysis logic** (4.1–4.3) can be built while node infrastructure is stabilizing (Phase 3)
 3. **Recommendation engine** (5.2) can be prototyped with mocked trends during Phase 5
 4. **Frontend dashboard** (Phase 6) can be developed against mocked API while Phase 4 finalizes
+
+---
+
+## Immediate Next Steps (Phase 3)
+
+1. Add queue/worker scaffolding for analysis jobs (Bull + Redis).
+2. Implement journal upload endpoint with multipart handling and MinIO persistence.
+3. Implement frontend recording page in Next.js and wire upload call to API.
+4. Add first seed data for `ActivityLibrary` and optional single-user bootstrap.
 
 ---
 

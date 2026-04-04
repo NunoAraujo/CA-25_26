@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: Audio Journaling Node API
+  version: 0.1.0
+servers:
+  - url: http://localhost:3000/api
+paths:
+  /health:
+    get:
+      summary: Health status for API and dependencies
+      responses:
+        "200":
+          description: Healthy response
+  /journals:
+    post:
+      summary: Upload a new audio journal
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [audio]
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                recordedAt:
+                  type: string
+                  format: date-time
+      responses:
+        "201":
+          description: Journal created and queued
+    get:
+      summary: List journal entries
+      responses:
+        "200":
+          description: List of journals
+  /journals/{journalId}:
+    get:
+      summary: Get journal details
+      parameters:
+        - in: path
+          name: journalId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Journal details
+    delete:
+      summary: Soft-delete journal entry
+      parameters:
+        - in: path
+          name: journalId
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+  /journals/{journalId}/status:
+    get:
+      summary: Get analysis status for journal
+      parameters:
+        - in: path
+          name: journalId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Status object
+  /journals/{journalId}/analysis-callback:
+    post:
+      summary: Receive analysis result from Python service
+      parameters:
+        - in: path
+          name: journalId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [complete, failed]
+                transcription:
+                  type: string
+                emotionVector:
+                  type: object
+                prosodyFeatures:
+                  type: object
+      responses:
+        "200":
+          description: Callback accepted
+  /trends/weekly:
+    get:
+      summary: Get weekly emotional trend data
+      parameters:
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Weekly trend response
+  /recommendations:
+    get:
+      summary: Get weekly recommendations
+      parameters:
+        - in: query
+          name: weekStart
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Recommendation list
+  /recommendations/{recommendationId}/feedback:
+    post:
+      summary: Submit recommendation feedback
+      parameters:
+        - in: path
+          name: recommendationId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [feedback]
+              properties:
+                feedback:
+                  type: string
+                  enum: [positive, neutral, negative]
+      responses:
+        "200":
+          description: Feedback stored

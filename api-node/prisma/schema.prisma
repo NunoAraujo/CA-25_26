@@ -1,6 +1,3 @@
-// Placeholder for Prisma schema
-// This will be populated in Phase 2 with full data model
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -10,9 +7,199 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Placeholder models - to be expanded in Phase 2
+enum JournalStatus {
+  queued
+  transcribing
+  analyzing
+  complete
+  failed
+}
+
+enum RecommendationFeedback {
+  positive
+  neutral
+  negative
+}
+
+enum ActivityIntensity {
+  low
+  medium
+  high
+}
+
 model User {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updated
+  id              String           @id @default(cuid())
+  email           String?          @unique
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  journals        Journal[]
+  weeklyTrends    WeeklyTrend[]
+  recommendations Recommendation[]
+}
+
+model Journal {
+  id                 String           @id @default(cuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audioObjectKey     String           @unique
+  audioUrl           String
+  durationSeconds    Float
+  recordedAt         DateTime?
+  uploadedAt         DateTime         @default(now())
+  status             JournalStatus    @default(queued)
+  statusUpdatedAt    DateTime         @updatedAt
+  transcription      String?
+  transcriptionLang  String           @default("pt-BR")
+  errorMessage       String?
+
+  joyScore           Float?
+  sadnessScore       Float?
+  angerScore         Float?
+  anxietyScore       Float?
+  calmScore          Float?
+  energyScore        Float?
+
+  prosodyWeight      Float            @default(0.3)
+  semanticWeight     Float            @default(0.7)
+  modelVersion       String           @default("0.1.0")
+
+  prosodyFeature     ProsodyFeature?
+  journalSuggestions JournalSuggestion[]
+
+  deletedAt          DateTime?
+
+  @@index([userId, uploadedAt])
+  @@index([status])
+}
+
+model ProsodyFeature {
+  id                String    @id @default(cuid())
+  journalId         String    @unique
+  journal           Journal   @relation(fields: [journalId], references: [id], onDelete: Cascade)
+
+  meanPitchHz       Float?
+  pitchStdDev       Float?
+  minPitchHz        Float?
+  maxPitchHz        Float?
+  pitchContourReg   Float?
+
+  meanEnergy        Float?
+  energyStdDev      Float?
+  speechRate        Float?
+  pauseRatio        Float?
+
+  mfccMean          Float[]
+  spectralCentroid  Float?
+  spectralSpread    Float?
+
+  jitter            Float?
+  shimmer           Float?
+  voicedRatio       Float?
+
+  createdAt         DateTime  @default(now())
+}
+
+model WeeklyTrend {
+  id                 String           @id @default(cuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart          DateTime
+  weekEnd            DateTime
+
+  avgJoyScore        Float
+  avgSadnessScore    Float
+  avgAngerScore      Float
+  avgAnxietyScore    Float
+  avgCalmScore       Float
+  avgEnergyScore     Float
+
+  joyTrend           Float?
+  sadnessTrend       Float?
+  angerTrend         Float?
+  anxietyTrend       Float?
+  calmTrend          Float?
+  energyTrend        Float?
+
+  emotionalVolatility Float
+  entryCount         Int
+  completionRate     Float
+
+  recommendations    Recommendation[]
+
+  computedAt         DateTime         @default(now())
+
+  @@unique([userId, weekStart])
+  @@index([userId, weekStart])
+}
+
+model Recommendation {
+  id                    String                  @id @default(cuid())
+  userId                String
+  user                  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeklyTrendId         String
+  weeklyTrend           WeeklyTrend             @relation(fields: [weeklyTrendId], references: [id], onDelete: Cascade)
+
+  activityId            String
+  activityName          String
+  activityDurationMin   Int
+  activityIntensity     ActivityIntensity
+  rationale             String
+  confidence            Float
+
+  expectedImpactMetric  String?
+  expectedImpactDelta   Float?
+
+  feedback              RecommendationFeedback?
+  feedbackAt            DateTime?
+  completedAt           DateTime?
+
+  createdAt             DateTime                @default(now())
+  expiresAt             DateTime
+
+  journalSuggestions    JournalSuggestion[]
+
+  @@index([userId, weeklyTrendId])
+  @@index([activityId])
+}
+
+model JournalSuggestion {
+  id                String          @id @default(cuid())
+  journalId         String
+  journal           Journal         @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  recommendationId  String
+  recommendation    Recommendation  @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  suggestedAt       DateTime        @default(now())
+
+  @@unique([journalId, recommendationId])
+}
+
+model ActivityLibrary {
+  id                    String            @id @default(cuid())
+  activityId            String            @unique
+  activityName          String
+  description           String
+  durationMin           Int
+  intensity             ActivityIntensity
+  category              String
+  targetEmotions        String[]
+  contraindications     String[]
+  instructions          String
+  resources             String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@index([category])
+}
+
+model ModelMetrics {
+  id                    String    @id @default(cuid())
+  metricDate            DateTime
+  totalAnalyzed         Int
+  avgLatencyMs          Float
+  failureRate           Float
+  whisperWer            Float?
+  emotionF1             Float?
+  createdAt             DateTime  @default(now())
+
+  @@index([metricDate])
 }

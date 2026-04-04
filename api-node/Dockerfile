@@ -2,7 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl openssl
 
 # Copy package files
 COPY package*.json ./
@@ -12,8 +12,9 @@ RUN npm install
 
 # Copy TypeScript config and source
 COPY tsconfig.json ./
-COPY src ./src
 COPY prisma ./prisma
+RUN npx prisma generate
+COPY src ./src
 
 # Build TypeScript (optional for dev, required for prod)
 # RUN npm run build

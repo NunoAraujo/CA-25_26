@@ -3,6 +3,12 @@ import helmet from "helmet";
 import cors from "cors";
 import dotenv from "dotenv";
 import pino from "pino";
+import axios from "axios";
+import journalsRouter from "./routes/journals";
+import trendsRouter from "./routes/trends";
+import recommendationsRouter from "./routes/recommendations";
+import { prisma } from "./lib/prisma";
+import { redis } from "./lib/redis";
 
 dotenv.config();
 
@@ -17,15 +23,58 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/api/journals", journalsRouter);
+app.use("/api/trends", trendsRouter);
+app.use("/api/recommendations", recommendationsRouter);
+
 // Health check endpoint
-app.get("/api/health", (req: Request, res: Response) => {
-  res.json({
-    status: "healthy",
+app.get("/api/health", async (_req: Request, res: Response) => {
+  const analysisUrl = `${process.env.ANALYSIS_API_URL ?? "http://analysis:8000"}/health`;
+
+  const services = {
+    database: "down",
+    redis: "down",
+    pythonAnalysis: "down",
+  } as const;
+
+  let databaseStatus: "ok" | "down" = "down";
+  let redisStatus: "ok" | "down" = "down";
+  let analysisStatus: "ok" | "down" = "down";
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    databaseStatus = "ok";
+  } catch (error) {
+    logger.error({ err: error }, "Database health check failed");
+  }
+
+  try {
+    await redis.ping();
+    redisStatus = "ok";
+  } catch (error) {
+    logger.error({ err: error }, "Redis health check failed");
+  }
+
+  try {
+    const response = await axios.get(analysisUrl, { timeout: 3000 });
+    if (response.status === 200) {
+      analysisStatus = "ok";
+    }
+  } catch (error) {
+    logger.error({ err: error }, "Analysis service health check failed");
+  }
+
+  const allHealthy =
+    databaseStatus === "ok" && redisStatus === "ok" && analysisStatus === "ok";
+
+  res.status(allHealthy ? 200 : 503).json({
+    status: allHealthy ? "healthy" : "degraded",
     timestamp: new Date().toISOString(),
     services: {
-      database: "pending",
-      redis: "pending",
-      pythonAnalysis: "pending",
+      ...services,
+      database: databaseStatus,
+      redis: redisStatus,
+      pythonAnalysis: analysisStatus,
     },
   });
 });
@@ -45,7 +94,7 @@ app.get("/api", (req: Request, res: Response) => {
 });
 
 // Error handling middleware
-app.use((err: any, req: Request, res: Response) => {
+app.use((err: any, _req: Request, res: Response, _next: unknown) => {
   logger.error(err);
   res.status(err.status || 500).json({
     error: err.message || "Internal Server Error",
