@@ -8,6 +8,20 @@ type UploadState = {
   createdAt: string;
 };
 
+type Recommendation = {
+  id: string;
+  activityName: string;
+  activityDurationMin: number;
+  activityIntensity: string;
+  rationale: string;
+  confidence: number;
+  expectedImpactMetric: string;
+  expectedImpactDelta: number;
+  feedback: string | null;
+  completedAt: string | null;
+  createdAt: string;
+};
+
 function formatClock(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60)
     .toString()
@@ -47,6 +61,15 @@ export default function HomePage() {
   const [recordedAt, setRecordedAt] = useState<string>(
     new Date().toISOString(),
   );
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] =
+    useState(false);
+  const [recommendationError, setRecommendationError] = useState<string | null>(
+    null,
+  );
+  const [completingRecommendationId, setCompletingRecommendationId] = useState<
+    string | null
+  >(null);
 
   const apiBaseUrl = useMemo(
     () => process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api",
@@ -88,6 +111,88 @@ export default function HomePage() {
       return nextUrl;
     });
   }, [audioBlob]);
+
+  useEffect(() => {
+    void loadRecommendations();
+  }, []);
+
+  async function loadRecommendations() {
+    setIsLoadingRecommendations(true);
+    setRecommendationError(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/recommendations`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message ??
+            payload.error ??
+            "Falha ao carregar recomendacoes.",
+        );
+      }
+
+      setRecommendations(
+        Array.isArray(payload.recommendations) ? payload.recommendations : [],
+      );
+    } catch (error) {
+      setRecommendationError(
+        error instanceof Error
+          ? error.message
+          : "Falha ao carregar recomendacoes.",
+      );
+    } finally {
+      setIsLoadingRecommendations(false);
+    }
+  }
+
+  async function completeRecommendation(recommendationId: string) {
+    setCompletingRecommendationId(recommendationId);
+    setRecommendationError(null);
+
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/recommendations/${recommendationId}/complete`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
+        },
+      );
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message ?? payload.error ?? "Falha ao concluir recomendacao.",
+        );
+      }
+
+      setRecommendations((current) =>
+        current.map((item) =>
+          item.id === recommendationId
+            ? {
+                ...item,
+                completedAt:
+                  typeof payload?.recommendation?.completedAt === "string"
+                    ? payload.recommendation.completedAt
+                    : new Date().toISOString(),
+              }
+            : item,
+        ),
+      );
+    } catch (error) {
+      setRecommendationError(
+        error instanceof Error
+          ? error.message
+          : "Falha ao concluir recomendacao.",
+      );
+    } finally {
+      setCompletingRecommendationId(null);
+    }
+  }
 
   async function startRecording() {
     setErrorMessage(null);
@@ -328,6 +433,94 @@ export default function HomePage() {
               </p>
             </div>
           ) : null}
+        </div>
+      </section>
+
+      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
+              Recomendacoes
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">
+              Plano semanal de autorregulacao
+            </h2>
+          </div>
+          <button
+            className="rounded-full border border-(--line) px-5 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isLoadingRecommendations}
+            onClick={() => {
+              void loadRecommendations();
+            }}
+            type="button"
+          >
+            {isLoadingRecommendations ? "A atualizar..." : "Atualizar lista"}
+          </button>
+        </div>
+
+        {recommendationError ? (
+          <div className="mt-5 rounded-[1.25rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {recommendationError}
+          </div>
+        ) : null}
+
+        {!isLoadingRecommendations && recommendations.length === 0 ? (
+          <div className="mt-6 rounded-3xl border border-(--line) bg-(--paper-strong) p-5 text-(--ink-soft)">
+            Ainda nao existem recomendacoes para mostrar. Gera a semana no API e
+            volta a atualizar esta vista.
+          </div>
+        ) : null}
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {recommendations.map((recommendation) => (
+            <article
+              className="rounded-3xl border border-(--line) bg-(--paper-strong) p-5"
+              key={recommendation.id}
+            >
+              <p className="text-xs uppercase tracking-[0.2em] text-(--ink-soft)">
+                {recommendation.activityIntensity} intensidade
+              </p>
+              <h3 className="mt-2 text-xl font-semibold text-slate-900">
+                {recommendation.activityName}
+              </h3>
+              <p className="mt-2 text-sm text-(--ink-soft)">
+                {recommendation.activityDurationMin} min · confianca {" "}
+                {Math.round(recommendation.confidence * 100)}%
+              </p>
+              <p className="mt-3 text-sm leading-6 text-slate-700">
+                {recommendation.rationale}
+              </p>
+              <p className="mt-3 text-xs uppercase tracking-[0.15em] text-(--ink-soft)">
+                impacto: {recommendation.expectedImpactMetric} ({" "}
+                {recommendation.expectedImpactDelta.toFixed(2)})
+              </p>
+
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <span className="text-xs text-(--ink-soft)">
+                  {recommendation.completedAt
+                    ? `Concluida em ${new Date(recommendation.completedAt).toLocaleString("pt-PT")}`
+                    : "Ainda por concluir"}
+                </span>
+                <button
+                  className="rounded-full bg-(--accent) px-4 py-2 text-xs font-semibold text-white transition hover:bg-(--accent-deep) disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={
+                    Boolean(recommendation.completedAt) ||
+                    completingRecommendationId === recommendation.id
+                  }
+                  onClick={() => {
+                    void completeRecommendation(recommendation.id);
+                  }}
+                  type="button"
+                >
+                  {completingRecommendationId === recommendation.id
+                    ? "A guardar..."
+                    : recommendation.completedAt
+                      ? "Concluida"
+                      : "Marcar como feita"}
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
     </main>

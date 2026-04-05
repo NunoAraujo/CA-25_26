@@ -210,7 +210,12 @@ Phase 4 has started with a working end-to-end analysis pipeline slice. Model qua
 
 - [x] Next.js app shell running in Docker.
 - [x] Tailwind v4 base CSS wiring in place.
-- [ ] Dashboard feature pages/components (to be implemented in this phase).
+- [~] Dashboard feature pages/components started (recommendation panel + completion action wired).
+
+### Phase 6 Progress Notes
+
+- Frontend now loads recommendation cards from `GET /api/recommendations`.
+- Added "Marcar como feita" action wired to `POST /api/recommendations/:recommendationId/complete` and local completion state refresh.
 
 ### 6.1 Emotion Evolution Chart
 
@@ -287,7 +292,7 @@ After Phase 1 completion:
 1. Integrate HuggingFace multilingual sentiment model to replace heuristic emotion scoring baseline.
 2. Replace lightweight transcription fallback with full Whisper pipeline after container runtime tuning.
 3. Add Python-side analysis smoke tests with fixture audio files.
-4. Add frontend wiring for "Mark as Done" to call recommendation completion endpoint and feed user loop.
+4. Add frontend trigger for weekly generation and auto-refresh recommendation panel after generation.
 
 ---
 
