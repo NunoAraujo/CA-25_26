@@ -29,6 +29,14 @@ type Recommendation = {
   createdAt: string;
 };
 
+type JournalTimelineItem = {
+  id: string;
+  status: string;
+  uploadedAt: string;
+  durationSeconds: number | null;
+  transcription: string | null;
+};
+
 function formatClock(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60)
     .toString()
@@ -50,6 +58,22 @@ function getRecordingStateLabel(isRecording: boolean, hasAudio: boolean) {
   }
 
   return "Em espera";
+}
+
+function statusBadgeClasses(status: string) {
+  if (status === "complete") {
+    return "border-emerald-300 bg-emerald-50 text-emerald-700";
+  }
+
+  if (status === "failed") {
+    return "border-rose-300 bg-rose-50 text-rose-700";
+  }
+
+  if (status === "analyzing" || status === "transcribing") {
+    return "border-amber-300 bg-amber-50 text-amber-700";
+  }
+
+  return "border-slate-300 bg-slate-50 text-slate-700";
 }
 
 export default function HomePage() {
@@ -77,6 +101,9 @@ export default function HomePage() {
   );
   const [isPollingJournalStatus, setIsPollingJournalStatus] = useState(false);
   const [statusPollAttempt, setStatusPollAttempt] = useState(0);
+  const [journals, setJournals] = useState<JournalTimelineItem[]>([]);
+  const [isLoadingJournals, setIsLoadingJournals] = useState(false);
+  const [journalsError, setJournalsError] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] =
     useState(false);
@@ -204,8 +231,52 @@ export default function HomePage() {
   }, [audioBlob]);
 
   useEffect(() => {
+    void loadJournals();
+  }, []);
+
+  useEffect(() => {
     void loadRecommendations();
   }, []);
+
+  async function loadJournals() {
+    setIsLoadingJournals(true);
+    setJournalsError(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/journals`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message ?? payload.error ?? "Falha ao carregar journals.",
+        );
+      }
+
+      const timeline = Array.isArray(payload.journals)
+        ? payload.journals.map((item: Record<string, unknown>) => ({
+            id: String(item.id),
+            status: String(item.status ?? "queued"),
+            uploadedAt: String(item.uploadedAt ?? new Date().toISOString()),
+            durationSeconds:
+              typeof item.durationSeconds === "number"
+                ? item.durationSeconds
+                : null,
+            transcription:
+              typeof item.transcription === "string"
+                ? item.transcription
+                : null,
+          }))
+        : [];
+
+      setJournals(timeline.slice(0, 8));
+    } catch (error) {
+      setJournalsError(
+        error instanceof Error ? error.message : "Falha ao carregar journals.",
+      );
+    } finally {
+      setIsLoadingJournals(false);
+    }
+  }
 
   async function loadRecommendations() {
     setIsLoadingRecommendations(true);
@@ -682,6 +753,70 @@ export default function HomePage() {
               </div>
             </div>
           ) : null}
+        </div>
+      </section>
+
+      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
+              Timeline
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Entradas recentes</h2>
+          </div>
+          <button
+            className="rounded-full border border-(--line) px-5 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isLoadingJournals}
+            onClick={() => {
+              void loadJournals();
+            }}
+            type="button"
+          >
+            {isLoadingJournals ? "A atualizar..." : "Atualizar timeline"}
+          </button>
+        </div>
+
+        {journalsError ? (
+          <div className="mt-5 rounded-[1.25rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {journalsError}
+          </div>
+        ) : null}
+
+        {!isLoadingJournals && journals.length === 0 ? (
+          <div className="mt-6 rounded-3xl border border-(--line) bg-(--paper-strong) p-5 text-(--ink-soft)">
+            Ainda nao existem entradas para mostrar.
+          </div>
+        ) : null}
+
+        <div className="mt-6 grid gap-3">
+          {journals.map((journal) => (
+            <article
+              className="rounded-3xl border border-(--line) bg-(--paper-strong) p-4"
+              key={journal.id}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-slate-900">
+                  {new Date(journal.uploadedAt).toLocaleString("pt-PT")}
+                </p>
+                <span
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClasses(journal.status)}`}
+                >
+                  {journal.status}
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-(--ink-soft)">
+                ID: {journal.id}
+              </p>
+              <p className="mt-1 text-sm text-(--ink-soft)">
+                Duracao: {journal.durationSeconds ?? 0}s
+              </p>
+              <p className="mt-2 line-clamp-2 text-sm text-slate-700">
+                {journal.transcription && journal.transcription.length > 0
+                  ? journal.transcription
+                  : "Sem transcricao disponivel ainda."}
+              </p>
+            </article>
+          ))}
         </div>
       </section>
 
