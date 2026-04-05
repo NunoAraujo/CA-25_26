@@ -167,3 +167,25 @@ paths:
       responses:
         "200":
           description: Feedback stored
+  /recommendations/{recommendationId}/complete:
+    post:
+      summary: Mark recommendation as completed
+      parameters:
+        - in: path
+          name: recommendationId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                completedAt:
+                  type: string
+                  format: date-time
+      responses:
+        "200":
+          description: Completion stored

@@ -9,6 +9,10 @@ const feedbackSchema = Joi.object({
   feedback: Joi.string().valid("positive", "neutral", "negative").required(),
 });
 
+const completionSchema = Joi.object({
+  completedAt: Joi.date().iso().optional(),
+});
+
 const generateSchema = Joi.object({
   weekStart: Joi.date().iso().optional(),
 });
@@ -310,10 +314,26 @@ router.post(
       });
 
       const activityFeedbackScore = new Map<string, number>();
+      const activityCompletionScore = new Map<string, number>();
       for (const item of recentFeedback) {
         const current = activityFeedbackScore.get(item.activityId) ?? 0;
         const delta = item.feedback === "positive" ? 1 : -1;
         activityFeedbackScore.set(item.activityId, current + delta);
+      }
+
+      const recentCompletions = await prisma.recommendation.findMany({
+        where: {
+          userId: user.id,
+          completedAt: { gte: feedbackWindowStart },
+        },
+        select: {
+          activityId: true,
+        },
+      });
+
+      for (const item of recentCompletions) {
+        const current = activityCompletionScore.get(item.activityId) ?? 0;
+        activityCompletionScore.set(item.activityId, current + 1);
       }
 
       const activities = await prisma.activityLibrary.findMany({
@@ -354,22 +374,38 @@ router.post(
       const rankedActivities: Array<{
         activity: (typeof activities)[number];
         feedbackScore: number;
+        completionScore: number;
       }> = activities
         .map((activity: (typeof activities)[number]) => {
           const feedbackScore =
             activityFeedbackScore.get(activity.activityId) ?? 0;
+          const completionScore =
+            activityCompletionScore.get(activity.activityId) ?? 0;
           return {
             activity,
             feedbackScore,
+            completionScore,
           };
         })
         .sort(
           (
-            a: { activity: (typeof activities)[number]; feedbackScore: number },
-            b: { activity: (typeof activities)[number]; feedbackScore: number },
+            a: {
+              activity: (typeof activities)[number];
+              feedbackScore: number;
+              completionScore: number;
+            },
+            b: {
+              activity: (typeof activities)[number];
+              feedbackScore: number;
+              completionScore: number;
+            },
           ) => {
             if (b.feedbackScore !== a.feedbackScore) {
               return b.feedbackScore - a.feedbackScore;
+            }
+
+            if (b.completionScore !== a.completionScore) {
+              return b.completionScore - a.completionScore;
             }
 
             return a.activity.durationMin - b.activity.durationMin;
@@ -386,7 +422,8 @@ router.post(
           emotionPriority[0].score -
             index * 0.08 +
             (0.5 - Math.min(metrics.volatility, 0.5)) * 0.1 +
-            ranked.feedbackScore * 0.04,
+            ranked.feedbackScore * 0.04 +
+            ranked.completionScore * 0.03,
         );
 
         const recommendation = await prisma.recommendation.create({
@@ -470,6 +507,40 @@ router.post(
       });
 
       return res.json({ message: "Feedback stored", recommendation });
+    } catch (error) {
+      return next(error);
+    }
+  },
+);
+
+router.post(
+  "/:recommendationId/complete",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const recommendationId = String(req.params.recommendationId);
+      const { error, value } = completionSchema.validate(req.body ?? {}, {
+        abortEarly: false,
+      });
+
+      if (error) {
+        return res.status(400).json({
+          message: "Invalid completion payload",
+          details: error.details,
+        });
+      }
+
+      const completionDate = value.completedAt
+        ? new Date(String(value.completedAt))
+        : new Date();
+
+      const recommendation = await prisma.recommendation.update({
+        where: { id: recommendationId },
+        data: {
+          completedAt: completionDate,
+        },
+      });
+
+      return res.json({ message: "Completion stored", recommendation });
     } catch (error) {
       return next(error);
     }
