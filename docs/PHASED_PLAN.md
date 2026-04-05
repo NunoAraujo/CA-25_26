@@ -130,6 +130,8 @@ Phase 4 has started with a working end-to-end analysis pipeline slice. Model qua
 - End-to-end validation confirmed Phase 4 happy path reaches `complete` with persisted prosody and score fields.
 - Lightweight transcription fallback is currently used for stability in local Docker while full Whisper/HuggingFace model integration is finalized.
 - Node callback route now ignores duplicate callbacks for already-finalized journals and rejects conflicting late callbacks.
+- Added first `ActivityLibrary` seed dataset and a dedicated `seed:activities` command in the Node API.
+- Seed command validated as idempotent (`created: 5` on first run, `updated: 5` on second run).
 
 ### 4.1 Transcription Service
 
@@ -273,9 +275,9 @@ After Phase 1 completion:
 ## Immediate Next Steps (Phase 4)
 
 1. Integrate HuggingFace multilingual sentiment model to replace heuristic emotion scoring baseline.
-2. Add first seed data for `ActivityLibrary` and wire a simple seed command.
-3. Replace lightweight transcription fallback with full Whisper pipeline after container runtime tuning.
-4. Add Python-side analysis smoke tests with fixture audio files.
+2. Replace lightweight transcription fallback with full Whisper pipeline after container runtime tuning.
+3. Add Python-side analysis smoke tests with fixture audio files.
+4. Start Phase 5.2 recommendation generation using seeded activities.
 
 ---
 
