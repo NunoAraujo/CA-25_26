@@ -1,6 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 type UploadState = {
   journalId: string;
@@ -35,6 +45,16 @@ type JournalTimelineItem = {
   uploadedAt: string;
   durationSeconds: number | null;
   transcription: string | null;
+};
+
+type WeeklyTrendPoint = {
+  weekStart: string;
+  joy: number;
+  sadness: number;
+  anger: number;
+  anxiety: number;
+  calm: number;
+  energy: number;
 };
 
 function formatClock(totalSeconds: number) {
@@ -76,6 +96,16 @@ function statusBadgeClasses(status: string) {
   return "border-slate-300 bg-slate-50 text-slate-700";
 }
 
+function formatWeekLabel(rawDate: string) {
+  const date = new Date(rawDate);
+  return Number.isNaN(date.getTime())
+    ? rawDate
+    : date.toLocaleDateString("pt-PT", {
+        day: "2-digit",
+        month: "2-digit",
+      });
+}
+
 export default function HomePage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -101,6 +131,11 @@ export default function HomePage() {
   );
   const [isPollingJournalStatus, setIsPollingJournalStatus] = useState(false);
   const [statusPollAttempt, setStatusPollAttempt] = useState(0);
+  const [weeklyTrends, setWeeklyTrends] = useState<WeeklyTrendPoint[]>([]);
+  const [isLoadingWeeklyTrends, setIsLoadingWeeklyTrends] = useState(false);
+  const [weeklyTrendsError, setWeeklyTrendsError] = useState<string | null>(
+    null,
+  );
   const [journals, setJournals] = useState<JournalTimelineItem[]>([]);
   const [isLoadingJournals, setIsLoadingJournals] = useState(false);
   const [journalsError, setJournalsError] = useState<string | null>(null);
@@ -231,12 +266,67 @@ export default function HomePage() {
   }, [audioBlob]);
 
   useEffect(() => {
+    void loadWeeklyTrends();
+  }, []);
+
+  useEffect(() => {
     void loadJournals();
   }, []);
 
   useEffect(() => {
     void loadRecommendations();
   }, []);
+
+  async function loadWeeklyTrends() {
+    setIsLoadingWeeklyTrends(true);
+    setWeeklyTrendsError(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/trends/weekly`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message ??
+            payload.error ??
+            "Falha ao carregar tendencia semanal.",
+        );
+      }
+
+      const points = Array.isArray(payload.trends)
+        ? payload.trends.map((item: Record<string, unknown>) => ({
+            weekStart: String(item.weekStart ?? ""),
+            joy: typeof item.avgJoyScore === "number" ? item.avgJoyScore : 0,
+            sadness:
+              typeof item.avgSadnessScore === "number"
+                ? item.avgSadnessScore
+                : 0,
+            anger:
+              typeof item.avgAngerScore === "number" ? item.avgAngerScore : 0,
+            anxiety:
+              typeof item.avgAnxietyScore === "number"
+                ? item.avgAnxietyScore
+                : 0,
+            calm:
+              typeof item.avgCalmScore === "number" ? item.avgCalmScore : 0,
+            energy:
+              typeof item.avgEnergyScore === "number"
+                ? item.avgEnergyScore
+                : 0,
+          }))
+        : [];
+
+      setWeeklyTrends(points);
+    } catch (error) {
+      setWeeklyTrendsError(
+        error instanceof Error
+          ? error.message
+          : "Falha ao carregar tendencia semanal.",
+      );
+    } finally {
+      setIsLoadingWeeklyTrends(false);
+    }
+  }
 
   async function loadJournals() {
     setIsLoadingJournals(true);
@@ -754,6 +844,83 @@ export default function HomePage() {
             </div>
           ) : null}
         </div>
+      </section>
+
+      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
+              Tendencia emocional
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold">Evolucao semanal</h2>
+          </div>
+          <button
+            className="rounded-full border border-(--line) px-5 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isLoadingWeeklyTrends}
+            onClick={() => {
+              void loadWeeklyTrends();
+            }}
+            type="button"
+          >
+            {isLoadingWeeklyTrends ? "A atualizar..." : "Atualizar grafico"}
+          </button>
+        </div>
+
+        {weeklyTrendsError ? (
+          <div className="mt-5 rounded-[1.25rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {weeklyTrendsError}
+          </div>
+        ) : null}
+
+        {!isLoadingWeeklyTrends && weeklyTrends.length === 0 ? (
+          <div className="mt-6 rounded-3xl border border-(--line) bg-(--paper-strong) p-5 text-(--ink-soft)">
+            Ainda nao existem dados suficientes para desenhar a tendencia semanal.
+          </div>
+        ) : null}
+
+        {weeklyTrends.length > 0 ? (
+          <div className="mt-6 h-80 rounded-3xl border border-(--line) bg-(--paper-strong) p-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={weeklyTrends}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(100,116,139,0.2)" />
+                <XAxis
+                  dataKey="weekStart"
+                  tickFormatter={formatWeekLabel}
+                  tick={{ fill: "#64748b", fontSize: 12 }}
+                />
+                <YAxis domain={[0, 1]} tick={{ fill: "#64748b", fontSize: 12 }} />
+                <Tooltip
+                  formatter={(value: number) => value.toFixed(2)}
+                  labelFormatter={(value: string) =>
+                    `Semana: ${formatWeekLabel(value)}`
+                  }
+                />
+                <Legend />
+                <Line type="monotone" dataKey="joy" stroke="#10b981" dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="sadness"
+                  stroke="#6366f1"
+                  dot={false}
+                />
+                <Line type="monotone" dataKey="anger" stroke="#ef4444" dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="anxiety"
+                  stroke="#f59e0b"
+                  dot={false}
+                />
+                <Line type="monotone" dataKey="calm" stroke="#06b6d4" dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="energy"
+                  stroke="#f97316"
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        ) : null}
       </section>
 
       <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]">
