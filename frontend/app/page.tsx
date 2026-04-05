@@ -804,9 +804,7 @@ export default function HomePage() {
                   {journal.status}
                 </span>
               </div>
-              <p className="mt-2 text-xs text-(--ink-soft)">
-                ID: {journal.id}
-              </p>
+              <p className="mt-2 text-xs text-(--ink-soft)">ID: {journal.id}</p>
               <p className="mt-1 text-sm text-(--ink-soft)">
                 Duracao: {journal.durationSeconds ?? 0}s
               </p>
