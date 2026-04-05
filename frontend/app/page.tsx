@@ -137,7 +137,9 @@ export default function HomePage() {
     setStatusPollAttempt(attempt);
 
     try {
-      const response = await fetch(`${apiBaseUrl}/journals/${journalId}/status`);
+      const response = await fetch(
+        `${apiBaseUrl}/journals/${journalId}/status`,
+      );
       const payload = await response.json();
 
       if (!response.ok) {
@@ -152,7 +154,9 @@ export default function HomePage() {
         id: payload.id,
         status: payload.status,
         errorMessage:
-          typeof payload.errorMessage === "string" ? payload.errorMessage : null,
+          typeof payload.errorMessage === "string"
+            ? payload.errorMessage
+            : null,
         statusUpdatedAt:
           typeof payload.statusUpdatedAt === "string"
             ? payload.statusUpdatedAt
@@ -657,7 +661,7 @@ export default function HomePage() {
 
                 {journalStatus?.statusUpdatedAt ? (
                   <p className="mt-1 text-xs text-emerald-900/80">
-                    Atualizado em: {" "}
+                    Atualizado em:{" "}
                     {new Date(journalStatus.statusUpdatedAt).toLocaleString(
                       "pt-PT",
                     )}
