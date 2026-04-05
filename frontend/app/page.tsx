@@ -67,9 +67,14 @@ export default function HomePage() {
   const [recommendationError, setRecommendationError] = useState<string | null>(
     null,
   );
+  const [recommendationInfo, setRecommendationInfo] = useState<string | null>(
+    null,
+  );
   const [completingRecommendationId, setCompletingRecommendationId] = useState<
     string | null
   >(null);
+  const [isGeneratingRecommendations, setIsGeneratingRecommendations] =
+    useState(false);
 
   const apiBaseUrl = useMemo(
     () => process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api",
@@ -146,9 +151,50 @@ export default function HomePage() {
     }
   }
 
+  async function generateWeeklyRecommendations() {
+    setIsGeneratingRecommendations(true);
+    setRecommendationError(null);
+    setRecommendationInfo(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/recommendations/generate-weekly`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message ??
+            payload.error ??
+            "Falha ao gerar recomendacoes semanais.",
+        );
+      }
+
+      const created =
+        Array.isArray(payload.recommendations) && payload.recommendations.length
+          ? payload.recommendations.length
+          : Number(payload.created ?? 0);
+      setRecommendationInfo(`Geracao concluida: ${created} recomendacoes.`);
+      await loadRecommendations();
+    } catch (error) {
+      setRecommendationError(
+        error instanceof Error
+          ? error.message
+          : "Falha ao gerar recomendacoes semanais.",
+      );
+    } finally {
+      setIsGeneratingRecommendations(false);
+    }
+  }
+
   async function completeRecommendation(recommendationId: string) {
     setCompletingRecommendationId(recommendationId);
     setRecommendationError(null);
+    setRecommendationInfo(null);
 
     try {
       const response = await fetch(
@@ -183,6 +229,7 @@ export default function HomePage() {
             : item,
         ),
       );
+      setRecommendationInfo("Recomendacao marcada como concluida.");
     } catch (error) {
       setRecommendationError(
         error instanceof Error
@@ -446,21 +493,41 @@ export default function HomePage() {
               Plano semanal de autorregulacao
             </h2>
           </div>
-          <button
-            className="rounded-full border border-(--line) px-5 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isLoadingRecommendations}
-            onClick={() => {
-              void loadRecommendations();
-            }}
-            type="button"
-          >
-            {isLoadingRecommendations ? "A atualizar..." : "Atualizar lista"}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="rounded-full bg-(--accent) px-5 py-2 text-sm font-semibold text-white transition hover:bg-(--accent-deep) disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isGeneratingRecommendations || isLoadingRecommendations}
+              onClick={() => {
+                void generateWeeklyRecommendations();
+              }}
+              type="button"
+            >
+              {isGeneratingRecommendations
+                ? "A gerar..."
+                : "Gerar semana"}
+            </button>
+            <button
+              className="rounded-full border border-(--line) px-5 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isLoadingRecommendations || isGeneratingRecommendations}
+              onClick={() => {
+                void loadRecommendations();
+              }}
+              type="button"
+            >
+              {isLoadingRecommendations ? "A atualizar..." : "Atualizar lista"}
+            </button>
+          </div>
         </div>
 
         {recommendationError ? (
           <div className="mt-5 rounded-[1.25rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {recommendationError}
+          </div>
+        ) : null}
+
+        {recommendationInfo ? (
+          <div className="mt-5 rounded-[1.25rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {recommendationInfo}
           </div>
         ) : null}
 
