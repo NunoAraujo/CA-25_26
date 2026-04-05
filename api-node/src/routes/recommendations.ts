@@ -233,10 +233,12 @@ router.post(
       const contraindicationSignals = inferContraindications(
         journals
           .map(
-            (journal: { transcription: string | null }) => journal.transcription,
+            (journal: { transcription: string | null }) =>
+              journal.transcription,
           )
           .filter(
-            (value: string | null): value is string => typeof value === "string",
+            (value: string | null): value is string =>
+              typeof value === "string",
           ),
       );
 
@@ -354,7 +356,8 @@ router.post(
         feedbackScore: number;
       }> = activities
         .map((activity: (typeof activities)[number]) => {
-          const feedbackScore = activityFeedbackScore.get(activity.activityId) ?? 0;
+          const feedbackScore =
+            activityFeedbackScore.get(activity.activityId) ?? 0;
           return {
             activity,
             feedbackScore,
@@ -365,11 +368,11 @@ router.post(
             a: { activity: (typeof activities)[number]; feedbackScore: number },
             b: { activity: (typeof activities)[number]; feedbackScore: number },
           ) => {
-          if (b.feedbackScore !== a.feedbackScore) {
-            return b.feedbackScore - a.feedbackScore;
-          }
+            if (b.feedbackScore !== a.feedbackScore) {
+              return b.feedbackScore - a.feedbackScore;
+            }
 
-          return a.activity.durationMin - b.activity.durationMin;
+            return a.activity.durationMin - b.activity.durationMin;
           },
         )
         .slice(0, 3);
