@@ -217,6 +217,7 @@ Phase 4 has started with a working end-to-end analysis pipeline slice. Model qua
 - Frontend now loads recommendation cards from `GET /api/recommendations`.
 - Added "Marcar como feita" action wired to `POST /api/recommendations/:recommendationId/complete` and local completion state refresh.
 - Added frontend trigger for `POST /api/recommendations/generate-weekly` with automatic recommendation list refresh after generation.
+- Added frontend feedback controls (`positive/neutral/negative`) wired to `POST /api/recommendations/:recommendationId/feedback` with local UI state updates.
 
 ### 6.1 Emotion Evolution Chart
 
@@ -293,7 +294,7 @@ After Phase 1 completion:
 1. Integrate HuggingFace multilingual sentiment model to replace heuristic emotion scoring baseline.
 2. Replace lightweight transcription fallback with full Whisper pipeline after container runtime tuning.
 3. Add Python-side analysis smoke tests with fixture audio files.
-4. Add frontend feedback controls (`positive/neutral/negative`) wired to recommendation feedback endpoint.
+4. Add frontend journal status polling panel to track queued/analyzing/complete transitions after upload.
 
 ---
 

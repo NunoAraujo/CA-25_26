@@ -73,6 +73,8 @@ export default function HomePage() {
   const [completingRecommendationId, setCompletingRecommendationId] = useState<
     string | null
   >(null);
+  const [feedbackingRecommendationId, setFeedbackingRecommendationId] =
+    useState<string | null>(null);
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] =
     useState(false);
 
@@ -157,13 +159,16 @@ export default function HomePage() {
     setRecommendationInfo(null);
 
     try {
-      const response = await fetch(`${apiBaseUrl}/recommendations/generate-weekly`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${apiBaseUrl}/recommendations/generate-weekly`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      });
+      );
       const payload = await response.json();
 
       if (!response.ok) {
@@ -238,6 +243,55 @@ export default function HomePage() {
       );
     } finally {
       setCompletingRecommendationId(null);
+    }
+  }
+
+  async function submitRecommendationFeedback(
+    recommendationId: string,
+    feedback: "positive" | "neutral" | "negative",
+  ) {
+    setFeedbackingRecommendationId(recommendationId);
+    setRecommendationError(null);
+    setRecommendationInfo(null);
+
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/recommendations/${recommendationId}/feedback`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ feedback }),
+        },
+      );
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message ?? payload.error ?? "Falha ao guardar feedback.",
+        );
+      }
+
+      setRecommendations((current) =>
+        current.map((item) =>
+          item.id === recommendationId
+            ? {
+                ...item,
+                feedback,
+              }
+            : item,
+        ),
+      );
+
+      setRecommendationInfo("Feedback guardado com sucesso.");
+    } catch (error) {
+      setRecommendationError(
+        error instanceof Error ? error.message : "Falha ao guardar feedback.",
+      );
+    } finally {
+      setFeedbackingRecommendationId(null);
     }
   }
 
@@ -502,9 +556,7 @@ export default function HomePage() {
               }}
               type="button"
             >
-              {isGeneratingRecommendations
-                ? "A gerar..."
-                : "Gerar semana"}
+              {isGeneratingRecommendations ? "A gerar..." : "Gerar semana"}
             </button>
             <button
               className="rounded-full border border-(--line) px-5 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
@@ -551,7 +603,7 @@ export default function HomePage() {
                 {recommendation.activityName}
               </h3>
               <p className="mt-2 text-sm text-(--ink-soft)">
-                {recommendation.activityDurationMin} min · confianca {" "}
+                {recommendation.activityDurationMin} min · confianca{" "}
                 {Math.round(recommendation.confidence * 100)}%
               </p>
               <p className="mt-3 text-sm leading-6 text-slate-700">
@@ -560,6 +612,9 @@ export default function HomePage() {
               <p className="mt-3 text-xs uppercase tracking-[0.15em] text-(--ink-soft)">
                 impacto: {recommendation.expectedImpactMetric} ({" "}
                 {recommendation.expectedImpactDelta.toFixed(2)})
+              </p>
+              <p className="mt-2 text-xs text-(--ink-soft)">
+                Feedback atual: {recommendation.feedback ?? "sem feedback"}
               </p>
 
               <div className="mt-4 flex items-center justify-between gap-3">
@@ -584,6 +639,45 @@ export default function HomePage() {
                     : recommendation.completedAt
                       ? "Concluida"
                       : "Marcar como feita"}
+                </button>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={feedbackingRecommendationId === recommendation.id}
+                  onClick={() => {
+                    void submitRecommendationFeedback(
+                      recommendation.id,
+                      "positive",
+                    );
+                  }}
+                  type="button"
+                >
+                  Positivo
+                </button>
+                <button
+                  className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={feedbackingRecommendationId === recommendation.id}
+                  onClick={() => {
+                    void submitRecommendationFeedback(recommendation.id, "neutral");
+                  }}
+                  type="button"
+                >
+                  Neutro
+                </button>
+                <button
+                  className="rounded-full border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={feedbackingRecommendationId === recommendation.id}
+                  onClick={() => {
+                    void submitRecommendationFeedback(
+                      recommendation.id,
+                      "negative",
+                    );
+                  }}
+                  type="button"
+                >
+                  Negativo
                 </button>
               </div>
             </article>
