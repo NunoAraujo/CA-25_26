@@ -285,6 +285,23 @@ router.post(
         return res.status(404).json({ message: "Journal not found" });
       }
 
+      const journalIsFinal =
+        journal.status === "complete" || journal.status === "failed";
+
+      if (journalIsFinal) {
+        if (journal.status === value.status) {
+          return res.json({
+            message: "Duplicate callback ignored",
+            status: journal.status,
+          });
+        }
+
+        return res.status(409).json({
+          message: "Journal already finalized with a different status",
+          status: journal.status,
+        });
+      }
+
       const emotionVector = value.emotionVector ?? {};
       const prosodyFeatures = value.prosodyFeatures as
         | Record<string, unknown>
