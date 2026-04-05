@@ -8,6 +8,13 @@ type UploadState = {
   createdAt: string;
 };
 
+type JournalStatusState = {
+  id: string;
+  status: string;
+  errorMessage: string | null;
+  statusUpdatedAt: string | null;
+};
+
 type Recommendation = {
   id: string;
   activityName: string;
@@ -50,6 +57,7 @@ export default function HomePage() {
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
+  const statusPollTimerRef = useRef<number | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -61,6 +69,14 @@ export default function HomePage() {
   const [recordedAt, setRecordedAt] = useState<string>(
     new Date().toISOString(),
   );
+  const [journalStatus, setJournalStatus] = useState<JournalStatusState | null>(
+    null,
+  );
+  const [journalStatusError, setJournalStatusError] = useState<string | null>(
+    null,
+  );
+  const [isPollingJournalStatus, setIsPollingJournalStatus] = useState(false);
+  const [statusPollAttempt, setStatusPollAttempt] = useState(0);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] =
     useState(false);
@@ -93,11 +109,75 @@ export default function HomePage() {
         window.clearInterval(timerRef.current);
       }
 
+      if (statusPollTimerRef.current) {
+        window.clearTimeout(statusPollTimerRef.current);
+      }
+
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
   }, []);
+
+  function isTerminalJournalStatus(status: string) {
+    return status === "complete" || status === "failed";
+  }
+
+  function stopJournalStatusPolling() {
+    if (statusPollTimerRef.current) {
+      window.clearTimeout(statusPollTimerRef.current);
+      statusPollTimerRef.current = null;
+    }
+
+    setIsPollingJournalStatus(false);
+  }
+
+  async function pollJournalStatus(journalId: string, attempt = 1) {
+    setIsPollingJournalStatus(true);
+    setStatusPollAttempt(attempt);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/journals/${journalId}/status`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message ??
+            payload.error ??
+            "Falha ao consultar estado do journal.",
+        );
+      }
+
+      const nextState: JournalStatusState = {
+        id: payload.id,
+        status: payload.status,
+        errorMessage:
+          typeof payload.errorMessage === "string" ? payload.errorMessage : null,
+        statusUpdatedAt:
+          typeof payload.statusUpdatedAt === "string"
+            ? payload.statusUpdatedAt
+            : null,
+      };
+      setJournalStatus(nextState);
+      setJournalStatusError(null);
+
+      if (isTerminalJournalStatus(nextState.status) || attempt >= 20) {
+        stopJournalStatusPolling();
+        return;
+      }
+
+      statusPollTimerRef.current = window.setTimeout(() => {
+        void pollJournalStatus(journalId, attempt + 1);
+      }, 2000);
+    } catch (error) {
+      setJournalStatusError(
+        error instanceof Error
+          ? error.message
+          : "Falha ao consultar estado do journal.",
+      );
+      stopJournalStatusPolling();
+    }
+  }
 
   useEffect(() => {
     if (!audioBlob) {
@@ -298,6 +378,10 @@ export default function HomePage() {
   async function startRecording() {
     setErrorMessage(null);
     setUploadState(null);
+    setJournalStatus(null);
+    setJournalStatusError(null);
+    setStatusPollAttempt(0);
+    stopJournalStatusPolling();
 
     if (!("mediaDevices" in navigator) || !("MediaRecorder" in window)) {
       setErrorMessage(
@@ -365,6 +449,10 @@ export default function HomePage() {
     setIsUploading(true);
     setErrorMessage(null);
     setUploadState(null);
+    setJournalStatus(null);
+    setJournalStatusError(null);
+    setStatusPollAttempt(0);
+    stopJournalStatusPolling();
 
     try {
       const formData = new FormData();
@@ -390,6 +478,16 @@ export default function HomePage() {
         status: payload.status,
         createdAt: payload.createdAt,
       });
+      setJournalStatus({
+        id: payload.id,
+        status: payload.status,
+        errorMessage: null,
+        statusUpdatedAt:
+          typeof payload.createdAt === "string"
+            ? payload.createdAt
+            : new Date().toISOString(),
+      });
+      void pollJournalStatus(payload.id);
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Falha no envio do audio.",
@@ -532,6 +630,52 @@ export default function HomePage() {
                 Criado em:{" "}
                 {new Date(uploadState.createdAt).toLocaleString("pt-PT")}
               </p>
+
+              <div className="mt-4 rounded-2xl border border-emerald-300 bg-white/60 px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-xs uppercase tracking-[0.15em] text-emerald-800">
+                    Estado de processamento
+                  </p>
+                  <button
+                    className="rounded-full border border-emerald-300 px-3 py-1 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isPollingJournalStatus}
+                    onClick={() => {
+                      void pollJournalStatus(uploadState.journalId);
+                    }}
+                    type="button"
+                  >
+                    {isPollingJournalStatus ? "A verificar..." : "Atualizar"}
+                  </button>
+                </div>
+
+                <p className="mt-2 text-sm">
+                  Atual: {journalStatus?.status ?? uploadState.status}
+                </p>
+                <p className="mt-1 text-xs text-emerald-900/80">
+                  Tentativa de polling: {statusPollAttempt}
+                </p>
+
+                {journalStatus?.statusUpdatedAt ? (
+                  <p className="mt-1 text-xs text-emerald-900/80">
+                    Atualizado em: {" "}
+                    {new Date(journalStatus.statusUpdatedAt).toLocaleString(
+                      "pt-PT",
+                    )}
+                  </p>
+                ) : null}
+
+                {journalStatus?.errorMessage ? (
+                  <p className="mt-2 text-xs text-red-700">
+                    Erro no processamento: {journalStatus.errorMessage}
+                  </p>
+                ) : null}
+
+                {journalStatusError ? (
+                  <p className="mt-2 text-xs text-red-700">
+                    {journalStatusError}
+                  </p>
+                ) : null}
+              </div>
             </div>
           ) : null}
         </div>
