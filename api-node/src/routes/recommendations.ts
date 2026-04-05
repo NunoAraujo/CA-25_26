@@ -15,6 +15,16 @@ const generateSchema = Joi.object({
 
 type EmotionKey = "joy" | "sadness" | "anger" | "anxiety" | "calm" | "energy";
 
+type WeeklyMetrics = {
+  joyAvg: number;
+  sadnessAvg: number;
+  angerAvg: number;
+  anxietyAvg: number;
+  calmAvg: number;
+  energyAvg: number;
+  volatility: number;
+};
+
 function startOfWeekUTC(date: Date) {
   const utcDate = new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
@@ -64,6 +74,85 @@ function recommendationRationale(targetEmotion: string) {
   return "Atividade sugerida com base no padrao emocional semanal detectado.";
 }
 
+function buildWeeklyMetrics(
+  emotionScores: Record<EmotionKey, number[]>,
+): WeeklyMetrics {
+  const joyAvg = average(emotionScores.joy);
+  const sadnessAvg = average(emotionScores.sadness);
+  const angerAvg = average(emotionScores.anger);
+  const anxietyAvg = average(emotionScores.anxiety);
+  const calmAvg = average(emotionScores.calm);
+  const energyAvg = average(emotionScores.energy);
+
+  const volatility = stdDev([
+    ...emotionScores.joy,
+    ...emotionScores.sadness,
+    ...emotionScores.anger,
+    ...emotionScores.anxiety,
+    ...emotionScores.calm,
+    ...emotionScores.energy,
+  ]);
+
+  return {
+    joyAvg,
+    sadnessAvg,
+    angerAvg,
+    anxietyAvg,
+    calmAvg,
+    energyAvg,
+    volatility,
+  };
+}
+
+function inferContraindications(transcriptions: string[]) {
+  const text = transcriptions.join(" ").toLowerCase();
+  const signals: string[] = [];
+
+  if (
+    text.includes("falta de ar") ||
+    text.includes("respirar mal") ||
+    text.includes("tontura")
+  ) {
+    signals.push("desconforto respiratorio agudo", "hiperventilacao");
+  }
+
+  if (
+    text.includes("dor forte") ||
+    text.includes("dor intensa") ||
+    text.includes("dor no peito")
+  ) {
+    signals.push("dor intensa sem acompanhamento medico");
+  }
+
+  if (
+    text.includes("lesao") ||
+    text.includes("tornozelo") ||
+    text.includes("joelho") ||
+    text.includes("lombar")
+  ) {
+    signals.push("lesao ortopedica sem liberacao");
+  }
+
+  return Array.from(new Set(signals));
+}
+
+function computeEmotionPriority(metrics: WeeklyMetrics) {
+  const items = [
+    { key: "anxiety", score: metrics.anxietyAvg },
+    { key: "sadness", score: metrics.sadnessAvg },
+    { key: "anger", score: metrics.angerAvg },
+    { key: "low_energy", score: 1 - metrics.energyAvg },
+  ]
+    .filter((item) => item.score > 0.35)
+    .sort((a, b) => b.score - a.score);
+
+  if (!items.length) {
+    items.push({ key: "anxiety", score: 0.4 });
+  }
+
+  return items;
+}
+
 router.post(
   "/generate-weekly",
   async (req: Request, res: Response, next: NextFunction) => {
@@ -103,6 +192,7 @@ router.post(
           anxietyScore: true,
           calmScore: true,
           energyScore: true,
+          transcription: true,
         },
       });
 
@@ -138,21 +228,17 @@ router.post(
           emotionScores.energy.push(journal.energyScore);
       }
 
-      const joyAvg = average(emotionScores.joy);
-      const sadnessAvg = average(emotionScores.sadness);
-      const angerAvg = average(emotionScores.anger);
-      const anxietyAvg = average(emotionScores.anxiety);
-      const calmAvg = average(emotionScores.calm);
-      const energyAvg = average(emotionScores.energy);
+      const metrics = buildWeeklyMetrics(emotionScores);
 
-      const volatility = stdDev([
-        ...emotionScores.joy,
-        ...emotionScores.sadness,
-        ...emotionScores.anger,
-        ...emotionScores.anxiety,
-        ...emotionScores.calm,
-        ...emotionScores.energy,
-      ]);
+      const contraindicationSignals = inferContraindications(
+        journals
+          .map(
+            (journal: { transcription: string | null }) => journal.transcription,
+          )
+          .filter(
+            (value: string | null): value is string => typeof value === "string",
+          ),
+      );
 
       const weeklyTrend = await prisma.weeklyTrend.upsert({
         where: {
@@ -165,66 +251,86 @@ router.post(
           userId: user.id,
           weekStart,
           weekEnd,
-          avgJoyScore: joyAvg,
-          avgSadnessScore: sadnessAvg,
-          avgAngerScore: angerAvg,
-          avgAnxietyScore: anxietyAvg,
-          avgCalmScore: calmAvg,
-          avgEnergyScore: energyAvg,
-          joyTrend: joyAvg,
-          sadnessTrend: sadnessAvg,
-          angerTrend: angerAvg,
-          anxietyTrend: anxietyAvg,
-          calmTrend: calmAvg,
-          energyTrend: energyAvg,
-          emotionalVolatility: volatility,
+          avgJoyScore: metrics.joyAvg,
+          avgSadnessScore: metrics.sadnessAvg,
+          avgAngerScore: metrics.angerAvg,
+          avgAnxietyScore: metrics.anxietyAvg,
+          avgCalmScore: metrics.calmAvg,
+          avgEnergyScore: metrics.energyAvg,
+          joyTrend: metrics.joyAvg,
+          sadnessTrend: metrics.sadnessAvg,
+          angerTrend: metrics.angerAvg,
+          anxietyTrend: metrics.anxietyAvg,
+          calmTrend: metrics.calmAvg,
+          energyTrend: metrics.energyAvg,
+          emotionalVolatility: metrics.volatility,
           entryCount: journals.length,
           completionRate: 1,
         },
         update: {
           weekEnd,
-          avgJoyScore: joyAvg,
-          avgSadnessScore: sadnessAvg,
-          avgAngerScore: angerAvg,
-          avgAnxietyScore: anxietyAvg,
-          avgCalmScore: calmAvg,
-          avgEnergyScore: energyAvg,
-          joyTrend: joyAvg,
-          sadnessTrend: sadnessAvg,
-          angerTrend: angerAvg,
-          anxietyTrend: anxietyAvg,
-          calmTrend: calmAvg,
-          energyTrend: energyAvg,
-          emotionalVolatility: volatility,
+          avgJoyScore: metrics.joyAvg,
+          avgSadnessScore: metrics.sadnessAvg,
+          avgAngerScore: metrics.angerAvg,
+          avgAnxietyScore: metrics.anxietyAvg,
+          avgCalmScore: metrics.calmAvg,
+          avgEnergyScore: metrics.energyAvg,
+          joyTrend: metrics.joyAvg,
+          sadnessTrend: metrics.sadnessAvg,
+          angerTrend: metrics.angerAvg,
+          anxietyTrend: metrics.anxietyAvg,
+          calmTrend: metrics.calmAvg,
+          energyTrend: metrics.energyAvg,
+          emotionalVolatility: metrics.volatility,
           entryCount: journals.length,
           completionRate: 1,
         },
       });
 
-      const emotionPriority: Array<{ key: string; score: number }> = [
-        { key: "anxiety", score: anxietyAvg },
-        { key: "sadness", score: sadnessAvg },
-        { key: "anger", score: angerAvg },
-        { key: "low_energy", score: 1 - energyAvg },
-      ]
-        .filter((item) => item.score > 0.35)
-        .sort((a, b) => b.score - a.score);
-
-      if (!emotionPriority.length) {
-        emotionPriority.push({ key: "anxiety", score: 0.4 });
-      }
+      const emotionPriority = computeEmotionPriority(metrics);
 
       const primaryEmotion = emotionPriority[0].key;
       const fallbackEmotion = emotionPriority[1]?.key ?? primaryEmotion;
+
+      const feedbackWindowStart = new Date();
+      feedbackWindowStart.setDate(feedbackWindowStart.getDate() - 28);
+
+      const recentFeedback = await prisma.recommendation.findMany({
+        where: {
+          userId: user.id,
+          feedbackAt: { gte: feedbackWindowStart },
+          feedback: { in: ["positive", "negative"] },
+        },
+        select: {
+          activityId: true,
+          feedback: true,
+        },
+      });
+
+      const activityFeedbackScore = new Map<string, number>();
+      for (const item of recentFeedback) {
+        const current = activityFeedbackScore.get(item.activityId) ?? 0;
+        const delta = item.feedback === "positive" ? 1 : -1;
+        activityFeedbackScore.set(item.activityId, current + delta);
+      }
 
       const activities = await prisma.activityLibrary.findMany({
         where: {
           targetEmotions: {
             hasSome: [primaryEmotion, fallbackEmotion],
           },
+          ...(contraindicationSignals.length
+            ? {
+                NOT: {
+                  contraindications: {
+                    hasSome: contraindicationSignals,
+                  },
+                },
+              }
+            : {}),
         },
         orderBy: [{ intensity: "asc" }, { durationMin: "asc" }],
-        take: 3,
+        take: 12,
       });
 
       if (!activities.length) {
@@ -243,14 +349,41 @@ router.post(
         },
       });
 
+      const rankedActivities: Array<{
+        activity: (typeof activities)[number];
+        feedbackScore: number;
+      }> = activities
+        .map((activity: (typeof activities)[number]) => {
+          const feedbackScore = activityFeedbackScore.get(activity.activityId) ?? 0;
+          return {
+            activity,
+            feedbackScore,
+          };
+        })
+        .sort(
+          (
+            a: { activity: (typeof activities)[number]; feedbackScore: number },
+            b: { activity: (typeof activities)[number]; feedbackScore: number },
+          ) => {
+          if (b.feedbackScore !== a.feedbackScore) {
+            return b.feedbackScore - a.feedbackScore;
+          }
+
+          return a.activity.durationMin - b.activity.durationMin;
+          },
+        )
+        .slice(0, 3);
+
       const expiresAt = new Date(weekEnd);
       const createdRecommendations = [];
 
-      for (const [index, activity] of activities.entries()) {
+      for (const [index, ranked] of rankedActivities.entries()) {
+        const activity = ranked.activity;
         const confidence = clamp01(
           emotionPriority[0].score -
             index * 0.08 +
-            (0.5 - Math.min(volatility, 0.5)) * 0.1,
+            (0.5 - Math.min(metrics.volatility, 0.5)) * 0.1 +
+            ranked.feedbackScore * 0.04,
         );
 
         const recommendation = await prisma.recommendation.create({

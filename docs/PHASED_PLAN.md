@@ -186,6 +186,7 @@ Phase 4 has started with a working end-to-end analysis pipeline slice. Model qua
 - Generation flow now persists `WeeklyTrend` (upsert) and recreates week-scoped `Recommendation` records for deterministic reruns.
 - Confidence, rationale, and expected impact fields are now populated with a first rule-based baseline.
 - Endpoint runtime validation completed (`/api/recommendations/generate-weekly` returns persisted trend + generated recommendations).
+- Recommendation selection now applies contraindication filtering inferred from recent transcription signals and re-ranks candidates with recent positive/negative feedback history.
 
 ### 5.3 Persistence & Exposure
 
@@ -284,7 +285,7 @@ After Phase 1 completion:
 1. Integrate HuggingFace multilingual sentiment model to replace heuristic emotion scoring baseline.
 2. Replace lightweight transcription fallback with full Whisper pipeline after container runtime tuning.
 3. Add Python-side analysis smoke tests with fixture audio files.
-4. Expand recommendation rules with contraindication filtering and user feedback re-ranking.
+4. Add recommendation completion tracking (`completedAt`) and include completion-aware ranking signals.
 
 ---
 
