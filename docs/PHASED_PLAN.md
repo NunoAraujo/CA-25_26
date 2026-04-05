@@ -180,6 +180,13 @@ Phase 4 has started with a working end-to-end analysis pipeline slice. Model qua
 - Confidence scoring and ranking
 - Expected impact quantification
 
+### Phase 5 Progress Notes
+
+- Added initial `POST /api/recommendations/generate-weekly` endpoint to compute weekly trend snapshots from completed journals and generate ranked recommendations from seeded `ActivityLibrary` entries.
+- Generation flow now persists `WeeklyTrend` (upsert) and recreates week-scoped `Recommendation` records for deterministic reruns.
+- Confidence, rationale, and expected impact fields are now populated with a first rule-based baseline.
+- Endpoint runtime validation completed (`/api/recommendations/generate-weekly` returns persisted trend + generated recommendations).
+
 ### 5.3 Persistence & Exposure
 
 - Store recommendations with rationale and expiry
@@ -277,7 +284,7 @@ After Phase 1 completion:
 1. Integrate HuggingFace multilingual sentiment model to replace heuristic emotion scoring baseline.
 2. Replace lightweight transcription fallback with full Whisper pipeline after container runtime tuning.
 3. Add Python-side analysis smoke tests with fixture audio files.
-4. Start Phase 5.2 recommendation generation using seeded activities.
+4. Expand recommendation rules with contraindication filtering and user feedback re-ranking.
 
 ---
 

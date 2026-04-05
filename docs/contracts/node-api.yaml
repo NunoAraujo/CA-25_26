@@ -128,6 +128,22 @@ paths:
       responses:
         "200":
           description: Recommendation list
+  /recommendations/generate-weekly:
+    post:
+      summary: Generate weekly recommendations from completed journals and activity library
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                weekStart:
+                  type: string
+                  format: date-time
+      responses:
+        "201":
+          description: Recommendations generated
   /recommendations/{recommendationId}/feedback:
     post:
       summary: Submit recommendation feedback
