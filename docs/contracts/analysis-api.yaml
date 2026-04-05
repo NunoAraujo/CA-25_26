@@ -28,6 +28,9 @@ paths:
                   type: string
                 audioUrl:
                   type: string
+                audioObjectKey:
+                  type: string
+                  description: Object key inside MinIO bucket used for secure server-side download
                 callbackUrl:
                   type: string
                   description: Node callback endpoint for final analysis result persistence

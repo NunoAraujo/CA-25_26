@@ -56,6 +56,7 @@ analysisQueue.process("analyze-journal", async (job) => {
     jobId: String(job.id),
     journalId,
     audioUrl,
+    audioObjectKey,
     audioFormat,
     duration: durationSeconds,
     language,

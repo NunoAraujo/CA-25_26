@@ -113,6 +113,23 @@ Phase 2 is complete enough to proceed. Remaining work now belongs to Phase 3 imp
 
 ## Phase 4: Python Analysis Engine 🧠
 
+### Status
+
+- [x] 4.1 Initial transcription pipeline started (audio retrieval from MinIO + lightweight fallback transcription for stable local execution).
+- [x] 4.2 Initial prosody extraction implemented (pitch, energy, speech rate, pauses, MFCC, spectral features, jitter/shimmer).
+- [x] 4.3 Initial emotion scoring implemented with heuristic Portuguese text/prosody fusion (HuggingFace model integration pending).
+- [x] 4.4 Callback flow now persists computed transcription/emotion/prosody payload from Python to Node.
+
+Phase 4 has started with a working end-to-end analysis pipeline slice. Model quality hardening, Whisper/HuggingFace integration, and richer classification calibration remain for next increments.
+
+### Implemented Notes
+
+- Python analysis service now downloads audio directly from MinIO using `audioObjectKey`.
+- Real prosody extraction is now active (pitch, energy, speech rate, pause ratio, MFCC, spectral features, jitter/shimmer, voiced ratio).
+- Callback payload now persists computed prosody and a generated transcription/emotion vector into Node/PostgreSQL.
+- End-to-end validation confirmed Phase 4 happy path reaches `complete` with persisted prosody and score fields.
+- Lightweight transcription fallback is currently used for stability in local Docker while full Whisper/HuggingFace model integration is finalized.
+
 ### 4.1 Transcription Service
 
 - OpenAI Whisper (tiny model for MVP speed)
@@ -252,12 +269,12 @@ After Phase 1 completion:
 
 ---
 
-## Immediate Next Steps (Phase 3)
+## Immediate Next Steps (Phase 4)
 
-1. Add first seed data for `ActivityLibrary` and wire a simple seed command.
-2. Start Phase 4.1 transcription logic integration in Python service.
-3. Replace placeholder analysis payload with real transcription + feature extraction output.
-4. Add callback idempotency guardrails for duplicate callback delivery.
+1. Integrate HuggingFace multilingual sentiment model to replace heuristic emotion scoring baseline.
+2. Add callback idempotency guardrails for duplicate callback delivery.
+3. Add first seed data for `ActivityLibrary` and wire a simple seed command.
+4. Replace lightweight transcription fallback with full Whisper pipeline after container runtime tuning.
 
 ---
 

@@ -18,11 +18,13 @@ nltk==3.8.1
 # Database and HTTP
 asyncpg==0.29.0
 httpx==0.25.0
+minio==7.2.7
 
 # Logging and utilities
 python-json-logger==2.0.0
 python-dotenv==1.0.0
 pillow==10.0.0
+setuptools==75.8.0
 
 # Development
 pytest==7.4.0
