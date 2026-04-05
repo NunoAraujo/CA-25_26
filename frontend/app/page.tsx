@@ -660,7 +660,10 @@ export default function HomePage() {
                   className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={feedbackingRecommendationId === recommendation.id}
                   onClick={() => {
-                    void submitRecommendationFeedback(recommendation.id, "neutral");
+                    void submitRecommendationFeedback(
+                      recommendation.id,
+                      "neutral",
+                    );
                   }}
                   type="button"
                 >
