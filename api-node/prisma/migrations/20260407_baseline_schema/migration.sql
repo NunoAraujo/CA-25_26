@@ -70,11 +70,11 @@ CREATE TABLE "ProsodyFeature" (
 );
 
 -- CreateTable
-CREATE TABLE "WeeklyTrend" (
+CREATE TABLE "DailyTrend" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "weekStart" TIMESTAMP(3) NOT NULL,
-    "weekEnd" TIMESTAMP(3) NOT NULL,
+    "dayStart" TIMESTAMP(3) NOT NULL,
+    "dayEnd" TIMESTAMP(3) NOT NULL,
     "avgJoyScore" DOUBLE PRECISION NOT NULL,
     "avgSadnessScore" DOUBLE PRECISION NOT NULL,
     "avgAngerScore" DOUBLE PRECISION NOT NULL,
@@ -92,14 +92,14 @@ CREATE TABLE "WeeklyTrend" (
     "completionRate" DOUBLE PRECISION NOT NULL,
     "computedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "WeeklyTrend_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "DailyTrend_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Recommendation" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "weeklyTrendId" TEXT NOT NULL,
+    "dailyTrendId" TEXT NOT NULL,
     "activityId" TEXT NOT NULL,
     "activityName" TEXT NOT NULL,
     "activityDurationMin" INTEGER NOT NULL,
@@ -176,13 +176,13 @@ CREATE INDEX "Journal_status_idx" ON "Journal"("status");
 CREATE UNIQUE INDEX "ProsodyFeature_journalId_key" ON "ProsodyFeature"("journalId");
 
 -- CreateIndex
-CREATE INDEX "WeeklyTrend_userId_weekStart_idx" ON "WeeklyTrend"("userId", "weekStart");
+CREATE INDEX "DailyTrend_userId_dayStart_idx" ON "DailyTrend"("userId", "dayStart");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "WeeklyTrend_userId_weekStart_key" ON "WeeklyTrend"("userId", "weekStart");
+CREATE UNIQUE INDEX "DailyTrend_userId_dayStart_key" ON "DailyTrend"("userId", "dayStart");
 
 -- CreateIndex
-CREATE INDEX "Recommendation_userId_weeklyTrendId_idx" ON "Recommendation"("userId", "weeklyTrendId");
+CREATE INDEX "Recommendation_userId_dailyTrendId_idx" ON "Recommendation"("userId", "dailyTrendId");
 
 -- CreateIndex
 CREATE INDEX "Recommendation_activityId_idx" ON "Recommendation"("activityId");
@@ -206,16 +206,17 @@ ALTER TABLE "Journal" ADD CONSTRAINT "Journal_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "ProsodyFeature" ADD CONSTRAINT "ProsodyFeature_journalId_fkey" FOREIGN KEY ("journalId") REFERENCES "Journal"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "WeeklyTrend" ADD CONSTRAINT "WeeklyTrend_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "DailyTrend" ADD CONSTRAINT "DailyTrend_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Recommendation" ADD CONSTRAINT "Recommendation_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Recommendation" ADD CONSTRAINT "Recommendation_weeklyTrendId_fkey" FOREIGN KEY ("weeklyTrendId") REFERENCES "WeeklyTrend"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Recommendation" ADD CONSTRAINT "Recommendation_dailyTrendId_fkey" FOREIGN KEY ("dailyTrendId") REFERENCES "DailyTrend"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "JournalSuggestion" ADD CONSTRAINT "JournalSuggestion_journalId_fkey" FOREIGN KEY ("journalId") REFERENCES "Journal"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "JournalSuggestion" ADD CONSTRAINT "JournalSuggestion_recommendationId_fkey" FOREIGN KEY ("recommendationId") REFERENCES "Recommendation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
