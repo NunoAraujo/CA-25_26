@@ -47,6 +47,17 @@ type JournalTimelineItem = {
   transcription: string | null;
 };
 
+type JournalDetail = {
+  id: string;
+  transcription: string | null;
+  joyScore: number | null;
+  sadnessScore: number | null;
+  angerScore: number | null;
+  anxietyScore: number | null;
+  calmScore: number | null;
+  energyScore: number | null;
+};
+
 type WeeklyTrendPoint = {
   weekStart: string;
   joy: number;
@@ -139,6 +150,18 @@ export default function HomePage() {
   const [journals, setJournals] = useState<JournalTimelineItem[]>([]);
   const [isLoadingJournals, setIsLoadingJournals] = useState(false);
   const [journalsError, setJournalsError] = useState<string | null>(null);
+  const [expandedJournalId, setExpandedJournalId] = useState<string | null>(
+    null,
+  );
+  const [journalDetailsById, setJournalDetailsById] = useState<
+    Record<string, JournalDetail>
+  >({});
+  const [loadingJournalDetailId, setLoadingJournalDetailId] = useState<
+    string | null
+  >(null);
+  const [journalDetailError, setJournalDetailError] = useState<string | null>(
+    null,
+  );
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] =
     useState(false);
@@ -307,12 +330,9 @@ export default function HomePage() {
               typeof item.avgAnxietyScore === "number"
                 ? item.avgAnxietyScore
                 : 0,
-            calm:
-              typeof item.avgCalmScore === "number" ? item.avgCalmScore : 0,
+            calm: typeof item.avgCalmScore === "number" ? item.avgCalmScore : 0,
             energy:
-              typeof item.avgEnergyScore === "number"
-                ? item.avgEnergyScore
-                : 0,
+              typeof item.avgEnergyScore === "number" ? item.avgEnergyScore : 0,
           }))
         : [];
 
@@ -365,6 +385,74 @@ export default function HomePage() {
       );
     } finally {
       setIsLoadingJournals(false);
+    }
+  }
+
+  async function loadJournalDetail(journalId: string) {
+    setLoadingJournalDetailId(journalId);
+    setJournalDetailError(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/journals/${journalId}`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message ??
+            payload.error ??
+            "Falha ao carregar detalhe do journal.",
+        );
+      }
+
+      const detail: JournalDetail = {
+        id: String(payload.id),
+        transcription:
+          typeof payload.transcription === "string"
+            ? payload.transcription
+            : null,
+        joyScore:
+          typeof payload.joyScore === "number" ? payload.joyScore : null,
+        sadnessScore:
+          typeof payload.sadnessScore === "number"
+            ? payload.sadnessScore
+            : null,
+        angerScore:
+          typeof payload.angerScore === "number" ? payload.angerScore : null,
+        anxietyScore:
+          typeof payload.anxietyScore === "number"
+            ? payload.anxietyScore
+            : null,
+        calmScore:
+          typeof payload.calmScore === "number" ? payload.calmScore : null,
+        energyScore:
+          typeof payload.energyScore === "number" ? payload.energyScore : null,
+      };
+
+      setJournalDetailsById((current) => ({
+        ...current,
+        [journalId]: detail,
+      }));
+    } catch (error) {
+      setJournalDetailError(
+        error instanceof Error
+          ? error.message
+          : "Falha ao carregar detalhe do journal.",
+      );
+    } finally {
+      setLoadingJournalDetailId(null);
+    }
+  }
+
+  async function toggleJournalDetail(journalId: string) {
+    if (expandedJournalId === journalId) {
+      setExpandedJournalId(null);
+      return;
+    }
+
+    setExpandedJournalId(journalId);
+
+    if (!journalDetailsById[journalId]) {
+      await loadJournalDetail(journalId);
     }
   }
 
@@ -874,7 +962,8 @@ export default function HomePage() {
 
         {!isLoadingWeeklyTrends && weeklyTrends.length === 0 ? (
           <div className="mt-6 rounded-3xl border border-(--line) bg-(--paper-strong) p-5 text-(--ink-soft)">
-            Ainda nao existem dados suficientes para desenhar a tendencia semanal.
+            Ainda nao existem dados suficientes para desenhar a tendencia
+            semanal.
           </div>
         ) : null}
 
@@ -882,13 +971,19 @@ export default function HomePage() {
           <div className="mt-6 h-80 rounded-3xl border border-(--line) bg-(--paper-strong) p-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={weeklyTrends}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(100,116,139,0.2)" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(100,116,139,0.2)"
+                />
                 <XAxis
                   dataKey="weekStart"
                   tickFormatter={formatWeekLabel}
                   tick={{ fill: "#64748b", fontSize: 12 }}
                 />
-                <YAxis domain={[0, 1]} tick={{ fill: "#64748b", fontSize: 12 }} />
+                <YAxis
+                  domain={[0, 1]}
+                  tick={{ fill: "#64748b", fontSize: 12 }}
+                />
                 <Tooltip
                   formatter={(value: number) => value.toFixed(2)}
                   labelFormatter={(value: string) =>
@@ -896,21 +991,36 @@ export default function HomePage() {
                   }
                 />
                 <Legend />
-                <Line type="monotone" dataKey="joy" stroke="#10b981" dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="joy"
+                  stroke="#10b981"
+                  dot={false}
+                />
                 <Line
                   type="monotone"
                   dataKey="sadness"
                   stroke="#6366f1"
                   dot={false}
                 />
-                <Line type="monotone" dataKey="anger" stroke="#ef4444" dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="anger"
+                  stroke="#ef4444"
+                  dot={false}
+                />
                 <Line
                   type="monotone"
                   dataKey="anxiety"
                   stroke="#f59e0b"
                   dot={false}
                 />
-                <Line type="monotone" dataKey="calm" stroke="#06b6d4" dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="calm"
+                  stroke="#06b6d4"
+                  dot={false}
+                />
                 <Line
                   type="monotone"
                   dataKey="energy"
@@ -949,6 +1059,12 @@ export default function HomePage() {
           </div>
         ) : null}
 
+        {journalDetailError ? (
+          <div className="mt-5 rounded-[1.25rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {journalDetailError}
+          </div>
+        ) : null}
+
         {!isLoadingJournals && journals.length === 0 ? (
           <div className="mt-6 rounded-3xl border border-(--line) bg-(--paper-strong) p-5 text-(--ink-soft)">
             Ainda nao existem entradas para mostrar.
@@ -980,6 +1096,77 @@ export default function HomePage() {
                   ? journal.transcription
                   : "Sem transcricao disponivel ainda."}
               </p>
+
+              <div className="mt-3 flex justify-end">
+                <button
+                  className="rounded-full border border-(--line) px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={loadingJournalDetailId === journal.id}
+                  onClick={() => {
+                    void toggleJournalDetail(journal.id);
+                  }}
+                  type="button"
+                >
+                  {loadingJournalDetailId === journal.id
+                    ? "A carregar..."
+                    : expandedJournalId === journal.id
+                      ? "Ocultar detalhes"
+                      : "Ver detalhes"}
+                </button>
+              </div>
+
+              {expandedJournalId === journal.id ? (
+                <div className="mt-3 rounded-2xl border border-(--line) bg-white/60 p-3">
+                  <p className="text-xs uppercase tracking-[0.15em] text-(--ink-soft)">
+                    Scores emocionais
+                  </p>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-700 sm:grid-cols-3">
+                    <p>
+                      Joy:{" "}
+                      {journalDetailsById[journal.id]?.joyScore?.toFixed(2) ??
+                        "-"}
+                    </p>
+                    <p>
+                      Sadness:{" "}
+                      {journalDetailsById[journal.id]?.sadnessScore?.toFixed(
+                        2,
+                      ) ?? "-"}
+                    </p>
+                    <p>
+                      Anger:{" "}
+                      {journalDetailsById[journal.id]?.angerScore?.toFixed(2) ??
+                        "-"}
+                    </p>
+                    <p>
+                      Anxiety:{" "}
+                      {journalDetailsById[journal.id]?.anxietyScore?.toFixed(
+                        2,
+                      ) ?? "-"}
+                    </p>
+                    <p>
+                      Calm:{" "}
+                      {journalDetailsById[journal.id]?.calmScore?.toFixed(2) ??
+                        "-"}
+                    </p>
+                    <p>
+                      Energy:{" "}
+                      {journalDetailsById[journal.id]?.energyScore?.toFixed(
+                        2,
+                      ) ?? "-"}
+                    </p>
+                  </div>
+
+                  <p className="mt-3 text-xs uppercase tracking-[0.15em] text-(--ink-soft)">
+                    Transcricao completa
+                  </p>
+                  <p className="mt-2 max-h-40 overflow-auto rounded-xl bg-white px-3 py-2 text-sm leading-6 text-slate-700">
+                    {journalDetailsById[journal.id]?.transcription &&
+                    (journalDetailsById[journal.id]?.transcription?.length ??
+                      0) > 0
+                      ? journalDetailsById[journal.id].transcription
+                      : "Sem transcricao completa disponivel."}
+                  </p>
+                </div>
+              ) : null}
             </article>
           ))}
         </div>
