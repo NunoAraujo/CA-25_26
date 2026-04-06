@@ -145,55 +145,98 @@ docker compose down
 └── README.md                # This file
 ```
 
-## Development Workflow
+## Implementation Status
 
-### Phase 1: Foundation (Current)
+All phases complete. See [PHASED_PLAN.md](./docs/PHASED_PLAN.md) for detailed progress.
 
-- [x] Monorepo structure bootstrap
-- [ ] Docker Compose with all services
-- [ ] Environment templates and health checks
-- [ ] Validate startup and dependency order
+- ✅ Phase 1: Foundation & Infrastructure
+- ✅ Phase 2: Data Model & API Contracts
+- ✅ Phase 3: Audio Ingestion Pipeline
+- ✅ Phase 4: Python Analysis Engine
+- ✅ Phase 5: Trends & Recommendations
+- ✅ Phase 6: Frontend Dashboard
+- 🚀 Phase 7: Documentation & Deployment (current)
 
-### Phase 2: Data Model & Contracts
+## Core User Workflows
 
-- [ ] PostgreSQL schema design
-- [ ] API contract definitions
-- [ ] Service integration contracts
+### Workflow 1: Record & Upload Audio
 
-### Phase 3: Ingestion Pipeline
+1. Open frontend at `http://localhost:5173`
+2. Click **"Iniciar Gravação"** button
+3. Speak naturally for 5–60 seconds (diary entry, stream-of-consciousness)
+4. Click **"Parar"** to stop recording
+5. Click **"Enviar"** to upload
+6. See status: audio being analyzed (queued → transcribing → analyzing → complete)
+7. Once complete, view transcription and emotion scores (joy, sadness, anger, anxiety, calm, energy)
 
-- [ ] Frontend audio recording/upload
-- [ ] Node multipart upload endpoint
-- [ ] Redis queue integration
-- [ ] Job status lifecycle
+### Workflow 2: View Weekly Trends & Recommendations
 
-### Phase 4: Analysis Engine
+1. After completing multiple journal entries (ideally over several days)
+2. Scroll to **"Evolução Emocional Semanal"** section
+3. Click **"Gerar Recomendações Semanais"** button (computes weekly average emotions)
+4. System generates 5–10 personalized recommendations based on emotional profile
+5. Each recommendation shows:
+   - Activity name (e.g., "Respiração Caixa 4-4-4-4")
+   - Duration (5–20 min)
+   - Target emotion & intensity
+   - Rationale (why recommended)
+   - Confidence score
 
-- [ ] Whisper transcription (Portuguese)
-- [ ] Prosody feature extraction
-- [ ] Emotion classification
-- [ ] Fusion and callback
+### Workflow 3: Interact with Recommendations
 
-### Phase 5: Trends & Recommendations
+1. Click **"Marcar como Feita"** on a completed activity → records completion
+2. Provide feedback: **Positivo** / **Neutro** / **Negativo**
+3. System learns from feedback → influences next week's recommendations
+4. Filter recommendations by emotion or intensity using sidebar controls
+5. Use quick presets: "Calming", "Energizing", "Short" to prefill filters
 
-- [ ] Weekly aggregation scheduler
-- [ ] Recommendation engine logic
-- [ ] Personalization rules
-- [ ] API endpoints
+### Workflow 4: Explore Journal Timeline
 
-### Phase 6: Frontend Dashboard
+1. Scroll to **"Histórico de Entradas"** section
+2. See all journal entries (newest first) with:
+   - Date/time recorded
+   - Duration in seconds
+   - Primary emotion + secondary emotion
+   - Transcription preview (first 100 chars)
+   - Status badge (complete/failed)
+3. Click entry to expand and view:
+   - Full transcription
+   - 6-dimension emotion breakdown
+   - Prosody metrics (pitch, energy, speech rate, etc.)
+   - Audio metadata
 
-- [ ] Emotion evolution chart
-- [ ] Recommendations panel
-- [ ] Journal timeline
-- [ ] Mobile-first responsive UX
+## API Quick Reference
 
-### Phase 7: QA & Hardening
+For programmatic access, key endpoints:
 
-- [ ] Integration tests
-- [ ] Model smoke tests
-- [ ] Structured logging
-- [ ] Privacy/deletion controls
+```bash
+# Upload audio
+curl -X POST http://localhost:3000/api/journals \
+  -F "audio=@your_audio.wav;type=audio/wav" \
+  -F "durationSeconds=30"
+
+# Check status
+curl http://localhost:3000/api/journals/{id}/status
+
+# Get weekly trends
+curl http://localhost:3000/api/trends/weekly
+
+# Generate recommendations
+curl -X POST http://localhost:3000/api/recommendations/generate-weekly
+
+# Get recommendations
+curl http://localhost:3000/api/recommendations
+
+# Mark recommendation done
+curl -X POST http://localhost:3000/api/recommendations/{id}/complete
+
+# Send feedback
+curl -X POST http://localhost:3000/api/recommendations/{id}/feedback \
+  -H "Content-Type: application/json" \
+  -d '{"feedback": "positive"}'
+```
+
+See [API_DOCUMENTATION.md](./docs/API_DOCUMENTATION.md) for comprehensive endpoint reference.
 
 ## Privacy & Compliance
 
