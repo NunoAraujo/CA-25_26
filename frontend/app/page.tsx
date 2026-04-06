@@ -191,6 +191,9 @@ export default function HomePage() {
     useState("all");
   const [recommendationEmotionFilter, setRecommendationEmotionFilter] =
     useState("all");
+  const [recommendationOrderBy, setRecommendationOrderBy] = useState(
+    "confidence",
+  );
   const [completingRecommendationId, setCompletingRecommendationId] = useState<
     string | null
   >(null);
@@ -273,6 +276,19 @@ export default function HomePage() {
       item.expectedImpactMetric === recommendationEmotionFilter;
 
     return intensityMatch && emotionMatch;
+  });
+  const sortedRecommendations = [...filteredRecommendations].sort((a, b) => {
+    if (recommendationOrderBy === "duration") {
+      return a.activityDurationMin - b.activityDurationMin;
+    }
+
+    if (recommendationOrderBy === "newest") {
+      return (
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    }
+
+    return b.confidence - a.confidence;
   });
 
   useEffect(() => {
@@ -1330,7 +1346,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <label className="text-sm font-medium text-slate-700">
             Intensidade
             <select
@@ -1366,6 +1382,21 @@ export default function HomePage() {
               ))}
             </select>
           </label>
+
+          <label className="text-sm font-medium text-slate-700">
+            Ordenacao
+            <select
+              className="mt-2 w-full rounded-2xl border border-(--line) bg-white px-3 py-2 text-sm text-slate-800"
+              onChange={(event) => {
+                setRecommendationOrderBy(event.target.value);
+              }}
+              value={recommendationOrderBy}
+            >
+              <option value="confidence">Confianca</option>
+              <option value="duration">Duracao</option>
+              <option value="newest">Mais recentes</option>
+            </select>
+          </label>
         </div>
 
         {recommendationError ? (
@@ -1389,14 +1420,14 @@ export default function HomePage() {
 
         {!isLoadingRecommendations &&
         recommendations.length > 0 &&
-        filteredRecommendations.length === 0 ? (
+        sortedRecommendations.length === 0 ? (
           <div className="mt-6 rounded-3xl border border-(--line) bg-(--paper-strong) p-5 text-(--ink-soft)">
             Nenhuma recomendacao corresponde aos filtros selecionados.
           </div>
         ) : null}
 
         <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredRecommendations.map((recommendation) => (
+          {sortedRecommendations.map((recommendation) => (
             <article
               className="rounded-3xl border border-(--line) bg-(--paper-strong) p-5"
               key={recommendation.id}
