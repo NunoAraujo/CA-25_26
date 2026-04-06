@@ -263,32 +263,25 @@ Phase 6 is complete for the MVP dashboard scope. The frontend now covers recordi
 
 ---
 
-## Phase 7: QA, Privacy & Hardening 🔒
+## Phase 7: Documentation & Deployment 📚
 
-### 7.1 Integration Tests
+### 7.1 Project Documentation
 
-- End-to-end: upload → queue → analysis → trends → recommendations
-- Fixture-based test scenarios
-- Jest + Supertest for API, pytest for Python
+- README with setup and usage instructions
+- Architecture overview diagrams
+- API endpoint documentation
 
-### 7.2 Model Smoke Tests
+### 7.2 Code Cleanup
 
-- Fixture dataset with known emotion labels
-- Regression tracking against baseline model
-- Tolerance bands for accuracy (±0.15)
+- Remove console.logs and debug code
+- Organize comments and docstrings
+- Ensure consistent code formatting
 
-### 7.3 Observability
+### 7.3 Demo Preparation
 
-- Structured logging across all services (pino + python-json-logger)
-- Correlation IDs / trace IDs propagation
-- Metrics: queue latency, analysis time, failed jobs
-
-### 7.4 Privacy Controls
-
-- DELETE endpoint for soft/hard deletes
-- Retention policy documentation
-- Deletion control UX
-- No audio content in logs
+- Document walkthrough scenarios for live testing
+- Prepare presentation materials
+- Create testing checklist for manual verification
 
 ---
 
@@ -303,12 +296,12 @@ After Phase 1 completion:
 
 ---
 
-## Immediate Next Steps (Phase 4)
+## Immediate Next Steps (Phase 7)
 
-1. Integrate HuggingFace multilingual sentiment model to replace heuristic emotion scoring baseline.
-2. Replace lightweight transcription fallback with full Whisper pipeline after container runtime tuning.
-3. Add Python-side analysis smoke tests with fixture audio files.
-4. Add end-to-end integration tests covering upload → analysis → trends → recommendations → frontend retrieval.
+1. Create comprehensive README with setup instructions and usage guide.
+2. Document the architecture and API endpoints for reference.
+3. Document manual testing scenarios and validation checklist.
+4. Clean up code comments and ensure consistent formatting across all services.
 
 ---
 
