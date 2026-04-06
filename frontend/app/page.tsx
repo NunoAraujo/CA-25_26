@@ -893,16 +893,28 @@ export default function HomePage() {
   return (
     <main className="min-h-screen px-5 py-8 sm:px-8 lg:px-12">
       <nav className="mx-auto mb-6 flex max-w-6xl flex-wrap gap-2 rounded-full border border-(--line) bg-(--paper) p-2 shadow-[0_18px_50px_rgba(82,55,31,0.08)]">
-        <a className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white" href="#capture">
+        <a
+          className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
+          href="#capture"
+        >
           Captura
         </a>
-        <a className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white" href="#trends">
+        <a
+          className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
+          href="#trends"
+        >
           Tendencias
         </a>
-        <a className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white" href="#timeline">
+        <a
+          className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
+          href="#timeline"
+        >
           Timeline
         </a>
-        <a className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white" href="#recommendations">
+        <a
+          className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
+          href="#recommendations"
+        >
           Recomendacoes
         </a>
       </nav>
@@ -955,7 +967,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="rounded-4xl border border-(--line) bg-(--paper-strong) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]" id="capture">
+        <div
+          className="rounded-4xl border border-(--line) bg-(--paper-strong) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]"
+          id="capture"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
@@ -1088,7 +1103,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]" id="trends">
+      <section
+        className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]"
+        id="trends"
+      >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
@@ -1224,7 +1242,10 @@ export default function HomePage() {
         ) : null}
       </section>
 
-      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]" id="timeline">
+      <section
+        className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]"
+        id="timeline"
+      >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
@@ -1363,7 +1384,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]" id="recommendations">
+      <section
+        className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]"
+        id="recommendations"
+      >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
