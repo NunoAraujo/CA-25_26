@@ -117,6 +117,22 @@ function formatWeekLabel(rawDate: string) {
       });
 }
 
+function deltaDirection(delta: number) {
+  if (delta > 0.001) {
+    return "up";
+  }
+
+  if (delta < -0.001) {
+    return "down";
+  }
+
+  return "flat";
+}
+
+function formatDelta(delta: number) {
+  return `${delta > 0 ? "+" : ""}${delta.toFixed(2)}`;
+}
+
 export default function HomePage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -187,6 +203,57 @@ export default function HomePage() {
     isRecording,
     Boolean(audioBlob),
   );
+  const latestTrendPoint =
+    weeklyTrends.length > 0 ? weeklyTrends[weeklyTrends.length - 1] : null;
+  const previousTrendPoint =
+    weeklyTrends.length > 1 ? weeklyTrends[weeklyTrends.length - 2] : null;
+  const trendDeltaCards =
+    latestTrendPoint && previousTrendPoint
+      ? [
+          {
+            key: "joy",
+            label: "Joy",
+            current: latestTrendPoint.joy,
+            delta: latestTrendPoint.joy - previousTrendPoint.joy,
+            color: "text-emerald-700",
+          },
+          {
+            key: "sadness",
+            label: "Sadness",
+            current: latestTrendPoint.sadness,
+            delta: latestTrendPoint.sadness - previousTrendPoint.sadness,
+            color: "text-indigo-700",
+          },
+          {
+            key: "anger",
+            label: "Anger",
+            current: latestTrendPoint.anger,
+            delta: latestTrendPoint.anger - previousTrendPoint.anger,
+            color: "text-rose-700",
+          },
+          {
+            key: "anxiety",
+            label: "Anxiety",
+            current: latestTrendPoint.anxiety,
+            delta: latestTrendPoint.anxiety - previousTrendPoint.anxiety,
+            color: "text-amber-700",
+          },
+          {
+            key: "calm",
+            label: "Calm",
+            current: latestTrendPoint.calm,
+            delta: latestTrendPoint.calm - previousTrendPoint.calm,
+            color: "text-cyan-700",
+          },
+          {
+            key: "energy",
+            label: "Energy",
+            current: latestTrendPoint.energy,
+            delta: latestTrendPoint.energy - previousTrendPoint.energy,
+            color: "text-orange-700",
+          },
+        ]
+      : [];
 
   useEffect(() => {
     return () => {
@@ -957,6 +1024,39 @@ export default function HomePage() {
         {weeklyTrendsError ? (
           <div className="mt-5 rounded-[1.25rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {weeklyTrendsError}
+          </div>
+        ) : null}
+
+        {trendDeltaCards.length > 0 ? (
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {trendDeltaCards.map((card) => {
+              const direction = deltaDirection(card.delta);
+              const marker =
+                direction === "up" ? "UP" : direction === "down" ? "DOWN" : "FLAT";
+              const directionClass =
+                direction === "up"
+                  ? "text-emerald-700"
+                  : direction === "down"
+                    ? "text-rose-700"
+                    : "text-slate-600";
+
+              return (
+                <article
+                  className="rounded-3xl border border-(--line) bg-(--paper-strong) p-4"
+                  key={card.key}
+                >
+                  <p className="text-xs uppercase tracking-[0.15em] text-(--ink-soft)">
+                    {card.label}
+                  </p>
+                  <p className={`mt-2 text-2xl font-semibold ${card.color}`}>
+                    {card.current.toFixed(2)}
+                  </p>
+                  <p className={`mt-1 text-xs font-semibold ${directionClass}`}>
+                    {marker} {formatDelta(card.delta)} vs. semana anterior
+                  </p>
+                </article>
+              );
+            })}
           </div>
         ) : null}
 
