@@ -223,6 +223,7 @@ Phase 4 has started with a working end-to-end analysis pipeline slice. Model qua
 - Added frontend emotion evolution chart wired to `GET /api/trends/weekly` using weekly normalized emotion series.
 - Added timeline expand interaction for journal details (`GET /api/journals/:journalId`) with full transcription and key emotion scores.
 - Added week-over-week trend direction indicators (delta cards) for emotion series in the weekly chart section.
+- Added recommendation filtering controls in frontend panel (by intensity and target emotion).
 
 ### 6.1 Emotion Evolution Chart
 
@@ -299,7 +300,7 @@ After Phase 1 completion:
 1. Integrate HuggingFace multilingual sentiment model to replace heuristic emotion scoring baseline.
 2. Replace lightweight transcription fallback with full Whisper pipeline after container runtime tuning.
 3. Add Python-side analysis smoke tests with fixture audio files.
-4. Add recommendation filtering controls by intensity/emotion in the frontend panel.
+4. Add recommendation ordering toggles in frontend panel (confidence, duration, newest).
 
 ---
 

@@ -187,6 +187,10 @@ export default function HomePage() {
   const [recommendationInfo, setRecommendationInfo] = useState<string | null>(
     null,
   );
+  const [recommendationIntensityFilter, setRecommendationIntensityFilter] =
+    useState("all");
+  const [recommendationEmotionFilter, setRecommendationEmotionFilter] =
+    useState("all");
   const [completingRecommendationId, setCompletingRecommendationId] = useState<
     string | null
   >(null);
@@ -254,6 +258,22 @@ export default function HomePage() {
           },
         ]
       : [];
+  const recommendationIntensityOptions = Array.from(
+    new Set(recommendations.map((item) => item.activityIntensity)),
+  ).sort((a, b) => a.localeCompare(b));
+  const recommendationEmotionOptions = Array.from(
+    new Set(recommendations.map((item) => item.expectedImpactMetric)),
+  ).sort((a, b) => a.localeCompare(b));
+  const filteredRecommendations = recommendations.filter((item) => {
+    const intensityMatch =
+      recommendationIntensityFilter === "all" ||
+      item.activityIntensity === recommendationIntensityFilter;
+    const emotionMatch =
+      recommendationEmotionFilter === "all" ||
+      item.expectedImpactMetric === recommendationEmotionFilter;
+
+    return intensityMatch && emotionMatch;
+  });
 
   useEffect(() => {
     return () => {
@@ -1032,7 +1052,11 @@ export default function HomePage() {
             {trendDeltaCards.map((card) => {
               const direction = deltaDirection(card.delta);
               const marker =
-                direction === "up" ? "UP" : direction === "down" ? "DOWN" : "FLAT";
+                direction === "up"
+                  ? "UP"
+                  : direction === "down"
+                    ? "DOWN"
+                    : "FLAT";
               const directionClass =
                 direction === "up"
                   ? "text-emerald-700"
@@ -1306,6 +1330,44 @@ export default function HomePage() {
           </div>
         </div>
 
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <label className="text-sm font-medium text-slate-700">
+            Intensidade
+            <select
+              className="mt-2 w-full rounded-2xl border border-(--line) bg-white px-3 py-2 text-sm text-slate-800"
+              onChange={(event) => {
+                setRecommendationIntensityFilter(event.target.value);
+              }}
+              value={recommendationIntensityFilter}
+            >
+              <option value="all">Todas</option>
+              {recommendationIntensityOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-sm font-medium text-slate-700">
+            Emocao alvo
+            <select
+              className="mt-2 w-full rounded-2xl border border-(--line) bg-white px-3 py-2 text-sm text-slate-800"
+              onChange={(event) => {
+                setRecommendationEmotionFilter(event.target.value);
+              }}
+              value={recommendationEmotionFilter}
+            >
+              <option value="all">Todas</option>
+              {recommendationEmotionOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         {recommendationError ? (
           <div className="mt-5 rounded-[1.25rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {recommendationError}
@@ -1325,8 +1387,16 @@ export default function HomePage() {
           </div>
         ) : null}
 
+        {!isLoadingRecommendations &&
+        recommendations.length > 0 &&
+        filteredRecommendations.length === 0 ? (
+          <div className="mt-6 rounded-3xl border border-(--line) bg-(--paper-strong) p-5 text-(--ink-soft)">
+            Nenhuma recomendacao corresponde aos filtros selecionados.
+          </div>
+        ) : null}
+
         <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {recommendations.map((recommendation) => (
+          {filteredRecommendations.map((recommendation) => (
             <article
               className="rounded-3xl border border-(--line) bg-(--paper-strong) p-5"
               key={recommendation.id}
