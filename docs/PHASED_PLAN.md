@@ -210,7 +210,7 @@ Phase 4 has started with a working end-to-end analysis pipeline slice. Model qua
 
 - [x] Next.js app shell running in Docker.
 - [x] Tailwind v4 base CSS wiring in place.
-- [~] Dashboard feature pages/components started (recommendation panel + completion action wired).
+- [x] Dashboard feature pages/components implemented for MVP scope.
 
 ### Phase 6 Progress Notes
 
@@ -225,6 +225,9 @@ Phase 4 has started with a working end-to-end analysis pipeline slice. Model qua
 - Added week-over-week trend direction indicators (delta cards) for emotion series in the weekly chart section.
 - Added recommendation filtering controls in frontend panel (by intensity and target emotion).
 - Added recommendation ordering toggles in frontend panel (confidence, duration, newest).
+- Added quick recommendation presets (calming, energizing, short) to prefill filter/sort selections.
+- Added Sonner toast notifications for upload, refresh, generation, completion, and feedback actions.
+- Added smooth in-page section navigation for capture, trends, timeline, and recommendations.
 
 ### 6.1 Emotion Evolution Chart
 
@@ -253,6 +256,10 @@ Phase 4 has started with a working end-to-end analysis pipeline slice. Model qua
 - Accessible audio recording/playback controls
 - Sonner toast notifications
 - Smooth navigation between tabs
+
+### Phase 6 Status
+
+Phase 6 is complete for the MVP dashboard scope. The frontend now covers recording, weekly trends, recommendation interaction, and journal exploration in a responsive single-page workflow.
 
 ---
 
@@ -301,7 +308,7 @@ After Phase 1 completion:
 1. Integrate HuggingFace multilingual sentiment model to replace heuristic emotion scoring baseline.
 2. Replace lightweight transcription fallback with full Whisper pipeline after container runtime tuning.
 3. Add Python-side analysis smoke tests with fixture audio files.
-4. Add frontend quick presets for recommendation view (e.g., "calming", "energizing") that prefill filter/sort selections.
+4. Add end-to-end integration tests covering upload → analysis → trends → recommendations → frontend retrieval.
 
 ---
 

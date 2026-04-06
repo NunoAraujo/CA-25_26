@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   CartesianGrid,
   Legend,
@@ -133,6 +134,31 @@ function formatDelta(delta: number) {
   return `${delta > 0 ? "+" : ""}${delta.toFixed(2)}`;
 }
 
+function applyRecommendationPreset(
+  preset: "calming" | "energizing" | "short",
+  setIntensity: (value: string) => void,
+  setEmotion: (value: string) => void,
+  setOrder: (value: string) => void,
+) {
+  if (preset === "calming") {
+    setIntensity("low");
+    setEmotion("anxiety");
+    setOrder("confidence");
+    return;
+  }
+
+  if (preset === "energizing") {
+    setIntensity("medium");
+    setEmotion("low_energy");
+    setOrder("confidence");
+    return;
+  }
+
+  setIntensity("all");
+  setEmotion("all");
+  setOrder("duration");
+}
+
 export default function HomePage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -191,9 +217,8 @@ export default function HomePage() {
     useState("all");
   const [recommendationEmotionFilter, setRecommendationEmotionFilter] =
     useState("all");
-  const [recommendationOrderBy, setRecommendationOrderBy] = useState(
-    "confidence",
-  );
+  const [recommendationOrderBy, setRecommendationOrderBy] =
+    useState("confidence");
   const [completingRecommendationId, setCompletingRecommendationId] = useState<
     string | null
   >(null);
@@ -283,9 +308,7 @@ export default function HomePage() {
     }
 
     if (recommendationOrderBy === "newest") {
-      return (
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
 
     return b.confidence - a.confidence;
@@ -482,10 +505,14 @@ export default function HomePage() {
         : [];
 
       setJournals(timeline.slice(0, 8));
+      if (timeline.length > 0) {
+        toast.success("Timeline atualizada.");
+      }
     } catch (error) {
       setJournalsError(
         error instanceof Error ? error.message : "Falha ao carregar journals.",
       );
+      toast.error("Falha ao carregar journals.");
     } finally {
       setIsLoadingJournals(false);
     }
@@ -578,12 +605,14 @@ export default function HomePage() {
       setRecommendations(
         Array.isArray(payload.recommendations) ? payload.recommendations : [],
       );
+      toast.success("Recomendacoes atualizadas.");
     } catch (error) {
       setRecommendationError(
         error instanceof Error
           ? error.message
           : "Falha ao carregar recomendacoes.",
       );
+      toast.error("Falha ao carregar recomendacoes.");
     } finally {
       setIsLoadingRecommendations(false);
     }
@@ -620,6 +649,7 @@ export default function HomePage() {
           ? payload.recommendations.length
           : Number(payload.created ?? 0);
       setRecommendationInfo(`Geracao concluida: ${created} recomendacoes.`);
+      toast.success(`Geracao concluida: ${created} recomendacoes.`);
       await loadRecommendations();
     } catch (error) {
       setRecommendationError(
@@ -627,6 +657,7 @@ export default function HomePage() {
           ? error.message
           : "Falha ao gerar recomendacoes semanais.",
       );
+      toast.error("Falha ao gerar recomendacoes semanais.");
     } finally {
       setIsGeneratingRecommendations(false);
     }
@@ -671,12 +702,14 @@ export default function HomePage() {
         ),
       );
       setRecommendationInfo("Recomendacao marcada como concluida.");
+      toast.success("Recomendacao marcada como concluida.");
     } catch (error) {
       setRecommendationError(
         error instanceof Error
           ? error.message
           : "Falha ao concluir recomendacao.",
       );
+      toast.error("Falha ao concluir recomendacao.");
     } finally {
       setCompletingRecommendationId(null);
     }
@@ -722,10 +755,12 @@ export default function HomePage() {
       );
 
       setRecommendationInfo("Feedback guardado com sucesso.");
+      toast.success("Feedback guardado com sucesso.");
     } catch (error) {
       setRecommendationError(
         error instanceof Error ? error.message : "Falha ao guardar feedback.",
       );
+      toast.error("Falha ao guardar feedback.");
     } finally {
       setFeedbackingRecommendationId(null);
     }
@@ -843,11 +878,13 @@ export default function HomePage() {
             ? payload.createdAt
             : new Date().toISOString(),
       });
+      toast.success("Entrada enviada para analise.");
       void pollJournalStatus(payload.id);
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Falha no envio do audio.",
       );
+      toast.error("Falha no envio do audio.");
     } finally {
       setIsUploading(false);
     }
@@ -855,6 +892,20 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen px-5 py-8 sm:px-8 lg:px-12">
+      <nav className="mx-auto mb-6 flex max-w-6xl flex-wrap gap-2 rounded-full border border-(--line) bg-(--paper) p-2 shadow-[0_18px_50px_rgba(82,55,31,0.08)]">
+        <a className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white" href="#capture">
+          Captura
+        </a>
+        <a className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white" href="#trends">
+          Tendencias
+        </a>
+        <a className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white" href="#timeline">
+          Timeline
+        </a>
+        <a className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white" href="#recommendations">
+          Recomendacoes
+        </a>
+      </nav>
       <section className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)] backdrop-blur">
           <p className="text-sm uppercase tracking-[0.35em] text-(--accent-deep)">
@@ -904,7 +955,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="rounded-4xl border border-(--line) bg-(--paper-strong) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]">
+        <div className="rounded-4xl border border-(--line) bg-(--paper-strong) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]" id="capture">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
@@ -1037,7 +1088,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]">
+      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]" id="trends">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
@@ -1173,7 +1224,7 @@ export default function HomePage() {
         ) : null}
       </section>
 
-      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]">
+      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]" id="timeline">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
@@ -1312,7 +1363,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]">
+      <section className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]" id="recommendations">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
@@ -1397,6 +1448,54 @@ export default function HomePage() {
               <option value="newest">Mais recentes</option>
             </select>
           </label>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            className="rounded-full border border-(--line) bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-(--paper-strong)"
+            onClick={() => {
+              applyRecommendationPreset(
+                "calming",
+                setRecommendationIntensityFilter,
+                setRecommendationEmotionFilter,
+                setRecommendationOrderBy,
+              );
+              toast.success("Preset calming aplicado.");
+            }}
+            type="button"
+          >
+            Calming
+          </button>
+          <button
+            className="rounded-full border border-(--line) bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-(--paper-strong)"
+            onClick={() => {
+              applyRecommendationPreset(
+                "energizing",
+                setRecommendationIntensityFilter,
+                setRecommendationEmotionFilter,
+                setRecommendationOrderBy,
+              );
+              toast.success("Preset energizing aplicado.");
+            }}
+            type="button"
+          >
+            Energizing
+          </button>
+          <button
+            className="rounded-full border border-(--line) bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-(--paper-strong)"
+            onClick={() => {
+              applyRecommendationPreset(
+                "short",
+                setRecommendationIntensityFilter,
+                setRecommendationEmotionFilter,
+                setRecommendationOrderBy,
+              );
+              toast.success("Preset short aplicado.");
+            }}
+            type="button"
+          >
+            Short
+          </button>
         </div>
 
         {recommendationError ? (
