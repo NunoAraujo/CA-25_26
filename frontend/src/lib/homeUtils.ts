@@ -42,7 +42,7 @@ export function statusBadgeClasses(status: string) {
   return "border-slate-300 bg-slate-50 text-slate-700";
 }
 
-export function formatWeekLabel(rawDate: string) {
+export function formatDayLabel(rawDate: string) {
   const date = new Date(rawDate);
   return Number.isNaN(date.getTime())
     ? rawDate

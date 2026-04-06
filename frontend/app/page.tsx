@@ -8,7 +8,7 @@ import { TrendsPanel } from "../src/components/home/TrendsPanel";
 import { useAudioCapture } from "../src/hooks/useAudioCapture";
 import { useJournalTimeline } from "../src/hooks/useJournalTimeline";
 import { useRecommendations } from "../src/hooks/useRecommendations";
-import { useWeeklyTrends } from "../src/hooks/useWeeklyTrends";
+import { useDailyTrends } from "../src/hooks/useDailyTrends";
 
 export default function HomePage() {
   const apiBaseUrl = useMemo(
@@ -17,12 +17,12 @@ export default function HomePage() {
   );
 
   const capture = useAudioCapture(apiBaseUrl);
-  const trends = useWeeklyTrends(apiBaseUrl);
+  const trends = useDailyTrends(apiBaseUrl);
   const timeline = useJournalTimeline(apiBaseUrl);
   const recommendations = useRecommendations(apiBaseUrl);
 
   useEffect(() => {
-    void trends.loadWeeklyTrends();
+    void trends.loadDailyTrends();
     void timeline.loadJournals();
     void recommendations.loadRecommendations();
   }, []);
@@ -76,11 +76,11 @@ export default function HomePage() {
       />
 
       <TrendsPanel
-        isLoadingWeeklyTrends={trends.isLoadingWeeklyTrends}
-        onRefresh={trends.loadWeeklyTrends}
+        isLoadingDailyTrends={trends.isLoadingDailyTrends}
+        onRefresh={trends.loadDailyTrends}
         trendDeltaCards={trends.trendDeltaCards}
-        weeklyTrends={trends.weeklyTrends}
-        weeklyTrendsError={trends.weeklyTrendsError}
+        dailyTrends={trends.dailyTrends}
+        dailyTrendsError={trends.dailyTrendsError}
       />
 
       <TimelinePanel
@@ -107,7 +107,7 @@ export default function HomePage() {
         onApplyPreset={recommendations.applyPreset}
         onComplete={recommendations.completeRecommendation}
         onFeedback={recommendations.submitRecommendationFeedback}
-        onGenerate={recommendations.generateWeeklyRecommendations}
+        onGenerate={recommendations.generateDailyRecommendations}
         onRefresh={recommendations.loadRecommendations}
         onSetEmotionFilter={recommendations.setRecommendationEmotionFilter}
         onSetIntensityFilter={recommendations.setRecommendationIntensityFilter}

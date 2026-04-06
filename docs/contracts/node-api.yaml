@@ -99,9 +99,9 @@ paths:
       responses:
         "200":
           description: Callback accepted
-  /trends/weekly:
+  /trends/daily:
     get:
-      summary: Get weekly emotional trend data
+      summary: Get daily emotional trend data
       parameters:
         - in: query
           name: from
@@ -115,22 +115,22 @@ paths:
             format: date
       responses:
         "200":
-          description: Weekly trend response
+          description: Daily trend response
   /recommendations:
     get:
-      summary: Get weekly recommendations
+      summary: Get daily recommendations
       parameters:
         - in: query
-          name: weekStart
+          name: dayStart
           schema:
             type: string
             format: date
       responses:
         "200":
           description: Recommendation list
-  /recommendations/generate-weekly:
+  /recommendations/generate-daily:
     post:
-      summary: Generate weekly recommendations from completed journals and activity library
+      summary: Generate daily recommendations from completed journals and activity library
       requestBody:
         required: false
         content:
@@ -138,7 +138,7 @@ paths:
             schema:
               type: object
               properties:
-                weekStart:
+                dayStart:
                   type: string
                   format: date-time
       responses:

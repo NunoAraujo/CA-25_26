@@ -15,7 +15,7 @@ The Audio Journaling MVP uses a **three-tier microservices-lite architecture** o
    - REST API for journal CRUD, upload orchestration, trends, recommendations
    - Orchestrates workflows between frontend and analysis service
    - Manages async job queues via Bull/Redis
-   - Handles weekly aggregation and recommendation generation
+   - Handles daily aggregation and recommendation generation
    - Connects to PostgreSQL for persistence
 
 3. **Analysis Engine (Python + FastAPI)**
@@ -51,9 +51,9 @@ Python POSTs results to Node callback endpoint
          ↓
 Node updates Journal record with emotions + prosody features
          ↓
-Weekly scheduler computes trends and recommendations
+Daily scheduler computes trends and recommendations
          ↓
-Frontend polls GET /api/trends/weekly and /api/recommendations
+Frontend polls GET /api/trends/daily and /api/recommendations
          ↓
 Dashboard displays charts + activity suggestions
 ```
@@ -92,7 +92,7 @@ Dashboard displays charts + activity suggestions
 - **User** – Single-user MVP placeholder
 - **Journal** – Audio entry with status lifecycle
 - **ProsodyFeature** – Extracted pitch, energy, speech features
-- **WeeklyTrend** – Aggregated emotion scores and volatility
+- **DailyTrend** – Aggregated emotion scores and volatility
 - **Recommendation** – Personalized activity suggestions
 - **ActivityLibrary** – Available self-regulation activities
 - **EditorRecommendation** – Per-journal recommendation context
@@ -113,7 +113,7 @@ GET    /api/journals                  # List entries
 GET    /api/journals/{id}             # Get entry details
 DELETE /api/journals/{id}             # Delete entry
 GET    /api/journals/{id}/status      # Poll job status
-GET    /api/trends/weekly             # Weekly emotion evolution
+GET    /api/trends/daily              # Daily emotion evolution
 GET    /api/recommendations           # Get activities
 POST   /api/recommendations/{id}/feedback # Rate recommendation
 GET    /api/health                    # Service health
@@ -162,7 +162,7 @@ GET    /health                        # Service health
 - **Analysis latency** (upload to results): 20–60 seconds for ~30s audio
 - **Dashboard load time**: < 500ms after cache warm
 - **Chart render time**: < 1 second (7 days of data)
-- **Recommendation generation**: < 5 seconds per week
+- **Recommendation generation**: < 5 seconds per day
 
 ## Scalability Notes (Post-MVP)
 
@@ -197,8 +197,8 @@ GET    /health                        # Service health
 4. **Prosody + semantic fusion (30/70 split)**
    - Rationale: Semantic signals more reliable for short clips; prosody adds accent/dialect robustness. Tuning weights in Phase 5.
 
-5. **Weekly-only aggregation**
-   - Rationale: Reduces computation; daily data remains queryable from Journal records. Upgrade to real-time if needed.
+5. **Daily aggregation**
+   - Rationale: Improves granularity and responsiveness for trend evolution and recommendation generation.
 
 6. **No ML fine-tuning in MVP**
    - Rationale: Simplifies deployment; HuggingFace pretrained models sufficient for POC. User feedback collected for future training.

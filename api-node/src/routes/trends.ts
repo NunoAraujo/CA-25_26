@@ -4,26 +4,28 @@ import { prisma } from "../lib/prisma";
 const router = Router();
 
 router.get(
-  "/weekly",
+  "/daily",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const from = req.query.from
-        ? new Date(String(req.query.from))
-        : undefined;
-      const to = req.query.to ? new Date(String(req.query.to)) : undefined;
+      const from =
+        typeof req.query.from === "string"
+          ? new Date(req.query.from)
+          : undefined;
+      const to =
+        typeof req.query.to === "string" ? new Date(req.query.to) : undefined;
 
-      const trends = await prisma.weeklyTrend.findMany({
+      const trends = await prisma.dailyTrend.findMany({
         where: {
           ...(from || to
             ? {
-                weekStart: {
+                dayStart: {
                   ...(from ? { gte: from } : {}),
                   ...(to ? { lte: to } : {}),
                 },
               }
             : {}),
         },
-        orderBy: { weekStart: "asc" },
+        orderBy: { dayStart: "asc" },
       });
 
       res.json({ trends, total: trends.length });

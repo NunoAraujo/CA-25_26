@@ -62,7 +62,7 @@ export function RecommendationsPanel({
             Recomendacoes
           </p>
           <h2 className="mt-2 text-2xl font-semibold">
-            Plano semanal de autorregulacao
+            Plano diario de autorregulacao
           </h2>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -74,7 +74,7 @@ export function RecommendationsPanel({
             }}
             type="button"
           >
-            {isGeneratingRecommendations ? "A gerar..." : "Gerar semana"}
+            {isGeneratingRecommendations ? "A gerar..." : "Gerar dia"}
           </button>
           <button
             className="rounded-full border border-(--line) px-5 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
@@ -189,7 +189,7 @@ export function RecommendationsPanel({
 
       {!isLoadingRecommendations && recommendations.length === 0 ? (
         <div className="mt-6 rounded-3xl border border-(--line) bg-(--paper-strong) p-5 text-(--ink-soft)">
-          Ainda nao existem recomendacoes para mostrar. Gera a semana no API e
+          Ainda nao existem recomendacoes para mostrar. Gera o dia no API e
           volta a atualizar esta vista.
         </div>
       ) : null}

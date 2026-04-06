@@ -6,7 +6,7 @@ export type EmotionKey =
   | "calm"
   | "energy";
 
-export type WeeklyMetrics = {
+export type DailyMetrics = {
   joyAvg: number;
   sadnessAvg: number;
   angerAvg: number;
@@ -16,14 +16,10 @@ export type WeeklyMetrics = {
   volatility: number;
 };
 
-export function startOfWeekUTC(date: Date) {
-  const utcDate = new Date(
+export function startOfDayUTC(date: Date) {
+  return new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
   );
-  const day = utcDate.getUTCDay();
-  const offset = day === 0 ? -6 : 1 - day;
-  utcDate.setUTCDate(utcDate.getUTCDate() + offset);
-  return utcDate;
 }
 
 export function average(values: number[]) {
@@ -50,7 +46,7 @@ export function clamp01(value: number) {
 
 export function recommendationRationale(targetEmotion: string) {
   if (targetEmotion === "anxiety") {
-    return "Niveis de ansiedade elevados na semana; atividade sugerida para regulacao fisiologica.";
+    return "Niveis de ansiedade elevados no dia; atividade sugerida para regulacao fisiologica.";
   }
   if (targetEmotion === "sadness") {
     return "Indicadores de tristeza persistente; atividade sugerida para reconectar com energia e presenca.";
@@ -59,15 +55,15 @@ export function recommendationRationale(targetEmotion: string) {
     return "Sinais de irritabilidade/raiva acima do baseline; atividade sugerida para desaceleracao e clareza.";
   }
   if (targetEmotion === "low_energy") {
-    return "Energia semanal abaixo do ideal; atividade sugerida para reativacao gradual.";
+    return "Energia diaria abaixo do ideal; atividade sugerida para reativacao gradual.";
   }
 
-  return "Atividade sugerida com base no padrao emocional semanal detectado.";
+  return "Atividade sugerida com base no padrao emocional diario detectado.";
 }
 
-export function buildWeeklyMetrics(
+export function buildDailyMetrics(
   emotionScores: Record<EmotionKey, number[]>,
-): WeeklyMetrics {
+): DailyMetrics {
   const joyAvg = average(emotionScores.joy);
   const sadnessAvg = average(emotionScores.sadness);
   const angerAvg = average(emotionScores.anger);
@@ -127,7 +123,7 @@ export function inferContraindications(transcriptions: string[]) {
   return Array.from(new Set(signals));
 }
 
-export function computeEmotionPriority(metrics: WeeklyMetrics) {
+export function computeEmotionPriority(metrics: DailyMetrics) {
   const items = [
     { key: "anxiety", score: metrics.anxietyAvg },
     { key: "sadness", score: metrics.sadnessAvg },

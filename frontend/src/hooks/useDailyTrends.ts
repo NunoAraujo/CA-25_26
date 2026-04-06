@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { WeeklyTrendPoint } from "../types/home";
+import { DailyTrendPoint } from "../types/home";
 
 type TrendDeltaCard = {
   key: string;
@@ -9,18 +9,16 @@ type TrendDeltaCard = {
   color: string;
 };
 
-export function useWeeklyTrends(apiBaseUrl: string) {
-  const [weeklyTrends, setWeeklyTrends] = useState<WeeklyTrendPoint[]>([]);
-  const [isLoadingWeeklyTrends, setIsLoadingWeeklyTrends] = useState(false);
-  const [weeklyTrendsError, setWeeklyTrendsError] = useState<string | null>(
+export function useDailyTrends(apiBaseUrl: string) {
+  const [dailyTrends, setDailyTrends] = useState<DailyTrendPoint[]>([]);
+  const [isLoadingDailyTrends, setIsLoadingDailyTrends] = useState(false);
+  const [dailyTrendsError, setDailyTrendsError] = useState<string | null>(
     null,
   );
 
   const trendDeltaCards = useMemo<TrendDeltaCard[]>(() => {
-    const latestTrendPoint =
-      weeklyTrends.length > 0 ? weeklyTrends[weeklyTrends.length - 1] : null;
-    const previousTrendPoint =
-      weeklyTrends.length > 1 ? weeklyTrends[weeklyTrends.length - 2] : null;
+    const latestTrendPoint = dailyTrends.at(-1) ?? null;
+    const previousTrendPoint = dailyTrends.at(-2) ?? null;
 
     if (!latestTrendPoint || !previousTrendPoint) {
       return [];
@@ -70,27 +68,27 @@ export function useWeeklyTrends(apiBaseUrl: string) {
         color: "text-orange-700",
       },
     ];
-  }, [weeklyTrends]);
+  }, [dailyTrends]);
 
-  async function loadWeeklyTrends() {
-    setIsLoadingWeeklyTrends(true);
-    setWeeklyTrendsError(null);
+  async function loadDailyTrends() {
+    setIsLoadingDailyTrends(true);
+    setDailyTrendsError(null);
 
     try {
-      const response = await fetch(`${apiBaseUrl}/trends/weekly`);
+      const response = await fetch(`${apiBaseUrl}/trends/daily`);
       const payload = await response.json();
 
       if (!response.ok) {
         throw new Error(
           payload.message ??
             payload.error ??
-            "Falha ao carregar tendencia semanal.",
+            "Falha ao carregar tendencia diaria.",
         );
       }
 
       const points = Array.isArray(payload.trends)
         ? payload.trends.map((item: Record<string, unknown>) => ({
-            weekStart: String(item.weekStart ?? ""),
+            dayStart: typeof item.dayStart === "string" ? item.dayStart : "",
             joy: typeof item.avgJoyScore === "number" ? item.avgJoyScore : 0,
             sadness:
               typeof item.avgSadnessScore === "number"
@@ -108,23 +106,23 @@ export function useWeeklyTrends(apiBaseUrl: string) {
           }))
         : [];
 
-      setWeeklyTrends(points);
+      setDailyTrends(points);
     } catch (error) {
-      setWeeklyTrendsError(
+      setDailyTrendsError(
         error instanceof Error
           ? error.message
-          : "Falha ao carregar tendencia semanal.",
+          : "Falha ao carregar tendencia diaria.",
       );
     } finally {
-      setIsLoadingWeeklyTrends(false);
+      setIsLoadingDailyTrends(false);
     }
   }
 
   return {
-    weeklyTrends,
-    isLoadingWeeklyTrends,
-    weeklyTrendsError,
+    dailyTrends,
+    isLoadingDailyTrends,
+    dailyTrendsError,
     trendDeltaCards,
-    loadWeeklyTrends,
+    loadDailyTrends,
   };
 }

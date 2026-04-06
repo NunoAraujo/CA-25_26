@@ -9,5 +9,5 @@ export const completionSchema = Joi.object({
 });
 
 export const generateSchema = Joi.object({
-  weekStart: Joi.date().iso().optional(),
+  dayStart: Joi.date().iso().optional(),
 });

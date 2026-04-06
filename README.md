@@ -169,11 +169,11 @@ All phases complete. See [PHASED_PLAN.md](./docs/PHASED_PLAN.md) for detailed pr
 6. See status: audio being analyzed (queued → transcribing → analyzing → complete)
 7. Once complete, view transcription and emotion scores (joy, sadness, anger, anxiety, calm, energy)
 
-### Workflow 2: View Weekly Trends & Recommendations
+### Workflow 2: View Daily Trends & Recommendations
 
 1. After completing multiple journal entries (ideally over several days)
-2. Scroll to **"Evolução Emocional Semanal"** section
-3. Click **"Gerar Recomendações Semanais"** button (computes weekly average emotions)
+2. Scroll to **"Evolucao Emocional Diaria"** section
+3. Click **"Gerar Recomendacoes Diarias"** button (computes daily average emotions)
 4. System generates 5–10 personalized recommendations based on emotional profile
 5. Each recommendation shows:
    - Activity name (e.g., "Respiração Caixa 4-4-4-4")
@@ -186,7 +186,7 @@ All phases complete. See [PHASED_PLAN.md](./docs/PHASED_PLAN.md) for detailed pr
 
 1. Click **"Marcar como Feita"** on a completed activity → records completion
 2. Provide feedback: **Positivo** / **Neutro** / **Negativo**
-3. System learns from feedback → influences next week's recommendations
+3. System learns from feedback -> influences next day's recommendations
 4. Filter recommendations by emotion or intensity using sidebar controls
 5. Use quick presets: "Calming", "Energizing", "Short" to prefill filters
 
@@ -218,11 +218,11 @@ curl -X POST http://localhost:3000/api/journals \
 # Check status
 curl http://localhost:3000/api/journals/{id}/status
 
-# Get weekly trends
-curl http://localhost:3000/api/trends/weekly
+# Get daily trends
+curl http://localhost:3000/api/trends/daily
 
 # Generate recommendations
-curl -X POST http://localhost:3000/api/recommendations/generate-weekly
+curl -X POST http://localhost:3000/api/recommendations/generate-daily
 
 # Get recommendations
 curl http://localhost:3000/api/recommendations

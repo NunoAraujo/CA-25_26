@@ -49,7 +49,7 @@ export function CapturePanel({
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-8 text-(--ink-soft)">
           Esta primeira versao grava audios curtos, envia-os para analise
-          asincrona e prepara a base para tendencias semanais e sugestoes de
+          asincrona e prepara a base para tendencias diarias e sugestoes de
           autorregulacao.
         </p>
 

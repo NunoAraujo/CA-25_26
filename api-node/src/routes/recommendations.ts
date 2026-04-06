@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response, Router } from "express";
 import {
-  generateWeeklyRecommendations,
+  generateDailyRecommendations,
   listRecommendations,
   storeRecommendationCompletion,
   storeRecommendationFeedback,
@@ -14,7 +14,7 @@ import {
 const router = Router();
 
 router.post(
-  "/generate-weekly",
+  "/generate-daily",
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { error, value } = generateSchema.validate(req.body ?? {}, {
@@ -28,10 +28,10 @@ router.post(
         });
       }
 
-      const weekStart = value.weekStart
-        ? new Date(String(value.weekStart))
+      const dayStart = value.dayStart
+        ? new Date(String(value.dayStart))
         : undefined;
-      const result = await generateWeeklyRecommendations(weekStart);
+      const result = await generateDailyRecommendations(dayStart);
 
       return res.status(result.status).json(result.payload);
     } catch (error) {
@@ -42,11 +42,11 @@ router.post(
 
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const weekStartRaw = req.query.weekStart;
-    const weekStart =
-      typeof weekStartRaw === "string" ? new Date(weekStartRaw) : undefined;
+    const dayStartRaw = req.query.dayStart;
+    const dayStart =
+      typeof dayStartRaw === "string" ? new Date(dayStartRaw) : undefined;
 
-    const data = await listRecommendations(weekStart);
+    const data = await listRecommendations(dayStart);
 
     return res.json(data);
   } catch (error) {

@@ -2,28 +2,28 @@ import { prisma } from "./prisma";
 import { getOrCreateDefaultUser } from "./defaultUser";
 import {
   EmotionKey,
-  buildWeeklyMetrics,
+  buildDailyMetrics,
   clamp01,
   computeEmotionPriority,
   inferContraindications,
   recommendationRationale,
-  startOfWeekUTC,
+  startOfDayUTC,
 } from "./recommendationAnalytics";
 
-export type GenerateWeeklyRecommendationsResult = {
+export type GenerateDailyRecommendationsResult = {
   status: 200 | 201;
   payload: Record<string, unknown>;
 };
 
-export async function generateWeeklyRecommendations(
-  weekStartInput?: Date,
-): Promise<GenerateWeeklyRecommendationsResult> {
+export async function generateDailyRecommendations(
+  dayStartInput?: Date,
+): Promise<GenerateDailyRecommendationsResult> {
   const user = await getOrCreateDefaultUser();
-  const weekStart = weekStartInput
-    ? startOfWeekUTC(weekStartInput)
-    : startOfWeekUTC(new Date());
-  const weekEnd = new Date(weekStart);
-  weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
+  const dayStart = dayStartInput
+    ? startOfDayUTC(dayStartInput)
+    : startOfDayUTC(new Date());
+  const dayEnd = new Date(dayStart);
+  dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
 
   const journals = await prisma.journal.findMany({
     where: {
@@ -31,8 +31,8 @@ export async function generateWeeklyRecommendations(
       deletedAt: null,
       status: "complete",
       uploadedAt: {
-        gte: weekStart,
-        lt: weekEnd,
+        gte: dayStart,
+        lt: dayEnd,
       },
     },
     select: {
@@ -50,8 +50,8 @@ export async function generateWeeklyRecommendations(
     return {
       status: 200,
       payload: {
-        message: "No completed journals found for requested week",
-        weekStart,
+        message: "No completed journals found for requested day",
+        dayStart,
         created: 0,
       },
     };
@@ -81,7 +81,7 @@ export async function generateWeeklyRecommendations(
       emotionScores.energy.push(journal.energyScore);
   }
 
-  const metrics = buildWeeklyMetrics(emotionScores);
+  const metrics = buildDailyMetrics(emotionScores);
 
   const contraindicationSignals = inferContraindications(
     journals
@@ -91,17 +91,17 @@ export async function generateWeeklyRecommendations(
       ),
   );
 
-  const weeklyTrend = await prisma.weeklyTrend.upsert({
+  const dailyTrend = await prisma.dailyTrend.upsert({
     where: {
-      userId_weekStart: {
+      userId_dayStart: {
         userId: user.id,
-        weekStart,
+        dayStart,
       },
     },
     create: {
       userId: user.id,
-      weekStart,
-      weekEnd,
+      dayStart,
+      dayEnd,
       avgJoyScore: metrics.joyAvg,
       avgSadnessScore: metrics.sadnessAvg,
       avgAngerScore: metrics.angerAvg,
@@ -119,7 +119,7 @@ export async function generateWeeklyRecommendations(
       completionRate: 1,
     },
     update: {
-      weekEnd,
+      dayEnd,
       avgJoyScore: metrics.joyAvg,
       avgSadnessScore: metrics.sadnessAvg,
       avgAngerScore: metrics.angerAvg,
@@ -205,8 +205,8 @@ export async function generateWeeklyRecommendations(
       status: 200,
       payload: {
         message: "No matching activities found in library",
-        weekStart,
-        weeklyTrendId: weeklyTrend.id,
+        dayStart,
+        dailyTrendId: dailyTrend.id,
         created: 0,
       },
     };
@@ -215,7 +215,7 @@ export async function generateWeeklyRecommendations(
   await prisma.recommendation.deleteMany({
     where: {
       userId: user.id,
-      weeklyTrendId: weeklyTrend.id,
+      dailyTrendId: dailyTrend.id,
     },
   });
 
@@ -243,7 +243,7 @@ export async function generateWeeklyRecommendations(
     })
     .slice(0, 3);
 
-  const expiresAt = new Date(weekEnd);
+  const expiresAt = new Date(dayEnd);
   const createdRecommendations = [];
 
   for (const [index, ranked] of rankedActivities.entries()) {
@@ -259,7 +259,7 @@ export async function generateWeeklyRecommendations(
     const recommendation = await prisma.recommendation.create({
       data: {
         userId: user.id,
-        weeklyTrendId: weeklyTrend.id,
+        dailyTrendId: dailyTrend.id,
         activityId: activity.activityId,
         activityName: activity.activityName,
         activityDurationMin: activity.durationMin,
@@ -278,21 +278,21 @@ export async function generateWeeklyRecommendations(
   return {
     status: 201,
     payload: {
-      message: "Weekly recommendations generated",
-      weekStart,
-      weeklyTrend,
+      message: "Daily recommendations generated",
+      dayStart,
+      dailyTrend,
       recommendations: createdRecommendations,
     },
   };
 }
 
-export async function listRecommendations(weekStart?: Date) {
+export async function listRecommendations(dayStart?: Date) {
   const recommendations = await prisma.recommendation.findMany({
     where: {
-      ...(weekStart
+      ...(dayStart
         ? {
-            weeklyTrend: {
-              weekStart,
+            dailyTrend: {
+              dayStart,
             },
           }
         : {}),

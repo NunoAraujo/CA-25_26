@@ -44,8 +44,8 @@ export type JournalDetail = {
   energyScore: number | null;
 };
 
-export type WeeklyTrendPoint = {
-  weekStart: string;
+export type DailyTrendPoint = {
+  dayStart: string;
   joy: number;
   sadness: number;
   anger: number;

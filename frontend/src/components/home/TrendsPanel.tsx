@@ -11,9 +11,9 @@ import {
 import {
   deltaDirection,
   formatDelta,
-  formatWeekLabel,
+  formatDayLabel,
 } from "../../lib/homeUtils";
-import { WeeklyTrendPoint } from "../../types/home";
+import { DailyTrendPoint } from "../../types/home";
 
 type TrendDeltaCard = {
   key: string;
@@ -24,17 +24,17 @@ type TrendDeltaCard = {
 };
 
 type TrendsPanelProps = {
-  weeklyTrends: WeeklyTrendPoint[];
-  isLoadingWeeklyTrends: boolean;
-  weeklyTrendsError: string | null;
+  dailyTrends: DailyTrendPoint[];
+  isLoadingDailyTrends: boolean;
+  dailyTrendsError: string | null;
   trendDeltaCards: TrendDeltaCard[];
   onRefresh: () => Promise<void>;
 };
 
 export function TrendsPanel({
-  weeklyTrends,
-  isLoadingWeeklyTrends,
-  weeklyTrendsError,
+  dailyTrends,
+  isLoadingDailyTrends,
+  dailyTrendsError,
   trendDeltaCards,
   onRefresh,
 }: Readonly<TrendsPanelProps>) {
@@ -48,23 +48,23 @@ export function TrendsPanel({
           <p className="text-sm uppercase tracking-[0.3em] text-(--accent-deep)">
             Tendencia emocional
           </p>
-          <h2 className="mt-2 text-2xl font-semibold">Evolucao semanal</h2>
+          <h2 className="mt-2 text-2xl font-semibold">Evolucao diaria</h2>
         </div>
         <button
           className="rounded-full border border-(--line) px-5 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={isLoadingWeeklyTrends}
+          disabled={isLoadingDailyTrends}
           onClick={() => {
             void onRefresh();
           }}
           type="button"
         >
-          {isLoadingWeeklyTrends ? "A atualizar..." : "Atualizar grafico"}
+          {isLoadingDailyTrends ? "A atualizar..." : "Atualizar grafico"}
         </button>
       </div>
 
-      {weeklyTrendsError ? (
+      {dailyTrendsError ? (
         <div className="mt-5 rounded-[1.25rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {weeklyTrendsError}
+          {dailyTrendsError}
         </div>
       ) : null}
 
@@ -98,7 +98,7 @@ export function TrendsPanel({
                   {card.current.toFixed(2)}
                 </p>
                 <p className={`mt-1 text-xs font-semibold ${directionClass}`}>
-                  {marker} {formatDelta(card.delta)} vs. semana anterior
+                  {marker} {formatDelta(card.delta)} vs. dia anterior
                 </p>
               </article>
             );
@@ -106,30 +106,30 @@ export function TrendsPanel({
         </div>
       ) : null}
 
-      {!isLoadingWeeklyTrends && weeklyTrends.length === 0 ? (
+      {!isLoadingDailyTrends && dailyTrends.length === 0 ? (
         <div className="mt-6 rounded-3xl border border-(--line) bg-(--paper-strong) p-5 text-(--ink-soft)">
-          Ainda nao existem dados suficientes para desenhar a tendencia semanal.
+          Ainda nao existem dados suficientes para desenhar a tendencia diaria.
         </div>
       ) : null}
 
-      {weeklyTrends.length > 0 ? (
+      {dailyTrends.length > 0 ? (
         <div className="mt-6 h-80 rounded-3xl border border-(--line) bg-(--paper-strong) p-4">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={weeklyTrends}>
+            <LineChart data={dailyTrends}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="rgba(100,116,139,0.2)"
               />
               <XAxis
-                dataKey="weekStart"
-                tickFormatter={formatWeekLabel}
+                dataKey="dayStart"
+                tickFormatter={formatDayLabel}
                 tick={{ fill: "#64748b", fontSize: 12 }}
               />
               <YAxis domain={[0, 1]} tick={{ fill: "#64748b", fontSize: 12 }} />
               <Tooltip
                 formatter={(value: number) => value.toFixed(2)}
                 labelFormatter={(value: string) =>
-                  `Semana: ${formatWeekLabel(value)}`
+                  `Dia: ${formatDayLabel(value)}`
                 }
               />
               <Legend />

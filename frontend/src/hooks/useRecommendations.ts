@@ -111,14 +111,14 @@ export function useRecommendations(apiBaseUrl: string) {
     }
   }
 
-  async function generateWeeklyRecommendations() {
+  async function generateDailyRecommendations() {
     setIsGeneratingRecommendations(true);
     setRecommendationError(null);
     setRecommendationInfo(null);
 
     try {
       const response = await fetch(
-        `${apiBaseUrl}/recommendations/generate-weekly`,
+        `${apiBaseUrl}/recommendations/generate-daily`,
         {
           method: "POST",
           headers: {
@@ -133,7 +133,7 @@ export function useRecommendations(apiBaseUrl: string) {
         throw new Error(
           payload.message ??
             payload.error ??
-            "Falha ao gerar recomendacoes semanais.",
+            "Falha ao gerar recomendacoes diarias.",
         );
       }
 
@@ -148,9 +148,9 @@ export function useRecommendations(apiBaseUrl: string) {
       setRecommendationError(
         error instanceof Error
           ? error.message
-          : "Falha ao gerar recomendacoes semanais.",
+          : "Falha ao gerar recomendacoes diarias.",
       );
-      toast.error("Falha ao gerar recomendacoes semanais.");
+      toast.error("Falha ao gerar recomendacoes diarias.");
     } finally {
       setIsGeneratingRecommendations(false);
     }
@@ -283,7 +283,7 @@ export function useRecommendations(apiBaseUrl: string) {
     feedbackingRecommendationId,
     isGeneratingRecommendations,
     loadRecommendations,
-    generateWeeklyRecommendations,
+    generateDailyRecommendations,
     completeRecommendation,
     submitRecommendationFeedback,
     setRecommendationIntensityFilter,

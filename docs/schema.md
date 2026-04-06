@@ -7,7 +7,7 @@ This schema is defined in Prisma at `api-node/prisma/schema.prisma`.
 - User
 - Journal
 - ProsodyFeature
-- WeeklyTrend
+- DailyTrend
 - Recommendation
 - JournalSuggestion
 - ActivityLibrary
@@ -32,8 +32,8 @@ All emotion scores are normalized to the [0, 1] range.
 
 - Journal by `(userId, uploadedAt)`
 - Journal by `status`
-- WeeklyTrend by `(userId, weekStart)`
-- Recommendation by `(userId, weeklyTrendId)` and `activityId`
+- DailyTrend by `(userId, dayStart)`
+- Recommendation by `(userId, dailyTrendId)` and `activityId`
 
 ## Notes
 
