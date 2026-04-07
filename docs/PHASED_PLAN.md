@@ -115,30 +115,32 @@ Phase 2 is complete enough to proceed. Remaining work now belongs to Phase 3 imp
 
 ### Status
 
-- [x] 4.1 Initial transcription pipeline started (audio retrieval from MinIO + lightweight fallback transcription for stable local execution).
-- [x] 4.2 Initial prosody extraction implemented (pitch, energy, speech rate, pauses, MFCC, spectral features, jitter/shimmer).
-- [x] 4.3 Initial emotion scoring implemented with heuristic Portuguese text/prosody fusion (HuggingFace model integration pending).
-- [x] 4.4 Callback flow now persists computed transcription/emotion/prosody payload from Python to Node.
+- [x] 4.1 Real Whisper ASR pipeline implemented via HuggingFace `transformers` (lazy-loaded, `openai/whisper-small` default, fallback on init failure).
+- [x] 4.2 Real prosody extraction implemented (pitch, energy, speech rate, pauses, MFCC, spectral features, jitter/shimmer, voiced ratio).
+- [x] 4.3 Multimodal emotion classification implemented: zero-shot XLM-RoBERTa for text (`TEXT_EMOTION_MODEL_ID`) + wav2vec2 for audio (`AUDIO_EMOTION_MODEL_ID`), both with fallback.
+- [x] 4.4 Multimodal fusion (semantic 70% + audio 30%) implemented; callback now includes `semanticScores`, `prosodyScores`, `semanticWeight`, `prosodyWeight`, `modelVersion`.
 
-Phase 4 has started with a working end-to-end analysis pipeline slice. Model quality hardening, Whisper/HuggingFace integration, and richer classification calibration remain for next increments.
+Phase 4 complete. The analysis pipeline is fully multimodal.
 
 ### Implemented Notes
 
-- Python analysis service now downloads audio directly from MinIO using `audioObjectKey`.
-- Real prosody extraction is now active (pitch, energy, speech rate, pause ratio, MFCC, spectral features, jitter/shimmer, voiced ratio).
-- Callback payload now persists computed prosody and a generated transcription/emotion vector into Node/PostgreSQL.
-- End-to-end validation confirmed Phase 4 happy path reaches `complete` with persisted prosody and score fields.
-- Lightweight transcription fallback is currently used for stability in local Docker while full Whisper/HuggingFace model integration is finalized.
-- Node callback route now ignores duplicate callbacks for already-finalized journals and rejects conflicting late callbacks.
-- Added first `ActivityLibrary` seed dataset and a dedicated `seed:activities` command in the Node API.
-- Seed command validated as idempotent (`created: 5` on first run, `updated: 5` on second run).
+- Python analysis service downloads audio directly from MinIO using `audioObjectKey`.
+- Real prosody extraction is active (pitch, energy, speech rate, pause ratio, MFCC, spectral features, jitter/shimmer, voiced ratio).
+- Transcription: `transcription.py` lazy-loads a Whisper ASR pipeline (`openai/whisper-small` default). Falls back to lightweight generated transcription if transformers init fails.
+- Text emotion: `text_emotion_model.py` lazy-loads zero-shot classification pipeline (`joeddav/xlm-roberta-large-xnli` default). Falls back to Portuguese lexical scoring.
+- Audio emotion: `classify_audio_emotions()` in `prosody.py` lazy-loads wav2vec2 audio classification pipeline (`ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition` default). Falls back to prosody-feature heuristics.
+- Fusion: `_fuse_emotion_scores()` in `analysis_tasks.py` applies `SEMANTIC_WEIGHT=0.7 / PROSODY_WEIGHT=0.3`; model version reported as `"0.2.0-multimodal"`.
+- Callback payload extended: `semanticScores`, `prosodyScores`, `semanticWeight`, `prosodyWeight`, `modelVersion` added to response and persisted in Node/PostgreSQL.
+- Dockerfile bakes thread-limiting environment variables (`OPENBLAS_NUM_THREADS=1`, `OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, `TOKENIZERS_PARALLELISM=false`) to prevent OpenBLAS/OpenMP hangs in Docker.
+- Node callback route ignores duplicate callbacks for already-finalized journals; extended `callbackSchema` (Joi) now validates all new fields.
+- `ActivityLibrary` seed dataset active with idempotent `seed:activities` command.
 
 ### 4.1 Transcription Service
 
-- OpenAI Whisper (tiny model for MVP speed)
-- Portuguese-first language support (pt-BR)
+- Whisper ASR via HuggingFace `transformers` (lazy-loaded, `WHISPER_MODEL_ID` env var, default `openai/whisper-small`)
+- Portuguese-first language support (pt-BR / pt-PT)
 - Audio download from MinIO
-- Error handling and timeout management
+- Graceful fallback when model init fails
 
 ### 4.2 Prosody Feature Extraction
 
@@ -146,21 +148,19 @@ Phase 4 has started with a working end-to-end analysis pipeline slice. Model qua
 - Energy metrics (intensity, variation)
 - Speech rate and pause ratio calculation
 - Spectral features (MFCC, centroid)
-- Audio quality validation (SNR threshold)
+- Jitter, shimmer, voiced ratio
 
 ### 4.3 Emotion Classification
 
-- HuggingFace multilingual sentiment model
-- Portuguese transcript analysis
-- Mapping to 6-dimension emotion vector
-- Confidence scoring
+- **Text**: Zero-shot classification via `transformers` pipeline (multilingual XLM-RoBERTa default); Portuguese lexical fallback
+- **Audio**: wav2vec2 audio classification pipeline; prosody-heuristic fallback
+- Both models configurable via `TEXT_EMOTION_MODEL_ID` / `AUDIO_EMOTION_MODEL_ID` env vars
 
 ### 4.4 Fusion and Callback
 
-- Combine prosody (30%) + semantic (70%) signals
-- Normalize emotion outputs to 0..1 scale
-- Callback to Node with results
-- Durable persistence through controlled API
+- `_fuse_emotion_scores()`: semantic × 0.7 + audio × 0.3, clamped to 0..1
+- Intermediate scores (`semanticScores`, `prosodyScores`) and metadata (`semanticWeight`, `prosodyWeight`, `modelVersion`) included in callback
+- Durable persistence through Node callback endpoint
 
 ---
 
@@ -179,16 +179,17 @@ Phase 4 has started with a working end-to-end analysis pipeline slice. Model qua
 - Personalization heuristics based on user profile
 - Confidence scoring and ranking
 - Expected impact quantification
+- Optional LLM enrichment via HuggingFace Inference API (Portuguese rationale, impact metric, confidence boost)
+- Graceful deterministic fallback when `HF_API_TOKEN` not configured
 
 ### Phase 5 Progress Notes
 
-- Added initial `POST /api/recommendations/generate-weekly` endpoint to compute weekly trend snapshots from completed journals and generate ranked recommendations from seeded `ActivityLibrary` entries.
-- Generation flow now persists `WeeklyTrend` (upsert) and recreates week-scoped `Recommendation` records for deterministic reruns.
-- Confidence, rationale, and expected impact fields are now populated with a first rule-based baseline.
-- Endpoint runtime validation completed (`/api/recommendations/generate-weekly` returns persisted trend + generated recommendations).
-- Recommendation selection now applies contraindication filtering inferred from recent transcription signals and re-ranks candidates with recent positive/negative feedback history.
-- Added `POST /api/recommendations/:recommendationId/complete` endpoint to persist recommendation completion timestamps (`completedAt`) with optional client-provided completion time.
-- Weekly recommendation ranking now incorporates recent completion history as an additional positive signal alongside explicit feedback.
+- Migrated from weekly to **daily** aggregation (2026-04-06): `WeeklyTrend` → `DailyTrend`, `/api/trends/daily`, `/api/recommendations/generate-daily`; Prisma migration history consolidated into single baseline (`20260407_baseline_schema`).
+- Daily generation flow persists `DailyTrend` (upsert) and recreates day-scoped `Recommendation` records for deterministic reruns.
+- Confidence, rationale, and expected impact fields populated with rule-based baseline.
+- Recommendation selection applies contraindication filtering and re-ranks with positive/negative feedback and completion history.
+- Added `POST /api/recommendations/:recommendationId/complete` endpoint (optional client-provided `completedAt`).
+- **LLM Enrichment (2026-04-07)**: Added optional `llmRecommendationService.ts` that calls HuggingFace Inference API (default `mistralai/Mistral-7B-Instruct-v0.3`) to generate Portuguese rationale, `expectedImpactMetric`, `expectedImpactDelta`, and `confidenceBoost` for each ranked activity. Falls back to deterministic rationale when `HF_API_TOKEN` is not set. API/worker services now accept `HF_API_TOKEN`, `HF_TEXT_GEN_MODEL`, and `HF_INFERENCE_URL` env vars.
 
 ### 5.3 Persistence & Exposure
 

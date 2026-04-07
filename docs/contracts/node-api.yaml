@@ -94,8 +94,32 @@ paths:
                   type: string
                 emotionVector:
                   type: object
+                  description: Fused emotion scores (0–1) for joy, sadness, anger, anxiety, calm, energy
+                semanticScores:
+                  type: object
+                  description: Raw text-model emotion scores before fusion
+                prosodyScores:
+                  type: object
+                  description: Raw audio-model emotion scores before fusion
                 prosodyFeatures:
                   type: object
+                  description: Low-level prosody features (pitch, energy, MFCC, etc.)
+                semanticWeight:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                  description: Fusion weight applied to semantic scores (default 0.7)
+                prosodyWeight:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                  description: Fusion weight applied to audio emotion scores (default 0.3)
+                modelVersion:
+                  type: string
+                  maxLength: 64
+                  description: Analysis pipeline version (e.g. "0.2.0-multimodal")
+                errorMessage:
+                  type: string
       responses:
         "200":
           description: Callback accepted

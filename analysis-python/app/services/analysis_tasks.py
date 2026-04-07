@@ -5,11 +5,28 @@ from typing import Any
 from app.models.schemas import AnalysisRequest
 from app.models.task_store import task_store
 from app.services.callbacks import notify_node_callback
-from app.services.emotions import classify_emotions
 from app.services.logging_config import logger
-from app.services.prosody import extract_prosody_features
+from app.services.prosody import classify_audio_emotions, extract_prosody_features
 from app.services.storage import fetch_audio_to_tempfile
+from app.services.text_emotion_model import analyze_text_emotions
 from app.services.transcription import transcribe_audio
+
+SEMANTIC_WEIGHT = 0.7
+PROSODY_WEIGHT = 0.3
+MODEL_VERSION = "0.2.0-multimodal"
+
+
+def _fuse_emotion_scores(
+    semantic_scores: dict[str, float],
+    prosody_scores: dict[str, float],
+) -> dict[str, float]:
+    labels = ["joy", "sadness", "anger", "anxiety", "calm", "energy"]
+    result: dict[str, float] = {}
+    for label in labels:
+        semantic = float(semantic_scores.get(label, 0.0))
+        prosody = float(prosody_scores.get(label, 0.0))
+        result[label] = max(0.0, min(1.0, (semantic * SEMANTIC_WEIGHT) + (prosody * PROSODY_WEIGHT)))
+    return result
 
 
 def queue_task(task_id: str) -> None:
@@ -19,6 +36,8 @@ def queue_task(task_id: str) -> None:
         "progress": 0,
         "transcription": None,
         "emotionVector": None,
+        "semanticScores": None,
+        "prosodyScores": None,
         "prosodyFeatures": None,
         "errorMessage": None,
     }
@@ -36,6 +55,8 @@ async def run_analysis_task(task_id: str, request: AnalysisRequest) -> None:
         "progress": 10,
         "transcription": None,
         "emotionVector": None,
+        "semanticScores": None,
+        "prosodyScores": None,
         "prosodyFeatures": None,
         "errorMessage": None,
     }
@@ -54,14 +75,19 @@ async def run_analysis_task(task_id: str, request: AnalysisRequest) -> None:
             temp_audio_path,
             request.language,
         )
-        task_store[task_id]["progress"] = 70
+        task_store[task_id]["progress"] = 55
 
         prosody_features = await asyncio.to_thread(extract_prosody_features, temp_audio_path)
-        emotion_vector = await asyncio.to_thread(
-            classify_emotions,
-            transcription,
+        prosody_scores = await asyncio.to_thread(
+            classify_audio_emotions,
+            temp_audio_path,
             prosody_features,
         )
+        semantic_scores = await asyncio.to_thread(
+            analyze_text_emotions,
+            transcription,
+        )
+        emotion_vector = _fuse_emotion_scores(semantic_scores, prosody_scores)
 
         task_store[task_id] = {
             "taskId": task_id,
@@ -69,6 +95,8 @@ async def run_analysis_task(task_id: str, request: AnalysisRequest) -> None:
             "progress": 100,
             "transcription": transcription,
             "emotionVector": emotion_vector,
+            "semanticScores": semantic_scores,
+            "prosodyScores": prosody_scores,
             "prosodyFeatures": prosody_features,
             "errorMessage": None,
         }
@@ -80,7 +108,12 @@ async def run_analysis_task(task_id: str, request: AnalysisRequest) -> None:
                     "status": "complete",
                     "transcription": transcription,
                     "emotionVector": emotion_vector,
+                    "semanticScores": semantic_scores,
+                    "prosodyScores": prosody_scores,
                     "prosodyFeatures": prosody_features,
+                    "semanticWeight": SEMANTIC_WEIGHT,
+                    "prosodyWeight": PROSODY_WEIGHT,
+                    "modelVersion": MODEL_VERSION,
                 },
             )
             logger.info(
@@ -102,6 +135,8 @@ async def run_analysis_task(task_id: str, request: AnalysisRequest) -> None:
             "progress": 100,
             "transcription": None,
             "emotionVector": None,
+            "semanticScores": None,
+            "prosodyScores": None,
             "prosodyFeatures": None,
             "errorMessage": message,
         }

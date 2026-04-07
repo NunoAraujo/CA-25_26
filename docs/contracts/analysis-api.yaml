@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Audio Journaling Analysis API
-  version: 0.1.0
+  version: 0.2.0
 servers:
   - url: http://localhost:8000
 paths:
@@ -57,3 +57,63 @@ paths:
       responses:
         "200":
           description: Status response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  taskId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [queued, transcribing, analyzing, complete, failed]
+                  progress:
+                    type: integer
+                    minimum: 0
+                    maximum: 100
+                  transcription:
+                    type: string
+                    nullable: true
+                  emotionVector:
+                    $ref: "#/components/schemas/EmotionScores"
+                  semanticScores:
+                    $ref: "#/components/schemas/EmotionScores"
+                    description: Raw text-model emotion scores before fusion
+                  prosodyScores:
+                    $ref: "#/components/schemas/EmotionScores"
+                    description: Raw audio-model emotion scores before fusion
+                  prosodyFeatures:
+                    type: object
+                    description: Low-level prosody features (pitch, energy, MFCC, etc.)
+                  errorMessage:
+                    type: string
+                    nullable: true
+components:
+  schemas:
+    EmotionScores:
+      type: object
+      properties:
+        joy:
+          type: number
+          minimum: 0
+          maximum: 1
+        sadness:
+          type: number
+          minimum: 0
+          maximum: 1
+        anger:
+          type: number
+          minimum: 0
+          maximum: 1
+        anxiety:
+          type: number
+          minimum: 0
+          maximum: 1
+        calm:
+          type: number
+          minimum: 0
+          maximum: 1
+        energy:
+          type: number
+          minimum: 0
+          maximum: 1

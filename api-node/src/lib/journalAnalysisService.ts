@@ -13,7 +13,26 @@ type CallbackPayload = {
     calm?: number;
     energy?: number;
   };
+  semanticScores?: {
+    joy?: number;
+    sadness?: number;
+    anger?: number;
+    anxiety?: number;
+    calm?: number;
+    energy?: number;
+  };
+  prosodyScores?: {
+    joy?: number;
+    sadness?: number;
+    anger?: number;
+    anxiety?: number;
+    calm?: number;
+    energy?: number;
+  };
   prosodyFeatures?: Record<string, unknown>;
+  semanticWeight?: number;
+  prosodyWeight?: number;
+  modelVersion?: string;
   errorMessage?: string;
 };
 
@@ -56,6 +75,9 @@ export async function processJournalAnalysisCallback(
         status: value.status,
         transcription: value.transcription ?? null,
         errorMessage: value.errorMessage ?? null,
+        semanticWeight: value.semanticWeight ?? undefined,
+        prosodyWeight: value.prosodyWeight ?? undefined,
+        modelVersion: value.modelVersion ?? undefined,
         joyScore: emotionVector.joy ?? null,
         sadnessScore: emotionVector.sadness ?? null,
         angerScore: emotionVector.anger ?? null,

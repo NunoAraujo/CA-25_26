@@ -1,7 +1,70 @@
+import os
+import threading
 from typing import Any
 
 import librosa
 import numpy as np
+
+from app.services.logging_config import logger
+
+_AUDIO_EMOTION_PIPELINE = None
+_AUDIO_EMOTION_LOCK = threading.Lock()
+_AUDIO_EMOTION_FAILED = False
+
+
+def _clamp01(value: float) -> float:
+    return float(max(0.0, min(1.0, value)))
+
+
+def _load_audio_emotion_pipeline():
+    global _AUDIO_EMOTION_PIPELINE, _AUDIO_EMOTION_FAILED
+
+    if _AUDIO_EMOTION_PIPELINE is not None or _AUDIO_EMOTION_FAILED:
+        return _AUDIO_EMOTION_PIPELINE
+
+    with _AUDIO_EMOTION_LOCK:
+        if _AUDIO_EMOTION_PIPELINE is not None or _AUDIO_EMOTION_FAILED:
+            return _AUDIO_EMOTION_PIPELINE
+
+        try:
+            from transformers import pipeline
+
+            model_id = os.getenv(
+                "AUDIO_EMOTION_MODEL_ID",
+                "ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition",
+            )
+            _AUDIO_EMOTION_PIPELINE = pipeline(
+                task="audio-classification",
+                model=model_id,
+                top_k=8,
+                device=-1,
+            )
+            logger.info("Loaded audio emotion model: %s", model_id)
+        except Exception as error:
+            _AUDIO_EMOTION_FAILED = True
+            logger.warning(
+                "Failed to initialize audio emotion model, fallback enabled: %s",
+                str(error),
+            )
+
+    return _AUDIO_EMOTION_PIPELINE
+
+
+def _map_audio_label(label: str) -> str | None:
+    normalized = label.strip().lower()
+
+    if any(key in normalized for key in ["happy", "joy", "positive", "excited"]):
+        return "joy"
+    if any(key in normalized for key in ["sad", "sadness"]):
+        return "sadness"
+    if any(key in normalized for key in ["angry", "anger", "frustrat"]):
+        return "anger"
+    if any(key in normalized for key in ["fear", "anx", "nerv", "stress"]):
+        return "anxiety"
+    if any(key in normalized for key in ["calm", "neutral", "relax"]):
+        return "calm"
+
+    return None
 
 
 def extract_prosody_features(audio_path: str) -> dict[str, Any]:
@@ -81,3 +144,50 @@ def extract_prosody_features(audio_path: str) -> dict[str, Any]:
         "shimmer": shimmer,
         "voicedRatio": voiced_ratio,
     }
+
+
+def classify_audio_emotions(
+    audio_path: str,
+    prosody_features: dict[str, Any],
+) -> dict[str, float]:
+    model = _load_audio_emotion_pipeline()
+    scores = {
+        "joy": 0.0,
+        "sadness": 0.0,
+        "anger": 0.0,
+        "anxiety": 0.0,
+        "calm": 0.0,
+        "energy": 0.0,
+    }
+
+    if model is not None:
+        try:
+            predictions = model(audio_path)
+            for prediction in predictions:
+                label = _map_audio_label(str(prediction.get("label", "")))
+                if not label:
+                    continue
+                score = _clamp01(float(prediction.get("score", 0.0)))
+                scores[label] = max(scores[label], score)
+        except Exception as error:
+            logger.warning("Audio emotion inference failed, using fallback: %s", str(error))
+
+    mean_energy = float(prosody_features.get("meanEnergy", 0.0))
+    speech_rate = float(prosody_features.get("speechRate", 0.0))
+    pause_ratio = float(prosody_features.get("pauseRatio", 0.0))
+    pitch_std = float(prosody_features.get("pitchStdDev", 0.0))
+
+    fallback_energy = _clamp01((mean_energy * 1.8) + (speech_rate / 8.0))
+    fallback_anxiety = _clamp01((pause_ratio * 1.15) + (pitch_std / 250.0))
+    fallback_sadness = _clamp01(0.15 + pause_ratio * 0.45)
+    fallback_anger = _clamp01(0.1 + pitch_std / 300.0)
+    fallback_joy = _clamp01(0.2 + (1.0 - pause_ratio) * 0.25)
+
+    scores["joy"] = max(scores["joy"], fallback_joy * 0.5)
+    scores["sadness"] = max(scores["sadness"], fallback_sadness * 0.6)
+    scores["anger"] = max(scores["anger"], fallback_anger * 0.6)
+    scores["anxiety"] = max(scores["anxiety"], fallback_anxiety * 0.65)
+    scores["calm"] = _clamp01(max(scores["calm"], 0.55 - scores["anxiety"] * 0.4))
+    scores["energy"] = _clamp01(max(scores["energy"], fallback_energy * 0.8))
+
+    return {key: _clamp01(value) for key, value in scores.items()}

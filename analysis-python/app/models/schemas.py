@@ -26,6 +26,8 @@ class StatusResponse(BaseModel):
     progress: int = 0
     transcription: str | None = None
     emotionVector: dict | None = None
+    semanticScores: dict | None = None
+    prosodyScores: dict | None = None
     prosodyFeatures: dict | None = None
     errorMessage: str | None = None
 

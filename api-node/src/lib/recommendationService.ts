@@ -9,6 +9,7 @@ import {
   recommendationRationale,
   startOfDayUTC,
 } from "./recommendationAnalytics";
+import { generateLlmRecommendationEnhancements } from "./llmRecommendationService";
 
 export type GenerateDailyRecommendationsResult = {
   status: 200 | 201;
@@ -243,17 +244,32 @@ export async function generateDailyRecommendations(
     })
     .slice(0, 3);
 
+  const llmEnhancements = await generateLlmRecommendationEnhancements({
+    primaryEmotion,
+    fallbackEmotion,
+    metrics,
+    activities: rankedActivities.map((ranked) => ({
+      activityId: ranked.activity.activityId,
+      activityName: ranked.activity.activityName,
+      intensity: ranked.activity.intensity,
+      durationMin: ranked.activity.durationMin,
+      targetEmotions: ranked.activity.targetEmotions,
+    })),
+  });
+
   const expiresAt = new Date(dayEnd);
   const createdRecommendations = [];
 
   for (const [index, ranked] of rankedActivities.entries()) {
     const activity = ranked.activity;
+    const llm = llmEnhancements.get(activity.activityId);
     const confidence = clamp01(
       emotionPriority[0].score -
         index * 0.08 +
         (0.5 - Math.min(metrics.volatility, 0.5)) * 0.1 +
         ranked.feedbackScore * 0.04 +
-        ranked.completionScore * 0.03,
+        ranked.completionScore * 0.03 +
+        (llm?.confidenceBoost ?? 0),
     );
 
     const recommendation = await prisma.recommendation.create({
@@ -264,10 +280,11 @@ export async function generateDailyRecommendations(
         activityName: activity.activityName,
         activityDurationMin: activity.durationMin,
         activityIntensity: activity.intensity,
-        rationale: recommendationRationale(primaryEmotion),
+        rationale: llm?.rationale ?? recommendationRationale(primaryEmotion),
         confidence,
-        expectedImpactMetric: primaryEmotion,
-        expectedImpactDelta: Number((confidence * 0.25).toFixed(3)),
+        expectedImpactMetric: llm?.expectedImpactMetric ?? primaryEmotion,
+        expectedImpactDelta:
+          llm?.expectedImpactDelta ?? Number((confidence * 0.25).toFixed(3)),
         expiresAt,
       },
     });

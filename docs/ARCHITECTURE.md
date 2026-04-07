@@ -20,10 +20,13 @@ The Audio Journaling MVP uses a **three-tier microservices-lite architecture** o
 
 3. **Analysis Engine (Python + FastAPI)**
    - Accepts audio analysis jobs from Node API
-   - Runs Whisper transcription (Portuguese-first)
-   - Extracts prosody features and semantic emotions
-   - Fuses results and callbacks to Node
-   - Isolated from frontend to optimize for ML model loading
+   - Runs Whisper ASR transcription via HuggingFace `transformers` pipeline (Portuguese-first, lazy-loaded with fallback)
+   - Classifies text emotions using zero-shot XLM-RoBERTa (`TEXT_EMOTION_MODEL_ID`) with lexical fallback
+   - Classifies audio emotions using wav2vec2 speech emotion recognition (`AUDIO_EMOTION_MODEL_ID`) with prosody-heuristic fallback
+   - Extracts low-level prosody features (pitch, energy, speech rate, MFCC, spectral, jitter/shimmer)
+   - Fuses semantic scores (70%) + audio emotion scores (30%) into final emotionVector
+   - Sends enriched callback including intermediate scores, fusion weights, and model version
+   - Isolated from frontend to optimize for ML model loading; thread-limiting env vars prevent OpenBLAS/OpenMP hangs
 
 4. **Data Layer**
    - PostgreSQL: core relational data (journals, trends, recommendations)
@@ -45,13 +48,15 @@ Node enqueues job → Bull queue (Redis)
          ↓
 Analysis worker consumes job, calls Python service
          ↓
-Python: Whisper → prosody extract → emotion classify → fuse
+Python: Whisper ASR → prosody extract → text emotion (XLM-RoBERTa) + audio emotion (wav2vec2) → fuse (0.7/0.3)
          ↓
 Python POSTs results to Node callback endpoint
          ↓
-Node updates Journal record with emotions + prosody features
+Node updates Journal record with emotions, prosody features, and model metadata
          ↓
-Daily scheduler computes trends and recommendations
+Daily scheduler computes trends; LLM enriches recommendation rationale (optional)
+         ↓
+Recommendation generation: rule-based ranking + optional HF LLM rationale/impact
          ↓
 Frontend polls GET /api/trends/daily and /api/recommendations
          ↓
@@ -60,30 +65,32 @@ Dashboard displays charts + activity suggestions
 
 ## Technology Stack
 
-| Layer    | Component        | Technology                      |
-| -------- | ---------------- | ------------------------------- |
-| Frontend | Framework        | Next.js 15 + TypeScript         |
-|          | Build Tool       | Next.js runtime/build pipeline  |
-|          | Styling          | Tailwind CSS 4                  |
-|          | State            | Zustand                         |
-|          | Charts           | Recharts                        |
-|          | HTTP             | Axios + React Query             |
-| API      | Runtime          | Node.js 20 LTS                  |
-|          | Framework        | Express 4                       |
-|          | Language         | TypeScript 5                    |
-|          | ORM              | Prisma 5                        |
-|          | Queue            | Bull 4 (Redis backend)          |
-|          | Logging          | Pino 8                          |
-| Analysis | Runtime          | Python 3.11                     |
-|          | Framework        | FastAPI 0.109                   |
-|          | Transcription    | OpenAI Whisper                  |
-|          | Audio Processing | librosa 0.10                    |
-|          | ML               | transformers 4.37 (HuggingFace) |
-| Data     | Database         | PostgreSQL 16                   |
-|          | Cache/Queue      | Redis 7                         |
-|          | Storage          | MinIO (S3-compatible)           |
-| Infra    | Orchestration    | Docker Compose 3.9              |
-|          | Containers       | Docker                          |
+| Layer    | Component        | Technology                                                                                    |
+| -------- | ---------------- | --------------------------------------------------------------------------------------------- |
+| Frontend | Framework        | Next.js 15 + TypeScript                                                                       |
+|          | Build Tool       | Next.js runtime/build pipeline                                                                |
+|          | Styling          | Tailwind CSS 4                                                                                |
+|          | State            | Zustand                                                                                       |
+|          | Charts           | Recharts                                                                                      |
+|          | HTTP             | Axios + React Query                                                                           |
+| API      | Runtime          | Node.js 20 LTS                                                                                |
+|          | Framework        | Express 4                                                                                     |
+|          | Language         | TypeScript 5                                                                                  |
+|          | ORM              | Prisma 5                                                                                      |
+|          | Queue            | Bull 4 (Redis backend)                                                                        |
+|          | Logging          | Pino 8                                                                                        |
+| Analysis | Runtime          | Python 3.11                                                                                   |
+|          | Framework        | FastAPI 0.109                                                                                 |
+|          | Transcription    | Whisper via HF transformers (lazy, `openai/whisper-small` default)                            |
+|          | Audio Processing | librosa 0.10                                                                                  |
+|          | Text Emotion     | Zero-shot XLM-RoBERTa (`joeddav/xlm-roberta-large-xnli` default)                              |
+|          | Audio Emotion    | wav2vec2 speech emotion (`ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition` default) |
+|          | ML Runtime       | transformers 4.37 (HuggingFace)                                                               |
+| Data     | Database         | PostgreSQL 16                                                                                 |
+|          | Cache/Queue      | Redis 7                                                                                       |
+|          | Storage          | MinIO (S3-compatible)                                                                         |
+| Infra    | Orchestration    | Docker Compose 3.9                                                                            |
+|          | Containers       | Docker                                                                                        |
 
 ## Database Schema (Phase 2 Detail)
 
@@ -101,22 +108,25 @@ Dashboard displays charts + activity suggestions
 
 - **Emotion Scores** – Normalized 0..1 for: joy, sadness, anger, anxiety, calm, energy
 - **Status Lifecycle** – queued → transcribing → analyzing → complete → failed
-- **Metadata** – Timestamps, user feedback, model version, trace IDs
+- **Metadata** – Timestamps, user feedback, model version (`modelVersion`), fusion weights (`semanticWeight`, `prosodyWeight`), trace IDs
+- **Intermediate Scores** – `semanticScores` (text model output) and `prosodyScores` (audio model output) stored for debugging and re-weighting
 
 ## API Contracts (Phase 2 Detail)
 
 ### Node.js Frontend API
 
 ```
-POST   /api/journals                  # Upload audio
-GET    /api/journals                  # List entries
-GET    /api/journals/{id}             # Get entry details
-DELETE /api/journals/{id}             # Delete entry
-GET    /api/journals/{id}/status      # Poll job status
-GET    /api/trends/daily              # Daily emotion evolution
-GET    /api/recommendations           # Get activities
-POST   /api/recommendations/{id}/feedback # Rate recommendation
-GET    /api/health                    # Service health
+POST   /api/journals                           # Upload audio
+GET    /api/journals                           # List entries
+GET    /api/journals/{id}                      # Get entry details
+DELETE /api/journals/{id}                      # Delete entry
+GET    /api/journals/{id}/status               # Poll job status
+GET    /api/trends/daily                       # Daily emotion evolution
+GET    /api/recommendations                    # Get activities
+POST   /api/recommendations/generate-daily     # Generate daily recommendations
+POST   /api/recommendations/{id}/feedback      # Rate recommendation
+POST   /api/recommendations/{id}/complete      # Mark recommendation done
+GET    /api/health                             # Service health
 ```
 
 ### Python Analysis API (Node calling)
@@ -128,15 +138,30 @@ POST   /api/journals/{journalId}/analysis-callback  # Python posts results back
 GET    /health                        # Service health
 ```
 
+#### Callback payload fields (`analysis-python` → `api-node`)
+
+| Field             | Type                   | Description                                                               |
+| ----------------- | ---------------------- | ------------------------------------------------------------------------- |
+| `status`          | `"complete"\|"failed"` | Terminal job status                                                       |
+| `transcription`   | `string`               | Whisper ASR transcript                                                    |
+| `emotionVector`   | `object`               | Fused emotion scores (0–1) for joy, sadness, anger, anxiety, calm, energy |
+| `semanticScores`  | `object`               | Raw text-model emotion scores before fusion                               |
+| `prosodyScores`   | `object`               | Raw audio-model emotion scores before fusion                              |
+| `prosodyFeatures` | `object`               | Low-level prosody features (pitch, energy, MFCC, etc.)                    |
+| `semanticWeight`  | `number`               | Fusion weight applied to semantic scores (default 0.7)                    |
+| `prosodyWeight`   | `number`               | Fusion weight applied to prosody/audio scores (default 0.3)               |
+| `modelVersion`    | `string`               | Pipeline version identifier (e.g. `"0.2.0-multimodal"`)                   |
+| `errorMessage`    | `string`               | Present only when `status=failed`                                         |
+
 ## MVP Boundaries
 
 ### Included
 
 - Single-user journaling (no auth)
-- Portuguese-first transcription and emotion analysis
+- Portuguese-first transcription (Whisper) and multimodal emotion analysis (text + audio models)
 - Local Docker Compose stack for development
 - Audio-only input (no text entries)
-- Basic heuristic-based recommendations (not ML-trained)
+- Rule-based recommendation ranking with optional LLM rationale enrichment (HF Inference API)
 - Full Docker containerization
 
 ### Excluded
@@ -194,14 +219,17 @@ GET    /health                        # Service health
 3. **Bull queue for async jobs**
    - Rationale: Proven resilience, retry/backoff logic, job persistence; simpler than Celery for MVP scale.
 
-4. **Prosody + semantic fusion (30/70 split)**
-   - Rationale: Semantic signals more reliable for short clips; prosody adds accent/dialect robustness. Tuning weights in Phase 5.
+4. **Multimodal fusion (semantic 70% + audio emotion 30%)**
+   - Rationale: Semantic text signals are more reliable for short clips; audio emotion model adds accent/dialect robustness and non-verbal cues. Weights are configurable constants (`SEMANTIC_WEIGHT`, `PROSODY_WEIGHT`) and can be tuned independently. Intermediate scores (`semanticScores`, `prosodyScores`) are stored for traceability and future re-weighting.
 
 5. **Daily aggregation**
    - Rationale: Improves granularity and responsiveness for trend evolution and recommendation generation.
 
 6. **No ML fine-tuning in MVP**
    - Rationale: Simplifies deployment; HuggingFace pretrained models sufficient for POC. User feedback collected for future training.
+
+7. **Optional LLM recommendation enrichment**
+   - Rationale: When `HF_API_TOKEN` is set, generation calls HuggingFace Inference API (default: `mistralai/Mistral-7B-Instruct-v0.3`) to produce Portuguese rationale and impact estimates. Falls back to deterministic rule-based rationale when token is absent, keeping the system fully functional without external API access.
 
 ## Monitoring & Observability
 

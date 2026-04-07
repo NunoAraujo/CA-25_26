@@ -2,6 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+ENV PYTHONUNBUFFERED=1
+ENV OPENBLAS_NUM_THREADS=1
+ENV OMP_NUM_THREADS=1
+ENV MKL_NUM_THREADS=1
+ENV TOKENIZERS_PARALLELISM=false
+
 # Install system dependencies for audio processing
 RUN apt-get update && apt-get install -y \
     ffmpeg \
