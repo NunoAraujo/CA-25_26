@@ -51,9 +51,16 @@ def transcribe_audio(audio_path: str, language: str) -> str:
 
     if asr is not None:
         try:
+            # Load audio to check duration for long-form handling
+            y, sr = librosa.load(audio_path, sr=16000, mono=True)
+            duration = float(librosa.get_duration(y=y, sr=sr))
+            
+            # Long-form audio (>30s) requires return_timestamps=True
+            return_timestamps = duration > 30
+            
             result = asr(
                 audio_path,
-                return_timestamps=False,
+                return_timestamps=return_timestamps,
                 generate_kwargs={
                     "task": "transcribe",
                     "language": _normalize_language(language),

@@ -1,5 +1,6 @@
 import os
 import threading
+import unicodedata
 from importlib import import_module
 from collections import Counter
 
@@ -13,7 +14,7 @@ _LEXICON = {
         "alegre",
         "contente",
         "grato",
-        "gratid",
+        "gratidao",
         "esperanca",
         "otimo",
         "bom",
@@ -84,7 +85,9 @@ def _clamp01(value: float) -> float:
 
 
 def _tokenize(text: str) -> list[str]:
-    sanitized = "".join(ch.lower() if ch.isalnum() else " " for ch in text)
+    normalized = unicodedata.normalize("NFD", text)
+    without_marks = "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn")
+    sanitized = "".join(ch.lower() if ch.isalnum() else " " for ch in without_marks)
     return [token for token in sanitized.split() if token]
 
 
@@ -104,6 +107,35 @@ def _lexical_scores(text: str) -> dict[str, float]:
     return scores
 
 
+def _load_zero_shot_tokenizer(transformers, model_id: str):
+    auto_tokenizer = getattr(transformers, "AutoTokenizer")
+
+    if "xlm-roberta" in model_id.lower():
+        xlm_roberta_fast_tokenizer = getattr(transformers, "XLMRobertaTokenizerFast")
+        try:
+            return xlm_roberta_fast_tokenizer.from_pretrained(model_id)
+        except Exception as error:
+            logger.warning(
+                "XLMRobertaTokenizerFast failed for %s, retrying with AutoTokenizer: %s",
+                model_id,
+                str(error),
+            )
+
+    try:
+        return auto_tokenizer.from_pretrained(model_id, use_fast=False)
+    except Exception as error:
+        if "xlm-roberta" not in model_id.lower():
+            raise error
+
+        xlm_roberta_tokenizer = getattr(transformers, "XLMRobertaTokenizer")
+        logger.warning(
+            "AutoTokenizer failed for %s, retrying with XLMRobertaTokenizer: %s",
+            model_id,
+            str(error),
+        )
+        return xlm_roberta_tokenizer.from_pretrained(model_id)
+
+
 def _load_zero_shot_pipeline():
     global _ZERO_SHOT_PIPELINE, _ZERO_SHOT_FAILED
 
@@ -115,15 +147,20 @@ def _load_zero_shot_pipeline():
             return _ZERO_SHOT_PIPELINE
 
         try:
-            pipeline = getattr(import_module("transformers"), "pipeline")
+            transformers = import_module("transformers")
+            pipeline = getattr(transformers, "pipeline")
+            auto_model = getattr(transformers, "AutoModelForSequenceClassification")
 
             model_id = os.getenv(
                 "TEXT_EMOTION_MODEL_ID",
                 "joeddav/xlm-roberta-large-xnli",
             )
+            tokenizer = _load_zero_shot_tokenizer(transformers, model_id)
+            model = auto_model.from_pretrained(model_id)
             _ZERO_SHOT_PIPELINE = pipeline(
                 "zero-shot-classification",
-                model=model_id,
+                model=model,
+                tokenizer=tokenizer,
                 device=-1,
             )
             logger.info("Loaded zero-shot text emotion model: %s", model_id)

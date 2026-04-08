@@ -14,6 +14,7 @@ transformers==4.37.0
 torch==2.2.0
 torchaudio==2.2.0
 nltk==3.8.1
+sentencepiece==0.2.0
 
 # Database and HTTP
 asyncpg==0.29.0

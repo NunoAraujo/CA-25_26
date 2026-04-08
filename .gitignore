@@ -72,3 +72,4 @@ htmlcov/
 *.bak
 *.tmp
 .turbo/
+tmp/
