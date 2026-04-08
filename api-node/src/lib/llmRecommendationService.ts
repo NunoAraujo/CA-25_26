@@ -108,14 +108,7 @@ export async function generateLlmRecommendations(input: {
 }): Promise<LlmRecommendationOutput[]> {
   const modelId =
     process.env.HF_TEXT_GEN_MODEL ?? "mistralai/Mistral-7B-Instruct-v0.3";
-  const token = process.env.HF_API_TOKEN;
-
-  if (!token) {
-    throw new LlmRecommendationError(
-      "llm_config_missing",
-      "HF_API_TOKEN is required to generate recommendations",
-    );
-  }
+  const token = process.env.HF_API_TOKEN?.trim();
 
   if (!input.templates.length) {
     throw new LlmRecommendationError(
@@ -125,9 +118,24 @@ export async function generateLlmRecommendations(input: {
     );
   }
 
+  const configuredEndpoint = process.env.HF_INFERENCE_URL?.trim();
   const endpoint =
-    process.env.HF_INFERENCE_URL ??
-    `https://api-inference.huggingface.co/models/${modelId}`;
+    configuredEndpoint && configuredEndpoint.length
+      ? configuredEndpoint
+      : "https://router.huggingface.co/v1/chat/completions";
+
+  const isChatCompletionsEndpoint = endpoint.includes("/v1/chat/completions");
+
+  const usingHuggingFaceHostedEndpoint =
+    endpoint.includes("router.huggingface.co") ||
+    endpoint.includes("api-inference.huggingface.co");
+
+  if (usingHuggingFaceHostedEndpoint && !token) {
+    throw new LlmRecommendationError(
+      "llm_config_missing",
+      "HF_API_TOKEN is required when using Hugging Face hosted inference",
+    );
+  }
 
   const prompt = [
     "You are an affective computing wellbeing assistant.",
@@ -143,21 +151,30 @@ export async function generateLlmRecommendations(input: {
   ].join("\n");
 
   try {
+    const requestPayload = isChatCompletionsEndpoint
+      ? {
+          model: modelId,
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 500,
+          temperature: 0.4,
+        }
+      : {
+          inputs: prompt,
+          parameters: {
+            max_new_tokens: 450,
+            return_full_text: false,
+            temperature: 0.4,
+          },
+        };
+
     const response = await axios.post(
       endpoint,
-      {
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 450,
-          return_full_text: false,
-          temperature: 0.4,
-        },
-      },
+      requestPayload,
       {
         timeout: 20000,
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       },
     );
@@ -168,9 +185,20 @@ export async function generateLlmRecommendations(input: {
     if (Array.isArray(rawData)) {
       generatedText = stringValue(rawData[0]?.generated_text);
     } else if (rawData && typeof rawData === "object") {
-      generatedText = stringValue(
-        (rawData as { generated_text?: unknown }).generated_text,
-      );
+      const typed = rawData as {
+        generated_text?: unknown;
+        choices?: Array<{ text?: unknown; message?: { content?: unknown } }>;
+      };
+
+      if (Array.isArray(typed.choices) && typed.choices.length > 0) {
+        generatedText = stringValue(
+          typed.choices[0]?.message?.content ?? typed.choices[0]?.text,
+        );
+      }
+
+      if (!generatedText) {
+        generatedText = stringValue(typed.generated_text);
+      }
     }
 
     const jsonText = extractFirstJsonArray(generatedText);
@@ -194,6 +222,40 @@ export async function generateLlmRecommendations(input: {
   } catch (error) {
     if (error instanceof LlmRecommendationError) {
       throw error;
+    }
+
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as { response?: { data?: unknown } };
+      const providerPayload = axiosError.response?.data;
+      let providerMessage = "";
+
+      if (typeof providerPayload === "string") {
+        providerMessage = providerPayload;
+      } else if (providerPayload && typeof providerPayload === "object") {
+        const recordPayload = providerPayload as Record<string, unknown>;
+        if (typeof recordPayload.error === "string") {
+          providerMessage = recordPayload.error;
+        } else if (
+          recordPayload.error &&
+          typeof recordPayload.error === "object" &&
+          typeof (recordPayload.error as Record<string, unknown>).message ===
+            "string"
+        ) {
+          providerMessage = String(
+            (recordPayload.error as Record<string, unknown>).message,
+          );
+        } else if (typeof recordPayload.message === "string") {
+          providerMessage = recordPayload.message;
+        }
+      }
+
+      const normalizedProviderMessage = providerMessage.trim();
+      throw new LlmRecommendationError(
+        "llm_request_failed",
+        normalizedProviderMessage
+          ? `Failed to generate recommendations from LLM: ${normalizedProviderMessage}`
+          : "Failed to generate recommendations from LLM",
+      );
     }
 
     throw new LlmRecommendationError(

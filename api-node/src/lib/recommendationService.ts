@@ -6,6 +6,7 @@ import {
   buildDailyMetrics,
   clamp01,
   computeEmotionPriority,
+  recommendationRationale,
   startOfDayUTC,
 } from "./recommendationAnalytics";
 import {
@@ -143,6 +144,21 @@ function pickUniqueRecommendations(
   }
 
   return selected;
+}
+
+function buildFallbackLlmOutput(
+  templates: RecommendationTemplate[],
+  primaryEmotion: PriorityEmotionKey,
+): LlmRecommendationOutput[] {
+  const normalizedEmotion = normalizePriorityEmotion(primaryEmotion);
+
+  return templates.slice(0, 3).map((template) => ({
+    templateId: template.templateId,
+    rationale: recommendationRationale(primaryEmotion),
+    expectedImpactMetric: normalizedEmotion,
+    expectedImpactDelta: 0.12,
+    confidenceBoost: 0,
+  }));
 }
 
 function collectEmotionScores(journals: JournalEmotionSample[]) {
@@ -340,20 +356,37 @@ export async function generateDailyRecommendations(
     },
   });
 
-  const llmRecommendations = await generateLlmRecommendations({
-    primaryEmotion,
-    fallbackEmotion,
-    metrics,
-    templates: candidateTemplates.map((template) => ({
-      templateId: template.templateId,
-      activityName: template.activityName,
-      intensity: template.activityIntensity,
-      durationMin: template.activityDurationMin,
-      category: template.category,
-      targetEmotions: template.targetEmotions,
-      contraindications: template.contraindications,
-    })),
-  });
+  let llmRecommendations: LlmRecommendationOutput[] = [];
+  let llmMode: "remote" | "fallback" = "remote";
+  let llmFallbackReason: string | null = null;
+
+  try {
+    llmRecommendations = await generateLlmRecommendations({
+      primaryEmotion,
+      fallbackEmotion,
+      metrics,
+      templates: candidateTemplates.map((template) => ({
+        templateId: template.templateId,
+        activityName: template.activityName,
+        intensity: template.activityIntensity,
+        durationMin: template.activityDurationMin,
+        category: template.category,
+        targetEmotions: template.targetEmotions,
+        contraindications: template.contraindications,
+      })),
+    });
+  } catch (error) {
+    if (!(error instanceof LlmRecommendationError)) {
+      throw error;
+    }
+
+    llmMode = "fallback";
+    llmFallbackReason = `${error.code}: ${error.message}`;
+    llmRecommendations = buildFallbackLlmOutput(
+      candidateTemplates,
+      primaryEmotion,
+    );
+  }
 
   const selectedRecommendations = pickUniqueRecommendations(
     llmRecommendations,
@@ -410,6 +443,11 @@ export async function generateDailyRecommendations(
       message: "Daily recommendations generated",
       dayStart,
       dailyTrend,
+      llm: {
+        mode: llmMode,
+        model: process.env.HF_TEXT_GEN_MODEL ?? "mistralai/Mistral-7B-Instruct-v0.3",
+        fallbackReason: llmFallbackReason,
+      },
       recommendations: createdRecommendations,
     },
   };

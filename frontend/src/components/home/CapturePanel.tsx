@@ -197,7 +197,7 @@ export function CapturePanel({
                 Atual: {journalStatus?.status ?? uploadState.status}
               </p>
               <p className="mt-1 text-xs text-emerald-900/80">
-                Tentativa de polling: {statusPollAttempt}
+                Tentativa de verificacao automatica: {statusPollAttempt}
               </p>
 
               {journalStatus?.statusUpdatedAt ? (

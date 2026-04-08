@@ -65,7 +65,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
-    command: npm run dev
+    command: sh -c "npm run migrate && npm run dev"
     stdin_open: true
     tty: true
 
@@ -96,6 +96,8 @@ services:
     networks:
       - app-network
     depends_on:
+      api:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       redis:
@@ -104,7 +106,7 @@ services:
         condition: service_healthy
       analysis:
         condition: service_healthy
-    command: npm run worker:analysis
+    command: sh -c "npm run migrate && npm run worker:analysis"
     stdin_open: true
     tty: true
 

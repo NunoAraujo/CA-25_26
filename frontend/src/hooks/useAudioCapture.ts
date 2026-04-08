@@ -7,12 +7,16 @@ function isTerminalJournalStatus(status: string) {
   return status === "complete" || status === "failed";
 }
 
+const STATUS_POLL_INTERVAL_MS = 2000;
+const STATUS_POLL_MAX_ATTEMPTS = 120;
+
 export function useAudioCapture(apiBaseUrl: string) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
   const statusPollTimerRef = useRef<number | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -80,14 +84,22 @@ export function useAudioCapture(apiBaseUrl: string) {
       setJournalStatus(nextState);
       setJournalStatusError(null);
 
-      if (isTerminalJournalStatus(nextState.status) || attempt >= 20) {
+      if (isTerminalJournalStatus(nextState.status)) {
+        stopJournalStatusPolling();
+        return;
+      }
+
+      if (attempt >= STATUS_POLL_MAX_ATTEMPTS) {
+        setJournalStatusError(
+          "A analise ainda esta a decorrer. Clica em Atualizar para voltar a verificar.",
+        );
         stopJournalStatusPolling();
         return;
       }
 
       statusPollTimerRef.current = window.setTimeout(() => {
         void pollJournalStatus(journalId, attempt + 1);
-      }, 2000);
+      }, STATUS_POLL_INTERVAL_MS);
     } catch (error) {
       setJournalStatusError(
         error instanceof Error
@@ -122,6 +134,14 @@ export function useAudioCapture(apiBaseUrl: string) {
       chunksRef.current = [];
       setElapsedSeconds(0);
       setAudioBlob(null);
+      setAudioUrl((currentUrl: string | null) => {
+        if (currentUrl) {
+          URL.revokeObjectURL(currentUrl);
+        }
+
+        audioUrlRef.current = null;
+        return null;
+      });
       setRecordedAt(new Date().toISOString());
 
       recorder.ondataavailable = (event) => {
@@ -135,6 +155,15 @@ export function useAudioCapture(apiBaseUrl: string) {
           type: recorder.mimeType || "audio/webm",
         });
         setAudioBlob(blob);
+        setAudioUrl((currentUrl: string | null) => {
+          if (currentUrl) {
+            URL.revokeObjectURL(currentUrl);
+          }
+
+          const nextUrl = URL.createObjectURL(blob);
+          audioUrlRef.current = nextUrl;
+          return nextUrl;
+        });
         stream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       };
@@ -223,27 +252,12 @@ export function useAudioCapture(apiBaseUrl: string) {
   }
 
   useEffect(() => {
-    if (!audioBlob) {
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-      }
-
-      setAudioUrl(null);
-      return;
-    }
-
-    const nextUrl = URL.createObjectURL(audioBlob);
-    setAudioUrl((currentUrl) => {
-      if (currentUrl) {
-        URL.revokeObjectURL(currentUrl);
-      }
-
-      return nextUrl;
-    });
-  }, [audioBlob, audioUrl]);
-
-  useEffect(() => {
     return () => {
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current);
+        audioUrlRef.current = null;
+      }
+
       if (timerRef.current) {
         window.clearInterval(timerRef.current);
       }

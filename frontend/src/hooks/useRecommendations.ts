@@ -141,8 +141,21 @@ export function useRecommendations(apiBaseUrl: string) {
         Array.isArray(payload.recommendations) && payload.recommendations.length
           ? payload.recommendations.length
           : Number(payload.created ?? 0);
-      setRecommendationInfo(`Geracao concluida: ${created} recomendacoes.`);
-      toast.success(`Geracao concluida: ${created} recomendacoes.`);
+
+      const llmMode =
+        payload && typeof payload === "object"
+          ? (payload as { llm?: { mode?: string } }).llm?.mode
+          : undefined;
+
+      if (llmMode === "fallback") {
+        setRecommendationInfo(
+          `Geracao concluida com fallback local: ${created} recomendacoes. Configura HF_API_TOKEN para usar Mistral remoto.`,
+        );
+        toast.success(`Geracao concluida com fallback local: ${created}.`);
+      } else {
+        setRecommendationInfo(`Geracao concluida: ${created} recomendacoes.`);
+        toast.success(`Geracao concluida: ${created} recomendacoes.`);
+      }
       await loadRecommendations();
     } catch (error) {
       setRecommendationError(
