@@ -225,6 +225,8 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5051:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
     networks:
       - app-network
     depends_on:
@@ -238,6 +240,7 @@ volumes:
   postgres-data:
   redis-data:
   minio-data:
+  pgadmin-data:
   torch-cache:
   hf-cache:
   audio-temp:

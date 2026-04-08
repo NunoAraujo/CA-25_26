@@ -8,8 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "migrate": "prisma migrate deploy",
-    "worker:analysis": "ts-node src/workers/analysisWorker.ts",
-    "seed:activities": "ts-node src/scripts/seedActivities.ts"
+    "worker:analysis": "ts-node src/workers/analysisWorker.ts"
   },
   "keywords": [
     "journaling",

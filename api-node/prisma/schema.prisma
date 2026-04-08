@@ -173,24 +173,6 @@ model JournalSuggestion {
   @@unique([journalId, recommendationId])
 }
 
-model ActivityLibrary {
-  id                    String            @id @default(cuid())
-  activityId            String            @unique
-  activityName          String
-  description           String
-  durationMin           Int
-  intensity             ActivityIntensity
-  category              String
-  targetEmotions        String[]
-  contraindications     String[]
-  instructions          String
-  resources             String?
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
-
-  @@index([category])
-}
-
 model ModelMetrics {
   id                    String    @id @default(cuid())
   metricDate            DateTime

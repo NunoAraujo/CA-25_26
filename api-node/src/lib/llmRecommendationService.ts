@@ -1,21 +1,42 @@
 import axios from "axios";
 import { DailyMetrics } from "./recommendationAnalytics";
 
-type LlmActivityInput = {
-  activityId: string;
+type LlmTemplateInput = {
+  templateId: string;
   activityName: string;
   intensity: string;
   durationMin: number;
+  category: string;
   targetEmotions: string[];
+  contraindications: string[];
 };
 
-export type LlmActivityOutput = {
-  activityId: string;
+export type LlmRecommendationOutput = {
+  templateId?: string;
   rationale: string;
   expectedImpactMetric?: string;
   expectedImpactDelta?: number;
   confidenceBoost?: number;
 };
+
+export class LlmRecommendationError extends Error {
+  readonly code:
+    | "llm_config_missing"
+    | "llm_response_invalid"
+    | "llm_request_failed";
+  readonly statusCode: number;
+
+  constructor(
+    code: "llm_config_missing" | "llm_response_invalid" | "llm_request_failed",
+    message: string,
+    statusCode = 503,
+  ) {
+    super(message);
+    this.name = "LlmRecommendationError";
+    this.code = code;
+    this.statusCode = statusCode;
+  }
+}
 
 function clamp01(value: number) {
   return Math.max(0, Math.min(1, value));
@@ -34,22 +55,22 @@ function stringValue(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function normalizeOutput(payload: unknown): LlmActivityOutput[] {
+function normalizeOutput(payload: unknown): LlmRecommendationOutput[] {
   if (!Array.isArray(payload)) {
     return [];
   }
 
   return payload
-    .map((item): LlmActivityOutput | null => {
+    .map((item): LlmRecommendationOutput | null => {
       if (!item || typeof item !== "object") {
         return null;
       }
 
       const raw = item as Record<string, unknown>;
-      const activityId = stringValue(raw.activityId);
+      const templateId = stringValue(raw.templateId);
       const rationale = stringValue(raw.rationale);
 
-      if (!activityId || !rationale) {
+      if (!rationale) {
         return null;
       }
 
@@ -69,28 +90,39 @@ function normalizeOutput(payload: unknown): LlmActivityOutput[] {
           : undefined;
 
       return {
-        activityId,
+        templateId: templateId || undefined,
         rationale,
         expectedImpactMetric,
         expectedImpactDelta,
         confidenceBoost,
       };
     })
-    .filter((item): item is LlmActivityOutput => item !== null);
+    .filter((item): item is LlmRecommendationOutput => item !== null);
 }
 
-export async function generateLlmRecommendationEnhancements(input: {
+export async function generateLlmRecommendations(input: {
   primaryEmotion: string;
   fallbackEmotion: string;
   metrics: DailyMetrics;
-  activities: LlmActivityInput[];
-}): Promise<Map<string, LlmActivityOutput>> {
+  templates: LlmTemplateInput[];
+}): Promise<LlmRecommendationOutput[]> {
   const modelId =
     process.env.HF_TEXT_GEN_MODEL ?? "mistralai/Mistral-7B-Instruct-v0.3";
   const token = process.env.HF_API_TOKEN;
 
-  if (!token || !input.activities.length) {
-    return new Map();
+  if (!token) {
+    throw new LlmRecommendationError(
+      "llm_config_missing",
+      "HF_API_TOKEN is required to generate recommendations",
+    );
+  }
+
+  if (!input.templates.length) {
+    throw new LlmRecommendationError(
+      "llm_response_invalid",
+      "No recommendation templates available for LLM generation",
+      422,
+    );
   }
 
   const endpoint =
@@ -100,12 +132,13 @@ export async function generateLlmRecommendationEnhancements(input: {
   const prompt = [
     "You are an affective computing wellbeing assistant.",
     "Return only JSON (array).",
-    "For each activity create one concise rationale in Portuguese (PT-PT/PT-BR neutral) based on emotion scores.",
-    "JSON item keys: activityId, rationale, expectedImpactMetric, expectedImpactDelta, confidenceBoost.",
+    "Generate exactly 3 recommendation items in Portuguese (PT-PT/PT-BR neutral) from the provided templates.",
+    "Each item must contain keys: templateId, rationale, expectedImpactMetric, expectedImpactDelta, confidenceBoost.",
+    "Use templateId values exactly as provided in the template list.",
     `Primary emotion: ${input.primaryEmotion}`,
     `Secondary emotion: ${input.fallbackEmotion}`,
     `Metrics: joy=${input.metrics.joyAvg.toFixed(3)}, sadness=${input.metrics.sadnessAvg.toFixed(3)}, anger=${input.metrics.angerAvg.toFixed(3)}, anxiety=${input.metrics.anxietyAvg.toFixed(3)}, calm=${input.metrics.calmAvg.toFixed(3)}, energy=${input.metrics.energyAvg.toFixed(3)}.`,
-    `Activities: ${JSON.stringify(input.activities)}.`,
+    `Templates: ${JSON.stringify(input.templates)}.`,
     "expectedImpactDelta and confidenceBoost must be numbers from 0 to 1.",
   ].join("\n");
 
@@ -142,14 +175,30 @@ export async function generateLlmRecommendationEnhancements(input: {
 
     const jsonText = extractFirstJsonArray(generatedText);
     if (!jsonText) {
-      return new Map();
+      throw new LlmRecommendationError(
+        "llm_response_invalid",
+        "LLM response did not contain a valid JSON array",
+      );
     }
 
     const parsed = JSON.parse(jsonText);
     const normalized = normalizeOutput(parsed);
+    if (!normalized.length) {
+      throw new LlmRecommendationError(
+        "llm_response_invalid",
+        "LLM response did not include valid recommendation items",
+      );
+    }
 
-    return new Map(normalized.map((item) => [item.activityId, item]));
-  } catch {
-    return new Map();
+    return normalized;
+  } catch (error) {
+    if (error instanceof LlmRecommendationError) {
+      throw error;
+    }
+
+    throw new LlmRecommendationError(
+      "llm_request_failed",
+      "Failed to generate recommendations from LLM",
+    );
   }
 }

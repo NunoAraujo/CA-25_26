@@ -5,6 +5,7 @@ import {
   storeRecommendationCompletion,
   storeRecommendationFeedback,
 } from "../lib/recommendationService";
+import { LlmRecommendationError } from "../lib/llmRecommendationService";
 import {
   completionSchema,
   feedbackSchema,
@@ -35,6 +36,12 @@ router.post(
 
       return res.status(result.status).json(result.payload);
     } catch (error) {
+      if (error instanceof LlmRecommendationError) {
+        return res.status(error.statusCode).json({
+          message: error.message,
+          code: error.code,
+        });
+      }
       return next(error);
     }
   },

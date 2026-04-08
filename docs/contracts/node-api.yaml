@@ -154,7 +154,7 @@ paths:
           description: Recommendation list
   /recommendations/generate-daily:
     post:
-      summary: Generate daily recommendations from completed journals and activity library
+      summary: Generate daily recommendations from completed journals using LLM output
       requestBody:
         required: false
         content:
