@@ -103,6 +103,12 @@ export function useDailyTrends(apiBaseUrl: string) {
             calm: typeof item.avgCalmScore === "number" ? item.avgCalmScore : 0,
             energy:
               typeof item.avgEnergyScore === "number" ? item.avgEnergyScore : 0,
+            entryCount:
+              typeof item.entryCount === "number" ? item.entryCount : 0,
+            emotionalVolatility:
+              typeof item.emotionalVolatility === "number"
+                ? item.emotionalVolatility
+                : 0,
           }))
         : [];
 

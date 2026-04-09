@@ -24,6 +24,8 @@ export function TimelinePanel({
   onRefresh,
   onToggleDetail,
 }: Readonly<TimelinePanelProps>) {
+  const visibleJournals = journals.slice(0, 8);
+
   return (
     <section
       className="mx-auto mt-6 max-w-6xl rounded-4xl border border-(--line) bg-(--paper) p-8 shadow-[0_24px_80px_rgba(82,55,31,0.08)]"
@@ -60,14 +62,14 @@ export function TimelinePanel({
         </div>
       ) : null}
 
-      {!isLoadingJournals && journals.length === 0 ? (
+      {!isLoadingJournals && visibleJournals.length === 0 ? (
         <div className="mt-6 rounded-3xl border border-(--line) bg-(--paper-strong) p-5 text-(--ink-soft)">
           Ainda nao existem entradas para mostrar.
         </div>
       ) : null}
 
       <div className="mt-6 grid gap-3">
-        {journals.map((journal) => {
+        {visibleJournals.map((journal) => {
           let detailButtonText = "Ver detalhes";
           if (loadingJournalDetailId === journal.id) {
             detailButtonText = "A carregar...";

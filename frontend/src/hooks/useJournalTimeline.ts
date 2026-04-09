@@ -38,6 +38,8 @@ export function useJournalTimeline(apiBaseUrl: string) {
             id: String(item.id),
             status: String(item.status ?? "queued"),
             uploadedAt: String(item.uploadedAt ?? new Date().toISOString()),
+            recordedAt:
+              typeof item.recordedAt === "string" ? item.recordedAt : null,
             durationSeconds:
               typeof item.durationSeconds === "number"
                 ? item.durationSeconds
@@ -46,10 +48,22 @@ export function useJournalTimeline(apiBaseUrl: string) {
               typeof item.transcription === "string"
                 ? item.transcription
                 : null,
+            joyScore:
+              typeof item.joyScore === "number" ? item.joyScore : null,
+            sadnessScore:
+              typeof item.sadnessScore === "number" ? item.sadnessScore : null,
+            angerScore:
+              typeof item.angerScore === "number" ? item.angerScore : null,
+            anxietyScore:
+              typeof item.anxietyScore === "number" ? item.anxietyScore : null,
+            calmScore:
+              typeof item.calmScore === "number" ? item.calmScore : null,
+            energyScore:
+              typeof item.energyScore === "number" ? item.energyScore : null,
           }))
         : [];
 
-      setJournals(timeline.slice(0, 8));
+      setJournals(timeline);
       if (timeline.length > 0) {
         toast.success("Timeline atualizada.");
       }

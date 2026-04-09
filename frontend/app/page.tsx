@@ -81,6 +81,7 @@ export default function HomePage() {
         trendDeltaCards={trends.trendDeltaCards}
         dailyTrends={trends.dailyTrends}
         dailyTrendsError={trends.dailyTrendsError}
+        journals={timeline.journals}
       />
 
       <TimelinePanel

@@ -25,12 +25,29 @@ export type Recommendation = {
   createdAt: string;
 };
 
+export type EmotionMetricKey =
+  | "joy"
+  | "sadness"
+  | "anger"
+  | "anxiety"
+  | "calm"
+  | "energy";
+
+export type EmotionScores = Record<EmotionMetricKey, number>;
+
 export type JournalTimelineItem = {
   id: string;
   status: string;
   uploadedAt: string;
+  recordedAt: string | null;
   durationSeconds: number | null;
   transcription: string | null;
+  joyScore: number | null;
+  sadnessScore: number | null;
+  angerScore: number | null;
+  anxietyScore: number | null;
+  calmScore: number | null;
+  energyScore: number | null;
 };
 
 export type JournalDetail = {
@@ -52,6 +69,8 @@ export type DailyTrendPoint = {
   anxiety: number;
   calm: number;
   energy: number;
+  entryCount: number;
+  emotionalVolatility: number;
 };
 
 export type RecommendationFeedback = "positive" | "neutral" | "negative";
