@@ -609,7 +609,7 @@ export function TrendsPanel({
                 {monthDaysWithDataCount}
               </p>
               <p className="mt-1 text-sm text-(--ink-soft)">
-                dias com tendencia ou entradas registadas.
+                dias com registos neste mês.
               </p>
             </div>
 

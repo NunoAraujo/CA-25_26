@@ -3,7 +3,6 @@
 import { useEffect, useMemo } from "react";
 import { CapturePanel } from "../src/components/home/CapturePanel";
 import { RecommendationsPanel } from "../src/components/home/RecommendationsPanel";
-import { TimelinePanel } from "../src/components/home/TimelinePanel";
 import { TrendsPanel } from "../src/components/home/TrendsPanel";
 import { useAudioCapture } from "../src/hooks/useAudioCapture";
 import { useJournalTimeline } from "../src/hooks/useJournalTimeline";
@@ -29,7 +28,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen px-5 py-8 sm:px-8 lg:px-12">
-      <nav className="mx-auto mb-6 flex max-w-6xl flex-wrap gap-2 rounded-full border border-(--line) bg-(--paper) p-2 shadow-[0_18px_50px_rgba(82,55,31,0.08)]">
+      <nav className="mx-auto mb-6 flex w-fit justify-center gap-2 rounded-full border border-(--line) bg-(--paper) p-2 shadow-[0_18px_50px_rgba(82,55,31,0.08)]">
         <a
           className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
           href="#capture"
@@ -41,12 +40,6 @@ export default function HomePage() {
           href="#trends"
         >
           Tendencias
-        </a>
-        <a
-          className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
-          href="#timeline"
-        >
-          Timeline
         </a>
         <a
           className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
@@ -84,18 +77,6 @@ export default function HomePage() {
         dailyTrends={trends.dailyTrends}
         dailyTrendsError={trends.dailyTrendsError}
         journals={timeline.journals}
-      />
-
-      <TimelinePanel
-        expandedJournalId={timeline.expandedJournalId}
-        isLoadingJournals={timeline.isLoadingJournals}
-        journalDetailError={timeline.journalDetailError}
-        journalDetailsById={timeline.journalDetailsById}
-        journals={timeline.journals}
-        journalsError={timeline.journalsError}
-        loadingJournalDetailId={timeline.loadingJournalDetailId}
-        onRefresh={timeline.loadJournals}
-        onToggleDetail={timeline.toggleJournalDetail}
       />
 
       <RecommendationsPanel
