@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "Jornadas Sonoras",
+  title: "MoodTrackAI",
   description:
     "Diario em audio com acompanhamento emocional e recomendacoes de regulacao",
 };
