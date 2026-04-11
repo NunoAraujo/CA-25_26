@@ -9,6 +9,117 @@ type TrendDeltaCard = {
   color: string;
 };
 
+type JournalTrendSource = {
+  status?: unknown;
+  recordedAt?: unknown;
+  uploadedAt?: unknown;
+  joyScore?: unknown;
+  sadnessScore?: unknown;
+  angerScore?: unknown;
+  anxietyScore?: unknown;
+  calmScore?: unknown;
+  energyScore?: unknown;
+};
+
+type DailyAccumulator = {
+  dayStart: string;
+  joy: number[];
+  sadness: number[];
+  anger: number[];
+  anxiety: number[];
+  calm: number[];
+  energy: number[];
+};
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function average(values: number[]) {
+  if (!values.length) {
+    return 0;
+  }
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function buildLocalDayKey(rawDate: unknown) {
+  if (typeof rawDate !== "string") {
+    return null;
+  }
+
+  const date = new Date(rawDate);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const year = date.getFullYear().toString().padStart(4, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function buildDailyTrendsFromJournals(journals: JournalTrendSource[]) {
+  const days = new Map<string, DailyAccumulator>();
+
+  for (const journal of journals) {
+    if (journal.status !== "complete") {
+      continue;
+    }
+
+    const dayStart =
+      buildLocalDayKey(journal.recordedAt) ?? buildLocalDayKey(journal.uploadedAt);
+
+    if (!dayStart) {
+      continue;
+    }
+
+    const current = days.get(dayStart) ?? {
+      dayStart,
+      joy: [],
+      sadness: [],
+      anger: [],
+      anxiety: [],
+      calm: [],
+      energy: [],
+    };
+
+    if (isFiniteNumber(journal.joyScore)) {
+      current.joy.push(journal.joyScore);
+    }
+    if (isFiniteNumber(journal.sadnessScore)) {
+      current.sadness.push(journal.sadnessScore);
+    }
+    if (isFiniteNumber(journal.angerScore)) {
+      current.anger.push(journal.angerScore);
+    }
+    if (isFiniteNumber(journal.anxietyScore)) {
+      current.anxiety.push(journal.anxietyScore);
+    }
+    if (isFiniteNumber(journal.calmScore)) {
+      current.calm.push(journal.calmScore);
+    }
+    if (isFiniteNumber(journal.energyScore)) {
+      current.energy.push(journal.energyScore);
+    }
+
+    days.set(dayStart, current);
+  }
+
+  return Array.from(days.values())
+    .map<DailyTrendPoint>((day) => ({
+      dayStart: day.dayStart,
+      joy: average(day.joy),
+      sadness: average(day.sadness),
+      anger: average(day.anger),
+      anxiety: average(day.anxiety),
+      calm: average(day.calm),
+      energy: average(day.energy),
+    }))
+    .sort((a, b) => a.dayStart.localeCompare(b.dayStart));
+}
+
 export function useDailyTrends(apiBaseUrl: string) {
   const [dailyTrends, setDailyTrends] = useState<DailyTrendPoint[]>([]);
   const [isLoadingDailyTrends, setIsLoadingDailyTrends] = useState(false);
@@ -75,41 +186,19 @@ export function useDailyTrends(apiBaseUrl: string) {
     setDailyTrendsError(null);
 
     try {
-      const response = await fetch(`${apiBaseUrl}/trends/daily`);
+      const response = await fetch(`${apiBaseUrl}/journals`, {
+        cache: "no-store",
+      });
       const payload = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          payload.message ??
-            payload.error ??
-            "Falha ao carregar tendencia diaria.",
+          payload.message ?? payload.error ?? "Falha ao carregar tendencia diaria.",
         );
       }
 
-      const points = Array.isArray(payload.trends)
-        ? payload.trends.map((item: Record<string, unknown>) => ({
-            dayStart: typeof item.dayStart === "string" ? item.dayStart : "",
-            joy: typeof item.avgJoyScore === "number" ? item.avgJoyScore : 0,
-            sadness:
-              typeof item.avgSadnessScore === "number"
-                ? item.avgSadnessScore
-                : 0,
-            anger:
-              typeof item.avgAngerScore === "number" ? item.avgAngerScore : 0,
-            anxiety:
-              typeof item.avgAnxietyScore === "number"
-                ? item.avgAnxietyScore
-                : 0,
-            calm: typeof item.avgCalmScore === "number" ? item.avgCalmScore : 0,
-            energy:
-              typeof item.avgEnergyScore === "number" ? item.avgEnergyScore : 0,
-            entryCount:
-              typeof item.entryCount === "number" ? item.entryCount : 0,
-            emotionalVolatility:
-              typeof item.emotionalVolatility === "number"
-                ? item.emotionalVolatility
-                : 0,
-          }))
+      const points = Array.isArray(payload.journals)
+        ? buildDailyTrendsFromJournals(payload.journals as JournalTrendSource[])
         : [];
 
       setDailyTrends(points);

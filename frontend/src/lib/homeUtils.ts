@@ -56,6 +56,11 @@ export function statusBadgeClasses(status: string) {
 }
 
 export function formatDayLabel(rawDate: string) {
+  const plainDayMatch = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (plainDayMatch) {
+    return `${plainDayMatch[3]}/${plainDayMatch[2]}`;
+  }
+
   const date = new Date(rawDate);
   return Number.isNaN(date.getTime())
     ? rawDate

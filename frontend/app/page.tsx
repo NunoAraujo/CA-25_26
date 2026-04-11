@@ -77,7 +77,9 @@ export default function HomePage() {
 
       <TrendsPanel
         isLoadingDailyTrends={trends.isLoadingDailyTrends}
+        isLoadingJournals={timeline.isLoadingJournals}
         onRefresh={trends.loadDailyTrends}
+        onRefreshTimeline={timeline.loadJournals}
         trendDeltaCards={trends.trendDeltaCards}
         dailyTrends={trends.dailyTrends}
         dailyTrendsError={trends.dailyTrendsError}

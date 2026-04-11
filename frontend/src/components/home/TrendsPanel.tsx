@@ -41,9 +41,11 @@ type TrendsPanelProps = {
   dailyTrends: DailyTrendPoint[];
   journals: JournalTimelineItem[];
   isLoadingDailyTrends: boolean;
+  isLoadingJournals: boolean;
   dailyTrendsError: string | null;
   trendDeltaCards: TrendDeltaCard[];
   onRefresh: () => Promise<void>;
+  onRefreshTimeline: () => Promise<void>;
 };
 
 type CalendarViewMode = "month" | "week" | "day";
@@ -152,9 +154,11 @@ export function TrendsPanel({
   dailyTrends,
   journals,
   isLoadingDailyTrends,
+  isLoadingJournals,
   dailyTrendsError,
   trendDeltaCards,
   onRefresh,
+  onRefreshTimeline,
 }: Readonly<TrendsPanelProps>) {
   const [calendarViewMode, setCalendarViewMode] =
     useState<CalendarViewMode>("month");
@@ -265,6 +269,11 @@ export function TrendsPanel({
   const selectedDayDominantEmotion =
     selectedDayScores ? dominantEmotionFromScores(selectedDayScores) : null;
 
+  const selectedDayVolatilityLabel =
+    typeof selectedDailyTrend?.emotionalVolatility === "number"
+      ? selectedDailyTrend.emotionalVolatility.toFixed(2)
+      : null;
+
   const monthGridDays = useMemo(() => {
     return buildMonthGrid(visibleMonthDate).map((currentDate) => {
       const dayKey = toDayKey(currentDate.toISOString());
@@ -337,6 +346,64 @@ export function TrendsPanel({
   const monthDaysWithDataCount = monthGridDays.filter(
     (day) => day.entryCount > 0 || day.dominantEmotion,
   ).length;
+
+  const chartData = useMemo(() => {
+    if (!dailyTrends.length) {
+      return [];
+    }
+
+    const result: Array<
+      | DailyTrendPoint
+      | {
+          dayStart: string;
+          joy: null;
+          sadness: null;
+          anger: null;
+          anxiety: null;
+          calm: null;
+          energy: null;
+        }
+    > = [];
+
+    let previousYear: string | null = null;
+
+    for (const point of dailyTrends) {
+      const currentYear = point.dayStart.slice(0, 4);
+
+      if (previousYear !== null && currentYear !== previousYear) {
+        result.push({
+          dayStart: `year-${currentYear}`,
+          joy: null,
+          sadness: null,
+          anger: null,
+          anxiety: null,
+          calm: null,
+          energy: null,
+        });
+      }
+
+      result.push(point);
+      previousYear = currentYear;
+    }
+
+    return result;
+  }, [dailyTrends]);
+
+  function formatChartTick(value: string) {
+    if (value.startsWith("year-")) {
+      return value.replace("year-", "");
+    }
+
+    return formatDayLabel(value);
+  }
+
+  function formatChartTooltipLabel(value: string) {
+    if (value.startsWith("year-")) {
+      return `Ano ${value.replace("year-", "")}`;
+    }
+
+    return `Dia: ${formatDayLabel(value)}`;
+  }
 
   return (
     <section
@@ -412,47 +479,50 @@ export function TrendsPanel({
         </div>
       ) : null}
 
-      {dailyTrends.length > 0 ? (
+      {chartData.length > 0 ? (
         <div className="mt-6 h-80 rounded-3xl border border-(--line) bg-(--paper-strong) p-4">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={dailyTrends}>
+            <LineChart data={chartData}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="rgba(100,116,139,0.2)"
               />
               <XAxis
                 dataKey="dayStart"
-                tickFormatter={formatDayLabel}
+                tickFormatter={formatChartTick}
                 tick={{ fill: "#64748b", fontSize: 12 }}
               />
               <YAxis domain={[0, 1]} tick={{ fill: "#64748b", fontSize: 12 }} />
               <Tooltip
-                formatter={(value: number) => value.toFixed(2)}
-                labelFormatter={(value: string) =>
-                  `Dia: ${formatDayLabel(value)}`
+                formatter={(value: number | null) =>
+                  typeof value === "number" ? value.toFixed(2) : "-"
                 }
+                labelFormatter={(value: string) => formatChartTooltipLabel(value)}
               />
               <Legend />
-              <Line type="monotone" dataKey="joy" stroke="#10b981" dot={false} />
+              
               <Line
                 type="monotone"
                 dataKey="sadness"
                 stroke="#6366f1"
                 dot={false}
+                connectNulls
               />
-              <Line type="monotone" dataKey="anger" stroke="#ef4444" dot={false} />
+              <Line type="monotone" dataKey="anger" stroke="#ef4444" dot={false} connectNulls />
               <Line
                 type="monotone"
                 dataKey="anxiety"
                 stroke="#f59e0b"
                 dot={false}
+                connectNulls
               />
-              <Line type="monotone" dataKey="calm" stroke="#06b6d4" dot={false} />
+              <Line type="monotone" dataKey="calm" stroke="#06b6d4" dot={false} connectNulls />
               <Line
                 type="monotone"
                 dataKey="energy"
                 stroke="#f97316"
                 dot={false}
+                connectNulls
               />
             </LineChart>
           </ResponsiveContainer>
@@ -549,7 +619,7 @@ export function TrendsPanel({
               </p>
               <p className="mt-2 text-sm text-(--ink-soft)">
                 {selectedDayEntries.length} entrada(s) associada(s)
-                {selectedDailyTrend ? ` · volatilidade ${selectedDailyTrend.emotionalVolatility.toFixed(2)}` : ""}
+                {selectedDayVolatilityLabel ? ` · volatilidade ${selectedDayVolatilityLabel}` : ""}
               </p>
               {selectedDayDominantEmotion ? (
                 <span
@@ -820,16 +890,28 @@ export function TrendsPanel({
                 {formatFullDateLabel(parseDayKey(selectedDayKey).toISOString())}
               </h4>
             </div>
-            {selectedDayDominantEmotion ? (
-              <span
-                className={[
-                  "rounded-full border px-4 py-2 text-sm font-semibold",
-                  emotionPresentationMap[selectedDayDominantEmotion].chipClass,
-                ].join(" ")}
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              {selectedDayDominantEmotion ? (
+                <span
+                  className={[
+                    "rounded-full border px-4 py-2 text-sm font-semibold",
+                    emotionPresentationMap[selectedDayDominantEmotion].chipClass,
+                  ].join(" ")}
+                >
+                  Emocao dominante: {emotionPresentationMap[selectedDayDominantEmotion].label}
+                </span>
+              ) : null}
+              <button
+                className="rounded-full border border-(--line) px-5 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isLoadingJournals}
+                onClick={() => {
+                  void onRefreshTimeline();
+                }}
+                type="button"
               >
-                Emocao dominante: {emotionPresentationMap[selectedDayDominantEmotion].label}
-              </span>
-            ) : null}
+                {isLoadingJournals ? "A atualizar..." : "Atualizar timeline"}
+              </button>
+            </div>
           </div>
 
           {selectedDayScores ? (
