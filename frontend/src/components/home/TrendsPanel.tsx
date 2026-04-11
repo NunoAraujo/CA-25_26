@@ -745,18 +745,18 @@ export function TrendsPanel({
             ) : null}
 
             {calendarViewMode === "week" && availableDayKeys.length > 0 ? (
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+              <div className="grid min-h-[560px] grid-rows-7 gap-3">
                 {weekDays.map((day) => {
                   const emotion = day.dominantEmotion;
                   const isSelected = day.dayKey === selectedDayKey;
                   return (
                     <button
                       className={[
-                        "rounded-3xl border p-4 text-left transition hover:-translate-y-0.5 hover:bg-white",
+                        "grid h-full grid-cols-[minmax(92px,120px)_1fr_auto] items-center gap-4 rounded-3xl border px-5 py-4 text-left transition hover:-translate-y-0.5 hover:bg-white",
                         emotion
                           ? emotionPresentationMap[emotion].surfaceClass
                           : "border-(--line) bg-(--paper)",
-                        isSelected ? "ring-2 ring-(--accent)" : "",
+                        isSelected ? "ring-2 ring-(--accent) shadow-[0_10px_24px_rgba(82,55,31,0.08)]" : "",
                       ].join(" ")}
                       key={day.dayKey}
                       onClick={() => {
@@ -764,22 +764,38 @@ export function TrendsPanel({
                       }}
                       type="button"
                     >
-                      <p className="text-xs uppercase tracking-[0.12em] text-(--ink-soft)">
-                        {day.date.toLocaleDateString("pt-PT", {
-                          weekday: "short",
-                        })}
-                      </p>
-                      <p className="mt-2 text-lg font-semibold text-slate-900">
-                        {day.date.getDate()}
-                      </p>
-                      <p className="mt-3 text-sm font-medium">
-                        {emotion
-                          ? emotionPresentationMap[emotion].label
-                          : "Sem emocao dominante"}
-                      </p>
-                      <p className="mt-1 text-xs text-(--ink-soft)">
-                        {day.entryCount} entrada(s)
-                      </p>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.14em] text-(--ink-soft)">
+                          {day.date.toLocaleDateString("pt-PT", {
+                            weekday: "long",
+                          })}
+                        </p>
+                        <p className="mt-2 text-3xl font-semibold text-slate-900">
+                          {day.date.getDate()}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.08em]">
+                          {emotion
+                            ? emotionPresentationMap[emotion].label
+                            : "Sem emocao dominante"}
+                        </p>
+                        <p className="mt-1 text-sm text-(--ink-soft)">
+                          {emotion
+                            ? "Seleciona para inspecionar as entradas deste dia."
+                            : "Dia sem tendencia consolidada ou sem entradas registadas."}
+                        </p>
+                      </div>
+
+                      <div className="justify-self-end text-right">
+                        <p className="text-2xl font-semibold text-slate-900">
+                          {day.entryCount}
+                        </p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.12em] text-(--ink-soft)">
+                          entrada(s)
+                        </p>
+                      </div>
                     </button>
                   );
                 })}
