@@ -268,6 +268,9 @@ export function TrendsPanel({
 
   const selectedDayDominantEmotion =
     selectedDayScores ? dominantEmotionFromScores(selectedDayScores) : null;
+  const selectedDayTopEmotions = selectedDayScores
+    ? topEmotionKeys(selectedDayScores, 3)
+    : [];
 
   const selectedDayVolatilityLabel =
     typeof selectedDailyTrend?.emotionalVolatility === "number"
@@ -803,19 +806,123 @@ export function TrendsPanel({
             ) : null}
 
             {calendarViewMode === "day" && availableDayKeys.length > 0 ? (
-              <div className="rounded-3xl border border-(--line) bg-(--paper) p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="grid min-h-[560px] grid-rows-[auto_auto_1fr] gap-4 rounded-3xl border border-(--line) bg-(--paper) p-5">
+                <div
+                  className={[
+                    "grid gap-4 rounded-3xl border px-5 py-5 md:grid-cols-[minmax(140px,200px)_1fr_auto] md:items-center",
+                    selectedDayDominantEmotion
+                      ? emotionPresentationMap[selectedDayDominantEmotion].surfaceClass
+                      : "border-(--line) bg-white/70 text-slate-900",
+                  ].join(" ")}
+                >
                   <div>
                     <p className="text-xs uppercase tracking-[0.15em] text-(--ink-soft)">
                       Vista diaria
                     </p>
-                    <h4 className="mt-2 text-xl font-semibold capitalize text-slate-900">
+                    <p className="mt-2 text-3xl font-semibold text-slate-900">
+                      {parseDayKey(selectedDayKey).getDate()}
+                    </p>
+                    <p className="mt-1 text-sm capitalize text-slate-700">
+                      {parseDayKey(selectedDayKey).toLocaleDateString("pt-PT", {
+                        weekday: "long",
+                        month: "long",
+                      })}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xl font-semibold capitalize text-slate-900">
                       {formatFullDateLabel(parseDayKey(selectedDayKey).toISOString())}
                     </h4>
+                    <p className="mt-2 text-sm text-slate-700">
+                      {selectedDayDominantEmotion
+                        ? `Leitura consolidada do dia com predominio de ${emotionPresentationMap[selectedDayDominantEmotion].label.toLowerCase()}.`
+                        : "Leitura diaria pronta para inspecionar as entradas e a distribuicao emocional deste dia."}
+                    </p>
                   </div>
-                  <div className="flex gap-2">
+
+                  <div className="justify-self-end text-right">
+                    <p className="text-2xl font-semibold text-slate-900">
+                      {selectedDayEntries.length}
+                    </p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.12em] text-(--ink-soft)">
+                      entrada(s)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-3xl border border-(--line) bg-white/75 p-4">
+                    <p className="text-xs uppercase tracking-[0.12em] text-(--ink-soft)">
+                      Emocao dominante
+                    </p>
+                    <div className="mt-3">
+                      {selectedDayDominantEmotion ? (
+                        <span
+                          className={[
+                            "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
+                            emotionPresentationMap[selectedDayDominantEmotion].chipClass,
+                          ].join(" ")}
+                        >
+                          {emotionPresentationMap[selectedDayDominantEmotion].label}
+                        </span>
+                      ) : (
+                        <p className="text-sm text-slate-700">Sem emocao dominante calculada.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl border border-(--line) bg-white/75 p-4">
+                    <p className="text-xs uppercase tracking-[0.12em] text-(--ink-soft)">
+                      Volatilidade
+                    </p>
+                    <p className="mt-3 text-2xl font-semibold text-slate-900">
+                      {selectedDayVolatilityLabel ?? "—"}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-700">
+                      {selectedDayVolatilityLabel
+                        ? "Variacao emocional agregada para este dia."
+                        : "Ainda sem valor consolidado para este indicador."}
+                    </p>
+                  </div>
+
+                  <div className="rounded-3xl border border-(--line) bg-white/75 p-4">
+                    <p className="text-xs uppercase tracking-[0.12em] text-(--ink-soft)">
+                      Top emocoes
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {selectedDayTopEmotions.length > 0 ? (
+                        selectedDayTopEmotions.map((emotionKey) => (
+                          <span
+                            className={[
+                              "inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
+                              emotionPresentationMap[emotionKey].chipClass,
+                            ].join(" ")}
+                            key={emotionKey}
+                          >
+                            {emotionPresentationMap[emotionKey].label}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="text-sm text-slate-700">Sem dados emocionais suficientes.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex h-full flex-col justify-between rounded-3xl border border-(--line) bg-white/75 p-5">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.12em] text-(--ink-soft)">
+                      Navegacao diaria
+                    </p>
+                    <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">
+                      Usa esta vista para percorrer os dias sequencialmente e acompanhar a tua evolucao emocional com mais detalhe, mantendo o mesmo estilo de leitura em blocos da vista semanal.
+                    </p>
+                  </div>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
                     <button
-                      className="rounded-full border border-(--line) px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-3xl border border-(--line) bg-(--paper) px-5 py-4 text-left transition hover:-translate-y-0.5 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={!previousDayKey}
                       onClick={() => {
                         if (!previousDayKey) {
@@ -833,10 +940,19 @@ export function TrendsPanel({
                       }}
                       type="button"
                     >
-                      Dia anterior
+                      <p className="text-xs uppercase tracking-[0.12em] text-(--ink-soft)">
+                        Navegar
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-slate-900">Dia anterior</p>
+                      <p className="mt-1 text-sm text-slate-700">
+                        {previousDayKey
+                          ? formatFullDateLabel(parseDayKey(previousDayKey).toISOString())
+                          : "Nao existe um dia anterior com dados."}
+                      </p>
                     </button>
+
                     <button
-                      className="rounded-full border border-(--line) px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-3xl border border-(--line) bg-(--paper) px-5 py-4 text-left transition hover:-translate-y-0.5 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={!nextDayKey}
                       onClick={() => {
                         if (!nextDayKey) {
@@ -854,41 +970,16 @@ export function TrendsPanel({
                       }}
                       type="button"
                     >
-                      Dia seguinte
+                      <p className="text-xs uppercase tracking-[0.12em] text-(--ink-soft)">
+                        Navegar
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-slate-900">Dia seguinte</p>
+                      <p className="mt-1 text-sm text-slate-700">
+                        {nextDayKey
+                          ? formatFullDateLabel(parseDayKey(nextDayKey).toISOString())
+                          : "Nao existe um dia seguinte com dados."}
+                      </p>
                     </button>
-                  </div>
-                </div>
-
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-2xl border border-(--line) bg-white/70 p-4">
-                    <p className="text-xs uppercase tracking-[0.12em] text-(--ink-soft)">
-                      Resumo do dia
-                    </p>
-                    <p className="mt-2 text-sm text-slate-700">
-                      {selectedDayEntries.length} entrada(s) com detalhe temporal e
-                      emocao dominante para analise mais fina.
-                    </p>
-                    {selectedDayDominantEmotion ? (
-                      <span
-                        className={[
-                          "mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold",
-                          emotionPresentationMap[selectedDayDominantEmotion].chipClass,
-                        ].join(" ")}
-                      >
-                        {emotionPresentationMap[selectedDayDominantEmotion].label}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className="rounded-2xl border border-(--line) bg-white/70 p-4">
-                    <p className="text-xs uppercase tracking-[0.12em] text-(--ink-soft)">
-                      Leitura rapida
-                    </p>
-                    <p className="mt-2 text-sm text-slate-700">
-                      Usa esta vista para percorrer os dias sequencialmente e ver
-                      como a tua energia, calma ou ansiedade oscilaram ao longo do
-                      tempo.
-                    </p>
                   </div>
                 </div>
               </div>
