@@ -16,6 +16,9 @@ type JournalTrendSource = {
   joyScore?: unknown;
   sadnessScore?: unknown;
   angerScore?: unknown;
+  fearScore?: unknown;
+  disgustScore?: unknown;
+  surpriseScore?: unknown;
   anxietyScore?: unknown;
   calmScore?: unknown;
   energyScore?: unknown;
@@ -26,9 +29,10 @@ type DailyAccumulator = {
   joy: number[];
   sadness: number[];
   anger: number[];
-  anxiety: number[];
-  calm: number[];
-  energy: number[];
+  fear: number[];
+  disgust: number[];
+  surprise: number[];
+  entryCount: number;
 };
 
 function isFiniteNumber(value: unknown): value is number {
@@ -41,6 +45,16 @@ function average(values: number[]) {
   }
 
   return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function stdDev(values: number[]) {
+  if (!values.length) {
+    return 0;
+  }
+
+  const mean = average(values);
+  const variance = average(values.map((value) => (value - mean) ** 2));
+  return Math.sqrt(variance);
 }
 
 function buildLocalDayKey(rawDate: unknown) {
@@ -58,6 +72,15 @@ function buildLocalDayKey(rawDate: unknown) {
   const day = date.getDate().toString().padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function emotionValue(journal: JournalTrendSource, primary: keyof JournalTrendSource, legacy?: keyof JournalTrendSource) {
+  const primaryValue = journal[primary];
+  if (isFiniteNumber(primaryValue)) {
+    return primaryValue;
+  }
+  const legacyValue = legacy ? journal[legacy] : undefined;
+  return isFiniteNumber(legacyValue) ? legacyValue : null;
 }
 
 function buildDailyTrendsFromJournals(journals: JournalTrendSource[]) {
@@ -80,30 +103,27 @@ function buildDailyTrendsFromJournals(journals: JournalTrendSource[]) {
       joy: [],
       sadness: [],
       anger: [],
-      anxiety: [],
-      calm: [],
-      energy: [],
+      fear: [],
+      disgust: [],
+      surprise: [],
+      entryCount: 0,
     };
 
-    if (isFiniteNumber(journal.joyScore)) {
-      current.joy.push(journal.joyScore);
-    }
-    if (isFiniteNumber(journal.sadnessScore)) {
-      current.sadness.push(journal.sadnessScore);
-    }
-    if (isFiniteNumber(journal.angerScore)) {
-      current.anger.push(journal.angerScore);
-    }
-    if (isFiniteNumber(journal.anxietyScore)) {
-      current.anxiety.push(journal.anxietyScore);
-    }
-    if (isFiniteNumber(journal.calmScore)) {
-      current.calm.push(journal.calmScore);
-    }
-    if (isFiniteNumber(journal.energyScore)) {
-      current.energy.push(journal.energyScore);
-    }
+    const joy = emotionValue(journal, "joyScore");
+    const sadness = emotionValue(journal, "sadnessScore");
+    const anger = emotionValue(journal, "angerScore");
+    const fear = emotionValue(journal, "fearScore", "anxietyScore");
+    const disgust = emotionValue(journal, "disgustScore", "calmScore");
+    const surprise = emotionValue(journal, "surpriseScore", "energyScore");
 
+    if (isFiniteNumber(joy)) current.joy.push(joy);
+    if (isFiniteNumber(sadness)) current.sadness.push(sadness);
+    if (isFiniteNumber(anger)) current.anger.push(anger);
+    if (isFiniteNumber(fear)) current.fear.push(fear);
+    if (isFiniteNumber(disgust)) current.disgust.push(disgust);
+    if (isFiniteNumber(surprise)) current.surprise.push(surprise);
+
+    current.entryCount += 1;
     days.set(dayStart, current);
   }
 
@@ -113,9 +133,18 @@ function buildDailyTrendsFromJournals(journals: JournalTrendSource[]) {
       joy: average(day.joy),
       sadness: average(day.sadness),
       anger: average(day.anger),
-      anxiety: average(day.anxiety),
-      calm: average(day.calm),
-      energy: average(day.energy),
+      fear: average(day.fear),
+      disgust: average(day.disgust),
+      surprise: average(day.surprise),
+      entryCount: day.entryCount,
+      emotionalVolatility: stdDev([
+        ...day.joy,
+        ...day.sadness,
+        ...day.anger,
+        ...day.fear,
+        ...day.disgust,
+        ...day.surprise,
+      ]),
     }))
     .sort((a, b) => a.dayStart.localeCompare(b.dayStart));
 }
@@ -158,24 +187,24 @@ export function useDailyTrends(apiBaseUrl: string) {
         color: "text-rose-700",
       },
       {
-        key: "anxiety",
-        label: "Anxiety",
-        current: latestTrendPoint.anxiety,
-        delta: latestTrendPoint.anxiety - previousTrendPoint.anxiety,
+        key: "fear",
+        label: "Fear",
+        current: latestTrendPoint.fear,
+        delta: latestTrendPoint.fear - previousTrendPoint.fear,
         color: "text-amber-700",
       },
       {
-        key: "calm",
-        label: "Calm",
-        current: latestTrendPoint.calm,
-        delta: latestTrendPoint.calm - previousTrendPoint.calm,
-        color: "text-cyan-700",
+        key: "disgust",
+        label: "Disgust",
+        current: latestTrendPoint.disgust,
+        delta: latestTrendPoint.disgust - previousTrendPoint.disgust,
+        color: "text-lime-700",
       },
       {
-        key: "energy",
-        label: "Energy",
-        current: latestTrendPoint.energy,
-        delta: latestTrendPoint.energy - previousTrendPoint.energy,
+        key: "surprise",
+        label: "Surprise",
+        current: latestTrendPoint.surprise,
+        delta: latestTrendPoint.surprise - previousTrendPoint.surprise,
         color: "text-orange-700",
       },
     ];

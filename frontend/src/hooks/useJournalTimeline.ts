@@ -2,6 +2,22 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { JournalDetail, JournalTimelineItem } from "../types/home";
 
+function numberOrNull(value: unknown) {
+  return typeof value === "number" ? value : null;
+}
+
+function fearValue(source: Record<string, unknown>) {
+  return numberOrNull(source.fearScore) ?? numberOrNull(source.anxietyScore);
+}
+
+function disgustValue(source: Record<string, unknown>) {
+  return numberOrNull(source.disgustScore) ?? numberOrNull(source.calmScore);
+}
+
+function surpriseValue(source: Record<string, unknown>) {
+  return numberOrNull(source.surpriseScore) ?? numberOrNull(source.energyScore);
+}
+
 export function useJournalTimeline(apiBaseUrl: string) {
   const [journals, setJournals] = useState<JournalTimelineItem[]>([]);
   const [isLoadingJournals, setIsLoadingJournals] = useState(false);
@@ -48,18 +64,12 @@ export function useJournalTimeline(apiBaseUrl: string) {
               typeof item.transcription === "string"
                 ? item.transcription
                 : null,
-            joyScore:
-              typeof item.joyScore === "number" ? item.joyScore : null,
-            sadnessScore:
-              typeof item.sadnessScore === "number" ? item.sadnessScore : null,
-            angerScore:
-              typeof item.angerScore === "number" ? item.angerScore : null,
-            anxietyScore:
-              typeof item.anxietyScore === "number" ? item.anxietyScore : null,
-            calmScore:
-              typeof item.calmScore === "number" ? item.calmScore : null,
-            energyScore:
-              typeof item.energyScore === "number" ? item.energyScore : null,
+            joyScore: numberOrNull(item.joyScore),
+            sadnessScore: numberOrNull(item.sadnessScore),
+            angerScore: numberOrNull(item.angerScore),
+            fearScore: fearValue(item),
+            disgustScore: disgustValue(item),
+            surpriseScore: surpriseValue(item),
           }))
         : [];
 
@@ -99,22 +109,12 @@ export function useJournalTimeline(apiBaseUrl: string) {
           typeof payload.transcription === "string"
             ? payload.transcription
             : null,
-        joyScore:
-          typeof payload.joyScore === "number" ? payload.joyScore : null,
-        sadnessScore:
-          typeof payload.sadnessScore === "number"
-            ? payload.sadnessScore
-            : null,
-        angerScore:
-          typeof payload.angerScore === "number" ? payload.angerScore : null,
-        anxietyScore:
-          typeof payload.anxietyScore === "number"
-            ? payload.anxietyScore
-            : null,
-        calmScore:
-          typeof payload.calmScore === "number" ? payload.calmScore : null,
-        energyScore:
-          typeof payload.energyScore === "number" ? payload.energyScore : null,
+        joyScore: numberOrNull(payload.joyScore),
+        sadnessScore: numberOrNull(payload.sadnessScore),
+        angerScore: numberOrNull(payload.angerScore),
+        fearScore: fearValue(payload),
+        disgustScore: disgustValue(payload),
+        surpriseScore: surpriseValue(payload),
       };
 
       setJournalDetailsById((current) => ({

@@ -13,14 +13,14 @@ from app.services.transcription import transcribe_audio
 
 SEMANTIC_WEIGHT = 0.7
 PROSODY_WEIGHT = 0.3
-MODEL_VERSION = "0.2.0-multimodal"
+MODEL_VERSION = "0.3.0-ekman"
 
 
 def _fuse_emotion_scores(
     semantic_scores: dict[str, float],
     prosody_scores: dict[str, float],
 ) -> dict[str, float]:
-    labels = ["joy", "sadness", "anger", "anxiety", "calm", "energy"]
+    labels = ["joy", "sadness", "anger", "fear", "disgust", "surprise"]
     result: dict[str, float] = {}
     for label in labels:
         semantic = float(semantic_scores.get(label, 0.0))

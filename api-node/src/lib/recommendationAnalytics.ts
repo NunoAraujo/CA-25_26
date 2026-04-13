@@ -2,17 +2,17 @@ export type EmotionKey =
   | "joy"
   | "sadness"
   | "anger"
-  | "anxiety"
-  | "calm"
-  | "energy";
+  | "fear"
+  | "disgust"
+  | "surprise";
 
 export type DailyMetrics = {
   joyAvg: number;
   sadnessAvg: number;
   angerAvg: number;
-  anxietyAvg: number;
-  calmAvg: number;
-  energyAvg: number;
+  fearAvg: number;
+  disgustAvg: number;
+  surpriseAvg: number;
   volatility: number;
 };
 
@@ -45,20 +45,23 @@ export function clamp01(value: number) {
 }
 
 export function recommendationRationale(targetEmotion: string) {
-  if (targetEmotion === "anxiety") {
-    return "Niveis de ansiedade elevados no dia; atividade sugerida para regulacao fisiologica.";
+  if (targetEmotion === "fear") {
+    return "Indicadores de medo elevados no dia; atividade sugerida para regulacao e sensacao de seguranca.";
   }
   if (targetEmotion === "sadness") {
-    return "Indicadores de tristeza persistente; atividade sugerida para reconectar com energia e presenca.";
+    return "Indicadores de tristeza persistente; atividade sugerida para reconectar com presenca e vitalidade.";
   }
   if (targetEmotion === "anger") {
     return "Sinais de irritabilidade/raiva acima do baseline; atividade sugerida para desaceleracao e clareza.";
   }
-  if (targetEmotion === "low_energy") {
-    return "Energia diaria abaixo do ideal; atividade sugerida para reativacao gradual.";
+  if (targetEmotion === "disgust") {
+    return "Sinais de aversao/rejeicao elevados; atividade sugerida para recentrar a atencao e reduzir reatividade.";
+  }
+  if (targetEmotion === "surprise") {
+    return "Sinais de surpresa/ativacao elevados; atividade sugerida para integrar a experiencia e estabilizar o ritmo.";
   }
 
-  return "Atividade sugerida com base no padrao emocional diario detectado.";
+  return "Atividade sugerida com base no padrao emocional diario detetado.";
 }
 
 export function buildDailyMetrics(
@@ -67,26 +70,26 @@ export function buildDailyMetrics(
   const joyAvg = average(emotionScores.joy);
   const sadnessAvg = average(emotionScores.sadness);
   const angerAvg = average(emotionScores.anger);
-  const anxietyAvg = average(emotionScores.anxiety);
-  const calmAvg = average(emotionScores.calm);
-  const energyAvg = average(emotionScores.energy);
+  const fearAvg = average(emotionScores.fear);
+  const disgustAvg = average(emotionScores.disgust);
+  const surpriseAvg = average(emotionScores.surprise);
 
   const volatility = stdDev([
     ...emotionScores.joy,
     ...emotionScores.sadness,
     ...emotionScores.anger,
-    ...emotionScores.anxiety,
-    ...emotionScores.calm,
-    ...emotionScores.energy,
+    ...emotionScores.fear,
+    ...emotionScores.disgust,
+    ...emotionScores.surprise,
   ]);
 
   return {
     joyAvg,
     sadnessAvg,
     angerAvg,
-    anxietyAvg,
-    calmAvg,
-    energyAvg,
+    fearAvg,
+    disgustAvg,
+    surpriseAvg,
     volatility,
   };
 }
@@ -125,16 +128,18 @@ export function inferContraindications(transcriptions: string[]) {
 
 export function computeEmotionPriority(metrics: DailyMetrics) {
   const items = [
-    { key: "anxiety", score: metrics.anxietyAvg },
+    { key: "fear", score: metrics.fearAvg },
     { key: "sadness", score: metrics.sadnessAvg },
     { key: "anger", score: metrics.angerAvg },
-    { key: "low_energy", score: 1 - metrics.energyAvg },
+    { key: "disgust", score: metrics.disgustAvg },
+    { key: "surprise", score: metrics.surpriseAvg },
+    { key: "joy", score: metrics.joyAvg },
   ]
     .filter((item) => item.score > 0.35)
     .sort((a, b) => b.score - a.score);
 
   if (!items.length) {
-    items.push({ key: "anxiety", score: 0.4 });
+    items.push({ key: "joy", score: metrics.joyAvg });
   }
 
   return items;

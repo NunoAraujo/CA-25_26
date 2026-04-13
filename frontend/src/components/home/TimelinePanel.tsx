@@ -138,19 +138,19 @@ export function TimelinePanel({
                         "-"}
                     </p>
                     <p>
-                      Anxiety:{" "}
-                      {journalDetailsById[journal.id]?.anxietyScore?.toFixed(
+                      Fear:{" "}
+                      {journalDetailsById[journal.id]?.fearScore?.toFixed(
                         2,
                       ) ?? "-"}
                     </p>
                     <p>
-                      Calm:{" "}
-                      {journalDetailsById[journal.id]?.calmScore?.toFixed(2) ??
+                      Disgust:{" "}
+                      {journalDetailsById[journal.id]?.disgustScore?.toFixed(2) ??
                         "-"}
                     </p>
                     <p>
-                      Energy:{" "}
-                      {journalDetailsById[journal.id]?.energyScore?.toFixed(
+                      Surprise:{" "}
+                      {journalDetailsById[journal.id]?.surpriseScore?.toFixed(
                         2,
                       ) ?? "-"}
                     </p>

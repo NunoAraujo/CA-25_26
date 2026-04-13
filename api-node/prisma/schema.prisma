@@ -55,9 +55,9 @@ model Journal {
   joyScore           Float?
   sadnessScore       Float?
   angerScore         Float?
-  anxietyScore       Float?
-  calmScore          Float?
-  energyScore        Float?
+  fearScore          Float?
+  disgustScore       Float?
+  surpriseScore      Float?
 
   prosodyWeight      Float            @default(0.3)
   semanticWeight     Float            @default(0.7)
@@ -100,33 +100,33 @@ model ProsodyFeature {
 }
 
 model DailyTrend {
-  id                 String           @id @default(cuid())
-  userId             String
-  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dayStart           DateTime
-  dayEnd             DateTime
+  id                  String           @id @default(cuid())
+  userId              String
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dayStart            DateTime
+  dayEnd              DateTime
 
-  avgJoyScore        Float
-  avgSadnessScore    Float
-  avgAngerScore      Float
-  avgAnxietyScore    Float
-  avgCalmScore       Float
-  avgEnergyScore     Float
+  avgJoyScore         Float
+  avgSadnessScore     Float
+  avgAngerScore       Float
+  avgFearScore        Float
+  avgDisgustScore     Float
+  avgSurpriseScore    Float
 
-  joyTrend           Float?
-  sadnessTrend       Float?
-  angerTrend         Float?
-  anxietyTrend       Float?
-  calmTrend          Float?
-  energyTrend        Float?
+  joyTrend            Float?
+  sadnessTrend        Float?
+  angerTrend          Float?
+  fearTrend           Float?
+  disgustTrend        Float?
+  surpriseTrend       Float?
 
   emotionalVolatility Float
-  entryCount         Int
-  completionRate     Float
+  entryCount          Int
+  completionRate      Float
 
-  recommendations    Recommendation[]
+  recommendations     Recommendation[]
 
-  computedAt         DateTime         @default(now())
+  computedAt          DateTime         @default(now())
 
   @@unique([userId, dayStart])
   @@index([userId, dayStart])

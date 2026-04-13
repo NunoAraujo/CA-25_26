@@ -6,7 +6,7 @@ from collections import Counter
 
 from app.services.logging_config import logger
 
-_TEXT_LABELS = ["joy", "sadness", "anger", "anxiety", "calm", "energy"]
+_TEXT_LABELS = ["joy", "sadness", "anger", "fear", "disgust", "surprise"]
 
 _LEXICON = {
     "joy": {
@@ -15,11 +15,11 @@ _LEXICON = {
         "contente",
         "grato",
         "gratidao",
-        "esperanca",
         "otimo",
         "bom",
         "leve",
         "animado",
+        "satisfeito",
     },
     "sadness": {
         "triste",
@@ -31,6 +31,7 @@ _LEXICON = {
         "desmotivado",
         "desesperanca",
         "saudade",
+        "abatido",
     },
     "anger": {
         "raiva",
@@ -41,37 +42,38 @@ _LEXICON = {
         "revoltado",
         "injusto",
         "furioso",
+        "zangado",
     },
-    "anxiety": {
+    "fear": {
+        "medo",
         "ansioso",
         "ansiedade",
         "preocupado",
-        "medo",
-        "aperto",
-        "tenso",
         "panico",
         "inseguro",
-        "acelerado",
+        "receio",
+        "tenso",
+        "assustado",
     },
-    "calm": {
-        "calmo",
-        "tranquilo",
-        "sereno",
-        "respirar",
-        "paz",
-        "equilibrio",
-        "centrado",
-        "presenca",
+    "disgust": {
+        "nojo",
+        "aversao",
+        "repulsa",
+        "asco",
+        "enojado",
+        "rejeicao",
+        "detesto",
+        "desgosto",
     },
-    "energy": {
-        "energia",
-        "disposto",
-        "forca",
-        "vontade",
-        "ativo",
-        "foco",
-        "produtivo",
-        "acordado",
+    "surprise": {
+        "surpresa",
+        "surpreso",
+        "inesperado",
+        "espanto",
+        "chocado",
+        "uau",
+        "imprevisivel",
+        "admirado",
     },
 }
 
@@ -179,7 +181,7 @@ def _zero_shot_scores(text: str) -> dict[str, float]:
     if classifier is None:
         return dict.fromkeys(_TEXT_LABELS, 0.0)
 
-    labels = ["joy", "sadness", "anger", "anxiety", "calm", "energy"]
+    labels = ["joy", "sadness", "anger", "fear", "disgust", "surprise"]
 
     try:
         result = classifier(
@@ -204,14 +206,7 @@ def _zero_shot_scores(text: str) -> dict[str, float]:
 def analyze_text_emotions(transcription: str | None) -> dict[str, float]:
     text = (transcription or "").strip()
     if not text:
-        return {
-            "joy": 0.0,
-            "sadness": 0.0,
-            "anger": 0.0,
-            "anxiety": 0.0,
-            "calm": 0.35,
-            "energy": 0.2,
-        }
+        return {label: 0.0 for label in _TEXT_LABELS}
 
     lexical = _lexical_scores(text)
     zero_shot = _zero_shot_scores(text)

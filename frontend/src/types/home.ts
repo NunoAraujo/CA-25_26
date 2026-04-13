@@ -29,9 +29,9 @@ export type EmotionMetricKey =
   | "joy"
   | "sadness"
   | "anger"
-  | "anxiety"
-  | "calm"
-  | "energy";
+  | "fear"
+  | "disgust"
+  | "surprise";
 
 export type EmotionScores = Record<EmotionMetricKey, number>;
 
@@ -45,9 +45,9 @@ export type JournalTimelineItem = {
   joyScore: number | null;
   sadnessScore: number | null;
   angerScore: number | null;
-  anxietyScore: number | null;
-  calmScore: number | null;
-  energyScore: number | null;
+  fearScore: number | null;
+  disgustScore: number | null;
+  surpriseScore: number | null;
 };
 
 export type JournalDetail = {
@@ -56,9 +56,9 @@ export type JournalDetail = {
   joyScore: number | null;
   sadnessScore: number | null;
   angerScore: number | null;
-  anxietyScore: number | null;
-  calmScore: number | null;
-  energyScore: number | null;
+  fearScore: number | null;
+  disgustScore: number | null;
+  surpriseScore: number | null;
 };
 
 export type DailyTrendPoint = {
@@ -66,9 +66,9 @@ export type DailyTrendPoint = {
   joy: number;
   sadness: number;
   anger: number;
-  anxiety: number;
-  calm: number;
-  energy: number;
+  fear: number;
+  disgust: number;
+  surprise: number;
   entryCount: number;
   emotionalVolatility: number;
 };

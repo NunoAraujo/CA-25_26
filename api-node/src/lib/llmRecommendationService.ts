@@ -145,7 +145,7 @@ export async function generateLlmRecommendations(input: {
     "Use templateId values exactly as provided in the template list.",
     `Primary emotion: ${input.primaryEmotion}`,
     `Secondary emotion: ${input.fallbackEmotion}`,
-    `Metrics: joy=${input.metrics.joyAvg.toFixed(3)}, sadness=${input.metrics.sadnessAvg.toFixed(3)}, anger=${input.metrics.angerAvg.toFixed(3)}, anxiety=${input.metrics.anxietyAvg.toFixed(3)}, calm=${input.metrics.calmAvg.toFixed(3)}, energy=${input.metrics.energyAvg.toFixed(3)}.`,
+    `Metrics: joy=${input.metrics.joyAvg.toFixed(3)}, sadness=${input.metrics.sadnessAvg.toFixed(3)}, anger=${input.metrics.angerAvg.toFixed(3)}, fear=${input.metrics.fearAvg.toFixed(3)}, disgust=${input.metrics.disgustAvg.toFixed(3)}, surprise=${input.metrics.surpriseAvg.toFixed(3)}.`,
     `Templates: ${JSON.stringify(input.templates)}.`,
     "expectedImpactDelta and confidenceBoost must be numbers from 0 to 1.",
   ].join("\n");
@@ -167,17 +167,13 @@ export async function generateLlmRecommendations(input: {
           },
         };
 
-    const response = await axios.post(
-      endpoint,
-      requestPayload,
-      {
-        timeout: 20000,
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+    const response = await axios.post(endpoint, requestPayload, {
+      timeout: 20000,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-    );
+    });
 
     const rawData = response.data;
     let generatedText = "";
@@ -260,7 +256,9 @@ export async function generateLlmRecommendations(input: {
 
     throw new LlmRecommendationError(
       "llm_request_failed",
-      "Failed to generate recommendations from LLM",
+      error instanceof Error
+        ? error.message
+        : "Failed to generate recommendations from LLM",
     );
   }
 }

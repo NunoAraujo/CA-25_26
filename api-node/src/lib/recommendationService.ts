@@ -25,15 +25,15 @@ type RecommendationTemplate = {
   contraindications: string[];
 };
 
-type PriorityEmotionKey = EmotionKey | "low_energy";
+type PriorityEmotionKey = EmotionKey;
 
 type JournalEmotionSample = {
   joyScore: number | null;
   sadnessScore: number | null;
   angerScore: number | null;
-  anxietyScore: number | null;
-  calmScore: number | null;
-  energyScore: number | null;
+  fearScore: number | null;
+  disgustScore: number | null;
+  surpriseScore: number | null;
   transcription: string | null;
 };
 
@@ -44,7 +44,7 @@ const RECOMMENDATION_TEMPLATES: RecommendationTemplate[] = [
     activityDurationMin: 5,
     activityIntensity: ActivityIntensity.low,
     category: "breathing",
-    targetEmotions: ["anxiety", "anger"],
+    targetEmotions: ["fear", "anger"],
     contraindications: ["hiperventilacao", "desconforto respiratorio agudo"],
   },
   {
@@ -53,7 +53,7 @@ const RECOMMENDATION_TEMPLATES: RecommendationTemplate[] = [
     activityDurationMin: 10,
     activityIntensity: ActivityIntensity.low,
     category: "mindfulness",
-    targetEmotions: ["anxiety", "sadness"],
+    targetEmotions: ["fear", "sadness"],
     contraindications: ["dor intensa sem acompanhamento medico"],
   },
   {
@@ -62,7 +62,7 @@ const RECOMMENDATION_TEMPLATES: RecommendationTemplate[] = [
     activityDurationMin: 7,
     activityIntensity: ActivityIntensity.low,
     category: "grounding",
-    targetEmotions: ["anxiety", "anger"],
+    targetEmotions: ["fear", "anger"],
     contraindications: [],
   },
   {
@@ -71,7 +71,7 @@ const RECOMMENDATION_TEMPLATES: RecommendationTemplate[] = [
     activityDurationMin: 15,
     activityIntensity: ActivityIntensity.medium,
     category: "movement",
-    targetEmotions: ["sadness", "energy"],
+    targetEmotions: ["sadness", "surprise"],
     contraindications: ["lesao ortopedica sem liberacao"],
   },
   {
@@ -80,34 +80,28 @@ const RECOMMENDATION_TEMPLATES: RecommendationTemplate[] = [
     activityDurationMin: 10,
     activityIntensity: ActivityIntensity.medium,
     category: "cognitive",
-    targetEmotions: ["anxiety", "sadness", "anger"],
+    targetEmotions: ["fear", "sadness", "anger"],
     contraindications: [],
   },
   {
-    templateId: "activation-energy-12",
-    activityName: "Ativacao de Energia",
+    templateId: "integration-surprise-12",
+    activityName: "Integracao da Surpresa",
     activityDurationMin: 12,
     activityIntensity: ActivityIntensity.medium,
     category: "activation",
-    targetEmotions: ["energy", "calm"],
+    targetEmotions: ["surprise", "disgust"],
     contraindications: ["fadiga extrema"],
   },
 ];
-
-function normalizePriorityEmotion(emotion: PriorityEmotionKey): EmotionKey {
-  return emotion === "low_energy" ? "energy" : emotion;
-}
 
 function resolveTemplatesForEmotion(
   primaryEmotion: PriorityEmotionKey,
   fallbackEmotion: PriorityEmotionKey,
 ) {
-  const normalizedPrimary = normalizePriorityEmotion(primaryEmotion);
-  const normalizedFallback = normalizePriorityEmotion(fallbackEmotion);
   const direct = RECOMMENDATION_TEMPLATES.filter((template) =>
     template.targetEmotions.some(
       (emotion) =>
-        emotion === normalizedPrimary || emotion === normalizedFallback,
+        emotion === primaryEmotion || emotion === fallbackEmotion,
     ),
   );
 
@@ -150,12 +144,10 @@ function buildFallbackLlmOutput(
   templates: RecommendationTemplate[],
   primaryEmotion: PriorityEmotionKey,
 ): LlmRecommendationOutput[] {
-  const normalizedEmotion = normalizePriorityEmotion(primaryEmotion);
-
   return templates.slice(0, 3).map((template) => ({
     templateId: template.templateId,
     rationale: recommendationRationale(primaryEmotion),
-    expectedImpactMetric: normalizedEmotion,
+    expectedImpactMetric: primaryEmotion,
     expectedImpactDelta: 0.12,
     confidenceBoost: 0,
   }));
@@ -166,9 +158,9 @@ function collectEmotionScores(journals: JournalEmotionSample[]) {
     joy: [],
     sadness: [],
     anger: [],
-    anxiety: [],
-    calm: [],
-    energy: [],
+    fear: [],
+    disgust: [],
+    surprise: [],
   };
 
   for (const journal of journals) {
@@ -181,14 +173,14 @@ function collectEmotionScores(journals: JournalEmotionSample[]) {
     if (typeof journal.angerScore === "number") {
       emotionScores.anger.push(journal.angerScore);
     }
-    if (typeof journal.anxietyScore === "number") {
-      emotionScores.anxiety.push(journal.anxietyScore);
+    if (typeof journal.fearScore === "number") {
+      emotionScores.fear.push(journal.fearScore);
     }
-    if (typeof journal.calmScore === "number") {
-      emotionScores.calm.push(journal.calmScore);
+    if (typeof journal.disgustScore === "number") {
+      emotionScores.disgust.push(journal.disgustScore);
     }
-    if (typeof journal.energyScore === "number") {
-      emotionScores.energy.push(journal.energyScore);
+    if (typeof journal.surpriseScore === "number") {
+      emotionScores.surprise.push(journal.surpriseScore);
     }
   }
 
@@ -263,9 +255,9 @@ export async function generateDailyRecommendations(
       joyScore: true,
       sadnessScore: true,
       angerScore: true,
-      anxietyScore: true,
-      calmScore: true,
-      energyScore: true,
+      fearScore: true,
+      disgustScore: true,
+      surpriseScore: true,
       transcription: true,
     },
   });
@@ -298,15 +290,15 @@ export async function generateDailyRecommendations(
       avgJoyScore: metrics.joyAvg,
       avgSadnessScore: metrics.sadnessAvg,
       avgAngerScore: metrics.angerAvg,
-      avgAnxietyScore: metrics.anxietyAvg,
-      avgCalmScore: metrics.calmAvg,
-      avgEnergyScore: metrics.energyAvg,
+      avgFearScore: metrics.fearAvg,
+      avgDisgustScore: metrics.disgustAvg,
+      avgSurpriseScore: metrics.surpriseAvg,
       joyTrend: metrics.joyAvg,
       sadnessTrend: metrics.sadnessAvg,
       angerTrend: metrics.angerAvg,
-      anxietyTrend: metrics.anxietyAvg,
-      calmTrend: metrics.calmAvg,
-      energyTrend: metrics.energyAvg,
+      fearTrend: metrics.fearAvg,
+      disgustTrend: metrics.disgustAvg,
+      surpriseTrend: metrics.surpriseAvg,
       emotionalVolatility: metrics.volatility,
       entryCount: journals.length,
       completionRate: 1,
@@ -316,15 +308,15 @@ export async function generateDailyRecommendations(
       avgJoyScore: metrics.joyAvg,
       avgSadnessScore: metrics.sadnessAvg,
       avgAngerScore: metrics.angerAvg,
-      avgAnxietyScore: metrics.anxietyAvg,
-      avgCalmScore: metrics.calmAvg,
-      avgEnergyScore: metrics.energyAvg,
+      avgFearScore: metrics.fearAvg,
+      avgDisgustScore: metrics.disgustAvg,
+      avgSurpriseScore: metrics.surpriseAvg,
       joyTrend: metrics.joyAvg,
       sadnessTrend: metrics.sadnessAvg,
       angerTrend: metrics.angerAvg,
-      anxietyTrend: metrics.anxietyAvg,
-      calmTrend: metrics.calmAvg,
-      energyTrend: metrics.energyAvg,
+      fearTrend: metrics.fearAvg,
+      disgustTrend: metrics.disgustAvg,
+      surpriseTrend: metrics.surpriseAvg,
       emotionalVolatility: metrics.volatility,
       entryCount: journals.length,
       completionRate: 1,
@@ -445,7 +437,9 @@ export async function generateDailyRecommendations(
       dailyTrend,
       llm: {
         mode: llmMode,
-        model: process.env.HF_TEXT_GEN_MODEL ?? "mistralai/Mistral-7B-Instruct-v0.3",
+        model:
+          process.env.HF_TEXT_GEN_MODEL ??
+          "mistralai/Mistral-7B-Instruct-v0.3",
         fallbackReason: llmFallbackReason,
       },
       recommendations: createdRecommendations,

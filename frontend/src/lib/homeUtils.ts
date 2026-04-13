@@ -8,9 +8,9 @@ export const emotionMetricKeys: EmotionMetricKey[] = [
   "joy",
   "sadness",
   "anger",
-  "anxiety",
-  "calm",
-  "energy",
+  "fear",
+  "disgust",
+  "surprise",
 ];
 
 export function formatClock(totalSeconds: number) {
@@ -106,14 +106,14 @@ export function applyRecommendationPreset(
 ) {
   if (preset === "calming") {
     setIntensity("low");
-    setEmotion("anxiety");
+    setEmotion("fear");
     setOrder("confidence");
     return;
   }
 
   if (preset === "energizing") {
     setIntensity("medium");
-    setEmotion("low_energy");
+    setEmotion("surprise");
     setOrder("confidence");
     return;
   }

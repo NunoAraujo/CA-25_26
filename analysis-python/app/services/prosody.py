@@ -53,16 +53,20 @@ def _load_audio_emotion_pipeline():
 def _map_audio_label(label: str) -> str | None:
     normalized = label.strip().lower()
 
-    if any(key in normalized for key in ["happy", "joy", "positive", "excited"]):
+    if any(key in normalized for key in ["happy", "joy", "positive"]):
         return "joy"
     if any(key in normalized for key in ["sad", "sadness"]):
         return "sadness"
     if any(key in normalized for key in ["angry", "anger", "frustrat"]):
         return "anger"
-    if any(key in normalized for key in ["fear", "anx", "nerv", "stress"]):
-        return "anxiety"
-    if any(key in normalized for key in ["calm", "neutral", "relax"]):
-        return "calm"
+    if any(key in normalized for key in ["fear", "anx", "nerv", "stress", "scared"]):
+        return "fear"
+    if any(key in normalized for key in ["disgust", "disgusted", "aversion"]):
+        return "disgust"
+    if any(key in normalized for key in ["surprise", "surprised", "astonish"]):
+        return "surprise"
+    if any(key in normalized for key in ["excited"]):
+        return "surprise"
 
     return None
 
@@ -155,9 +159,9 @@ def classify_audio_emotions(
         "joy": 0.0,
         "sadness": 0.0,
         "anger": 0.0,
-        "anxiety": 0.0,
-        "calm": 0.0,
-        "energy": 0.0,
+        "fear": 0.0,
+        "disgust": 0.0,
+        "surprise": 0.0,
     }
 
     if model is not None:
@@ -176,18 +180,21 @@ def classify_audio_emotions(
     speech_rate = float(prosody_features.get("speechRate", 0.0))
     pause_ratio = float(prosody_features.get("pauseRatio", 0.0))
     pitch_std = float(prosody_features.get("pitchStdDev", 0.0))
+    jitter = float(prosody_features.get("jitter", 0.0))
+    shimmer = float(prosody_features.get("shimmer", 0.0))
 
-    fallback_energy = _clamp01((mean_energy * 1.8) + (speech_rate / 8.0))
-    fallback_anxiety = _clamp01((pause_ratio * 1.15) + (pitch_std / 250.0))
-    fallback_sadness = _clamp01(0.15 + pause_ratio * 0.45)
-    fallback_anger = _clamp01(0.1 + pitch_std / 300.0)
-    fallback_joy = _clamp01(0.2 + (1.0 - pause_ratio) * 0.25)
+    fallback_joy = _clamp01(0.15 + mean_energy * 1.4 + (1.0 - pause_ratio) * 0.15)
+    fallback_sadness = _clamp01(0.1 + pause_ratio * 0.55 + max(0.0, 0.08 - mean_energy) * 2.5)
+    fallback_anger = _clamp01(0.08 + pitch_std / 300.0 + mean_energy * 1.0)
+    fallback_fear = _clamp01(0.1 + pause_ratio * 0.75 + pitch_std / 260.0)
+    fallback_disgust = _clamp01(0.05 + jitter * 1.4 + shimmer * 0.9)
+    fallback_surprise = _clamp01(0.08 + speech_rate / 8.0 + pitch_std / 280.0)
 
-    scores["joy"] = max(scores["joy"], fallback_joy * 0.5)
+    scores["joy"] = max(scores["joy"], fallback_joy * 0.45)
     scores["sadness"] = max(scores["sadness"], fallback_sadness * 0.6)
-    scores["anger"] = max(scores["anger"], fallback_anger * 0.6)
-    scores["anxiety"] = max(scores["anxiety"], fallback_anxiety * 0.65)
-    scores["calm"] = _clamp01(max(scores["calm"], 0.55 - scores["anxiety"] * 0.4))
-    scores["energy"] = _clamp01(max(scores["energy"], fallback_energy * 0.8))
+    scores["anger"] = max(scores["anger"], fallback_anger * 0.55)
+    scores["fear"] = max(scores["fear"], fallback_fear * 0.6)
+    scores["disgust"] = max(scores["disgust"], fallback_disgust * 0.5)
+    scores["surprise"] = max(scores["surprise"], fallback_surprise * 0.55)
 
     return {key: _clamp01(value) for key, value in scores.items()}

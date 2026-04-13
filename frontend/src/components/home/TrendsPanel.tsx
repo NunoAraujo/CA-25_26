@@ -80,22 +80,22 @@ const emotionPresentationMap: Record<EmotionMetricKey, EmotionPresentation> = {
     mutedClass: "text-rose-800/80",
     valueClass: "text-rose-700",
   },
-  anxiety: {
-    label: "Ansiedade",
+  fear: {
+    label: "Medo",
     chipClass: "border-amber-200 bg-amber-50 text-amber-800",
     surfaceClass: "border-amber-200 bg-amber-50/70 text-amber-900",
     mutedClass: "text-amber-800/80",
     valueClass: "text-amber-700",
   },
-  calm: {
-    label: "Calma",
-    chipClass: "border-cyan-200 bg-cyan-50 text-cyan-800",
-    surfaceClass: "border-cyan-200 bg-cyan-50/70 text-cyan-900",
-    mutedClass: "text-cyan-800/80",
-    valueClass: "text-cyan-700",
+  disgust: {
+    label: "Nojo",
+    chipClass: "border-lime-200 bg-lime-50 text-lime-800",
+    surfaceClass: "border-lime-200 bg-lime-50/70 text-lime-900",
+    mutedClass: "text-lime-800/80",
+    valueClass: "text-lime-700",
   },
-  energy: {
-    label: "Energia",
+  surprise: {
+    label: "Surpresa",
     chipClass: "border-orange-200 bg-orange-50 text-orange-800",
     surfaceClass: "border-orange-200 bg-orange-50/70 text-orange-900",
     mutedClass: "text-orange-800/80",
@@ -112,9 +112,9 @@ function buildEmotionScoresFromTrend(trend: DailyTrendPoint): EmotionScores {
     joy: trend.joy,
     sadness: trend.sadness,
     anger: trend.anger,
-    anxiety: trend.anxiety,
-    calm: trend.calm,
-    energy: trend.energy,
+    fear: trend.fear,
+    disgust: trend.disgust,
+    surprise: trend.surprise,
   };
 }
 
@@ -124,9 +124,9 @@ function buildEmotionScoresFromJournal(journal: JournalTimelineItem) {
       joy: journal.joyScore,
       sadness: journal.sadnessScore,
       anger: journal.angerScore,
-      anxiety: journal.anxietyScore,
-      calm: journal.calmScore,
-      energy: journal.energyScore,
+      fear: journal.fearScore,
+      disgust: journal.disgustScore,
+      surprise: journal.surpriseScore,
     },
   ]);
 }
@@ -259,9 +259,9 @@ export function TrendsPanel({
         joy: journal.joyScore,
         sadness: journal.sadnessScore,
         anger: journal.angerScore,
-        anxiety: journal.anxietyScore,
-        calm: journal.calmScore,
-        energy: journal.energyScore,
+        fear: journal.fearScore,
+        disgust: journal.disgustScore,
+        surprise: journal.surpriseScore,
       })),
     );
   }, [selectedDailyTrend, selectedDayEntries]);
@@ -289,9 +289,9 @@ export function TrendsPanel({
               joy: journal.joyScore,
               sadness: journal.sadnessScore,
               anger: journal.angerScore,
-              anxiety: journal.anxietyScore,
-              calm: journal.calmScore,
-              energy: journal.energyScore,
+              fear: journal.fearScore,
+              disgust: journal.disgustScore,
+              surprise: journal.surpriseScore,
             })),
           );
 
@@ -324,9 +324,9 @@ export function TrendsPanel({
               joy: journal.joyScore,
               sadness: journal.sadnessScore,
               anger: journal.angerScore,
-              anxiety: journal.anxietyScore,
-              calm: journal.calmScore,
-              energy: journal.energyScore,
+              fear: journal.fearScore,
+              disgust: journal.disgustScore,
+              surprise: journal.surpriseScore,
             })),
           );
 
@@ -362,9 +362,9 @@ export function TrendsPanel({
           joy: null;
           sadness: null;
           anger: null;
-          anxiety: null;
-          calm: null;
-          energy: null;
+          fear: null;
+          disgust: null;
+          surprise: null;
         }
     > = [];
 
@@ -379,9 +379,9 @@ export function TrendsPanel({
           joy: null,
           sadness: null,
           anger: null,
-          anxiety: null,
-          calm: null,
-          energy: null,
+          fear: null,
+          disgust: null,
+          surprise: null,
         });
       }
 
@@ -506,6 +506,13 @@ export function TrendsPanel({
               
               <Line
                 type="monotone"
+                dataKey="joy"
+                stroke="#10b981"
+                dot={false}
+                connectNulls
+              />
+              <Line
+                type="monotone"
                 dataKey="sadness"
                 stroke="#6366f1"
                 dot={false}
@@ -514,15 +521,15 @@ export function TrendsPanel({
               <Line type="monotone" dataKey="anger" stroke="#ef4444" dot={false} connectNulls />
               <Line
                 type="monotone"
-                dataKey="anxiety"
+                dataKey="fear"
                 stroke="#f59e0b"
                 dot={false}
                 connectNulls
               />
-              <Line type="monotone" dataKey="calm" stroke="#06b6d4" dot={false} connectNulls />
+              <Line type="monotone" dataKey="disgust" stroke="#84cc16" dot={false} connectNulls />
               <Line
                 type="monotone"
-                dataKey="energy"
+                dataKey="surprise"
                 stroke="#f97316"
                 dot={false}
                 connectNulls
