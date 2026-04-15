@@ -1118,7 +1118,8 @@ export function TrendsPanel({
                         )}
                       </div>
 
-                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-700">
+                      <p className="mt-3 text-sm leading-6 text-slate-700">
+                        
                         {journal.transcription && journal.transcription.length > 0
                           ? journal.transcription
                           : "Sem transcricao disponivel para esta entrada."}
