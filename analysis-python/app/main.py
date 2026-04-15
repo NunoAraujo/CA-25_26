@@ -8,21 +8,37 @@ from app.models.schemas import AnalysisRequest, AnalysisResponse, StatusResponse
 from app.models.task_store import running_tasks
 from app.services.analysis_tasks import get_task_status, queue_task, run_analysis_task
 from app.services.logging_config import logger
+from app.services.transcription import get_selected_asr_model, list_available_asr_models
 
 app = FastAPI(
     title="Audio Journaling Analysis Engine",
     description="Portuguese-first audio analysis service for emotion detection",
-    version="0.2.0",
+    version="0.3.0",
 )
 
 
 @app.get("/health")
 async def health():
+    selected_asr = get_selected_asr_model()
     return {
         "status": "ready",
-        "models_loaded": ["whisper", "prosody-extractor", "heuristic-emotion"],
+        "models_loaded": [
+            f"asr:{selected_asr['key']}",
+            "prosody-extractor",
+            "heuristic-emotion",
+        ],
+        "selected_asr_model": selected_asr,
+        "available_asr_models": list_available_asr_models(),
         "minio_configured": bool(os.getenv("MINIO_ENDPOINT")),
         "gpu_available": False,
+    }
+
+
+@app.get("/api/v1/asr/models")
+async def asr_models():
+    return {
+        "selected": get_selected_asr_model(),
+        "models": list_available_asr_models(),
     }
 
 
@@ -70,9 +86,10 @@ async def get_status(taskId: Annotated[str, Path()]):  # noqa: N803
 async def root():
     return {
         "service": "Audio Journaling Analysis Engine",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "endpoints": {
             "health": "/health",
+            "asr_models": "/api/v1/asr/models",
             "analyze": "/api/v1/analyze",
             "status": "/api/v1/analyze/{taskId}",
         },

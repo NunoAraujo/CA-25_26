@@ -38,35 +38,37 @@ model User {
 }
 
 model Journal {
-  id                 String           @id @default(cuid())
-  userId             String
-  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  audioObjectKey     String           @unique
-  audioUrl           String
-  durationSeconds    Float
-  recordedAt         DateTime?
-  uploadedAt         DateTime         @default(now())
-  status             JournalStatus    @default(queued)
-  statusUpdatedAt    DateTime         @updatedAt
-  transcription      String?
-  transcriptionLang  String           @default("pt-BR")
-  errorMessage       String?
+  id                    String           @id @default(cuid())
+  userId                String
+  user                  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audioObjectKey        String           @unique
+  audioUrl              String
+  durationSeconds       Float
+  recordedAt            DateTime?
+  uploadedAt            DateTime         @default(now())
+  status                JournalStatus    @default(queued)
+  statusUpdatedAt       DateTime         @updatedAt
+  transcription         String?
+  transcriptionLang     String           @default("pt-BR")
+  transcriptionModelKey String?
+  transcriptionModelId  String?
+  errorMessage          String?
 
-  joyScore           Float?
-  sadnessScore       Float?
-  angerScore         Float?
-  fearScore          Float?
-  disgustScore       Float?
-  surpriseScore      Float?
+  joyScore              Float?
+  sadnessScore          Float?
+  angerScore            Float?
+  fearScore             Float?
+  disgustScore          Float?
+  surpriseScore         Float?
 
-  prosodyWeight      Float            @default(0.3)
-  semanticWeight     Float            @default(0.7)
-  modelVersion       String           @default("0.1.0")
+  prosodyWeight         Float            @default(0.3)
+  semanticWeight        Float            @default(0.7)
+  modelVersion          String           @default("0.1.0")
 
-  prosodyFeature     ProsodyFeature?
-  journalSuggestions JournalSuggestion[]
+  prosodyFeature        ProsodyFeature?
+  journalSuggestions    JournalSuggestion[]
 
-  deletedAt          DateTime?
+  deletedAt             DateTime?
 
   @@index([userId, uploadedAt])
   @@index([status])

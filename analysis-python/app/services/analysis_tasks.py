@@ -13,7 +13,7 @@ from app.services.transcription import transcribe_audio
 
 SEMANTIC_WEIGHT = 0.7
 PROSODY_WEIGHT = 0.3
-MODEL_VERSION = "0.3.0-ekman"
+MODEL_VERSION = "0.4.0-ekman-multi-asr"
 
 
 def _fuse_emotion_scores(
@@ -35,6 +35,8 @@ def queue_task(task_id: str) -> None:
         "status": "queued",
         "progress": 0,
         "transcription": None,
+        "transcriptionModelKey": None,
+        "transcriptionModelId": None,
         "emotionVector": None,
         "semanticScores": None,
         "prosodyScores": None,
@@ -54,6 +56,8 @@ async def run_analysis_task(task_id: str, request: AnalysisRequest) -> None:
         "status": "processing",
         "progress": 10,
         "transcription": None,
+        "transcriptionModelKey": None,
+        "transcriptionModelId": None,
         "emotionVector": None,
         "semanticScores": None,
         "prosodyScores": None,
@@ -70,10 +74,11 @@ async def run_analysis_task(task_id: str, request: AnalysisRequest) -> None:
         )
         task_store[task_id]["progress"] = 35
 
-        transcription = await asyncio.to_thread(
+        transcription_result = await asyncio.to_thread(
             transcribe_audio,
             temp_audio_path,
             request.language,
+            request.transcriptionModelKey,
         )
         task_store[task_id]["progress"] = 55
 
@@ -85,15 +90,18 @@ async def run_analysis_task(task_id: str, request: AnalysisRequest) -> None:
         )
         semantic_scores = await asyncio.to_thread(
             analyze_text_emotions,
-            transcription,
+            transcription_result.text,
         )
         emotion_vector = _fuse_emotion_scores(semantic_scores, prosody_scores)
+        model_version = f"{MODEL_VERSION}|asr={transcription_result.model_key}"
 
         task_store[task_id] = {
             "taskId": task_id,
             "status": "complete",
             "progress": 100,
-            "transcription": transcription,
+            "transcription": transcription_result.text,
+            "transcriptionModelKey": transcription_result.model_key,
+            "transcriptionModelId": transcription_result.model_id,
             "emotionVector": emotion_vector,
             "semanticScores": semantic_scores,
             "prosodyScores": prosody_scores,
@@ -106,20 +114,23 @@ async def run_analysis_task(task_id: str, request: AnalysisRequest) -> None:
                 request.callbackUrl,
                 {
                     "status": "complete",
-                    "transcription": transcription,
+                    "transcription": transcription_result.text,
+                    "transcriptionModelKey": transcription_result.model_key,
+                    "transcriptionModelId": transcription_result.model_id,
                     "emotionVector": emotion_vector,
                     "semanticScores": semantic_scores,
                     "prosodyScores": prosody_scores,
                     "prosodyFeatures": prosody_features,
                     "semanticWeight": SEMANTIC_WEIGHT,
                     "prosodyWeight": PROSODY_WEIGHT,
-                    "modelVersion": MODEL_VERSION,
+                    "modelVersion": model_version,
                 },
             )
             logger.info(
-                "Analysis callback sent for journal %s (task %s)",
+                "Analysis callback sent for journal %s (task %s) using ASR %s",
                 request.journalId,
                 task_id,
+                transcription_result.model_key,
             )
         else:
             logger.warning(
@@ -134,6 +145,8 @@ async def run_analysis_task(task_id: str, request: AnalysisRequest) -> None:
             "status": "failed",
             "progress": 100,
             "transcription": None,
+            "transcriptionModelKey": None,
+            "transcriptionModelId": None,
             "emotionVector": None,
             "semanticScores": None,
             "prosodyScores": None,

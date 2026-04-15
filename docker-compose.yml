@@ -130,6 +130,7 @@ services:
       MINIO_BUCKET: ${MINIO_BUCKET:-journals}
       DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@postgres:5432/journaling_db}
       WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
+      ASR_MODEL_KEY: ${ASR_MODEL_KEY:-whisper_small}
       WHISPER_MODEL_ID: ${WHISPER_MODEL_ID:-openai/whisper-small}
       TEXT_EMOTION_MODEL_ID: ${TEXT_EMOTION_MODEL_ID:-joeddav/xlm-roberta-large-xnli}
       AUDIO_EMOTION_MODEL_ID: ${AUDIO_EMOTION_MODEL_ID:-ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition}

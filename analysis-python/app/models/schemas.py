@@ -11,6 +11,7 @@ class AnalysisRequest(BaseModel):
     audioFormat: str = "wav"
     duration: float
     language: str = "pt-BR"
+    transcriptionModelKey: str | None = None
     callbackUrl: str | None = None
 
 
@@ -25,6 +26,8 @@ class StatusResponse(BaseModel):
     status: str
     progress: int = 0
     transcription: str | None = None
+    transcriptionModelKey: str | None = None
+    transcriptionModelId: str | None = None
     emotionVector: dict | None = None
     semanticScores: dict | None = None
     prosodyScores: dict | None = None

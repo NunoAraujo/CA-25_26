@@ -20,6 +20,8 @@ type LegacyEmotionVector = {
 type CallbackPayload = {
   status: "complete" | "failed";
   transcription?: string | null;
+  transcriptionModelKey?: string | null;
+  transcriptionModelId?: string | null;
   emotionVector?: EkmanEmotionVector & LegacyEmotionVector;
   semanticScores?: (EkmanEmotionVector & LegacyEmotionVector) | null;
   prosodyScores?: (EkmanEmotionVector & LegacyEmotionVector) | null;
@@ -96,6 +98,8 @@ export async function processJournalAnalysisCallback(
       data: {
         status: value.status,
         transcription: value.transcription ?? null,
+        transcriptionModelKey: value.transcriptionModelKey ?? null,
+        transcriptionModelId: value.transcriptionModelId ?? null,
         errorMessage: value.errorMessage ?? null,
         semanticWeight: value.semanticWeight ?? undefined,
         prosodyWeight: value.prosodyWeight ?? undefined,
