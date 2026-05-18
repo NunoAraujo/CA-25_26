@@ -107,6 +107,118 @@ function topEmotionKeys(scores: EmotionScores, limit = 2): EmotionMetricKey[] {
     .slice(0, limit);
 }
 
+// ─── JournalEntryCard ─────────────────────────────────────────────────────────
+
+type JournalEntryCardProps = {
+  journal: JournalTimelineItem;
+  emotionLabels: Record<EmotionMetricKey, string>;
+  emotionBg: Record<EmotionMetricKey, string>;
+  emotionChartColors: Record<EmotionMetricKey, string>;
+};
+
+function JournalEntryCard({
+  journal: j,
+  emotionLabels,
+  emotionBg,
+  emotionChartColors,
+}: Readonly<JournalEntryCardProps>) {
+  const [expanded, setExpanded] = useState(false);
+  const [showScores, setShowScores] = useState(false);
+
+  const src = j.recordedAt ?? j.uploadedAt;
+  const entryScores = averageEmotionScores([{
+    joy: j.joyScore, sadness: j.sadnessScore, anger: j.angerScore,
+    fear: j.fearScore, disgust: j.disgustScore, surprise: j.surpriseScore,
+  }]);
+  const top = entryScores ? topEmotionKeys(entryScores, 2) : [];
+  const hasLongText = (j.transcription?.length ?? 0) > 180;
+  const hasScores = entryScores && emotionMetricKeys.some(k => entryScores[k] > 0);
+
+  return (
+    <article className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
+      {/* Header row */}
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-[var(--text)]">
+          {new Date(src).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}
+          <span className="ml-2 text-xs text-[var(--text-subtle)]">· {j.durationSeconds ?? 0}s</span>
+        </p>
+        <div className="flex flex-wrap gap-1">
+          {top.map(k => (
+            <span key={k} className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${emotionBg[k]}`}>
+              {emotionLabels[k]}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Transcription */}
+      {j.transcription && (
+        <div className="mt-3">
+          <p
+            className={[
+              "text-sm leading-6 text-[var(--text-muted)] transition-all duration-300",
+              !expanded && hasLongText ? "line-clamp-3" : "",
+            ].join(" ")}
+          >
+            {j.transcription}
+          </p>
+          {hasLongText && (
+            <button
+              type="button"
+              className="mt-1 text-xs font-semibold text-[var(--accent-light)] hover:underline"
+              onClick={() => setExpanded(e => !e)}
+            >
+              {expanded ? "Ver menos ↑" : "Ver mais ↓"}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Scores toggle */}
+      {hasScores && (
+        <div className="mt-3">
+          <button
+            type="button"
+            className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-subtle)] hover:text-[var(--text)]"
+            onClick={() => setShowScores(s => !s)}
+          >
+            <span>{showScores ? "▲" : "▼"}</span>
+            <span>Resultados desta gravação</span>
+          </button>
+
+          {showScores && entryScores && (
+            <div className="mt-2 space-y-1.5 rounded-lg border border-[var(--line-muted)] bg-[var(--surface-2)] p-3">
+              {emotionMetricKeys.map(k => (
+                <div key={k} className="flex items-center gap-2">
+                  <span className="w-16 text-[11px] text-[var(--text-muted)]">{emotionLabels[k]}</span>
+                  <div className="flex-1 rounded-full bg-[var(--surface-3)]" style={{ height: 5 }}>
+                    <div
+                      className="rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.round(entryScores[k] * 100)}%`,
+                        height: 5,
+                        background: emotionChartColors[k],
+                      }}
+                    />
+                  </div>
+                  <span className="w-9 text-right text-[11px] font-bold" style={{ color: emotionChartColors[k] }}>
+                    {(entryScores[k] * 100).toFixed(0)}%
+                  </span>
+                </div>
+              ))}
+              <p className="mt-1 text-[10px] text-[var(--text-subtle)]">
+                Scores desta gravação individualmente — a média do dia aparece na barra lateral.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </article>
+  );
+}
+
+// ─── TrendsPanel ──────────────────────────────────────────────────────────────
+
 export function TrendsPanel({
   dailyTrends,
   journals,
@@ -117,10 +229,19 @@ export function TrendsPanel({
   onRefreshTimeline,
 }: Readonly<TrendsPanelProps>) {
   const [calendarViewMode, setCalendarViewMode] = useState<CalendarViewMode>("month");
-  const [selectedDayKey, setSelectedDayKey] = useState(() => toDayKey(new Date().toISOString()));
-  const [visibleMonthDate, setVisibleMonthDate] = useState(
-    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+  const [mounted, setMounted] = useState(false);
+  const [selectedDayKey, setSelectedDayKey] = useState<string>("");
+  const [visibleMonthDate, setVisibleMonthDate] = useState<Date>(
+    () => new Date(2000, 0, 1), // stable SSR placeholder, overridden on mount
   );
+
+  // Hydrate date-dependent state only on the client to avoid SSR mismatch
+  useEffect(() => {
+    const now = new Date();
+    setSelectedDayKey(toDayKey(now.toISOString()));
+    setVisibleMonthDate(new Date(now.getFullYear(), now.getMonth(), 1));
+    setMounted(true);
+  }, []);
 
   const dailyTrendByDay = useMemo(() =>
     dailyTrends.reduce<Record<string, DailyTrendPoint>>((acc, item) => {
@@ -310,8 +431,8 @@ export function TrendsPanel({
         </div>
       )}
 
-      {/* Calendar section */}
-      <div className="mt-8 rounded-xl border border-[var(--line-muted)] bg-[var(--surface-2)] p-5">
+      {/* Calendar section — only rendered client-side to avoid date hydration mismatch */}
+      {mounted && <div className="mt-8 rounded-xl border border-[var(--line-muted)] bg-[var(--surface-2)] p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-subtle)]">
@@ -511,45 +632,21 @@ export function TrendsPanel({
                   <p className="text-xs text-[var(--text-subtle)]">{selectedDayEntries.length} entrada(s)</p>
                 </div>
                 <div className="mt-3 space-y-3">
-                  {selectedDayEntries.map(j => {
-                    const src = j.recordedAt ?? j.uploadedAt;
-                    const entryScores = averageEmotionScores([{
-                      joy: j.joyScore, sadness: j.sadnessScore, anger: j.angerScore,
-                      fear: j.fearScore, disgust: j.disgustScore, surprise: j.surpriseScore,
-                    }]);
-                    const top = entryScores ? topEmotionKeys(entryScores, 2) : [];
-                    return (
-                      <article
-                        key={j.id}
-                        className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-semibold text-[var(--text)]">
-                            {new Date(src).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}
-                            <span className="ml-2 text-xs text-[var(--text-subtle)]">· {j.durationSeconds ?? 0}s</span>
-                          </p>
-                          <div className="flex flex-wrap gap-1">
-                            {top.map(k => (
-                              <span key={k} className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${EMOTION_BG[k]}`}>
-                                {EMOTION_LABELS[k]}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        {j.transcription && (
-                          <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--text-muted)]">
-                            {j.transcription}
-                          </p>
-                        )}
-                      </article>
-                    );
-                  })}
+                  {selectedDayEntries.map(j => (
+                    <JournalEntryCard
+                      key={j.id}
+                      journal={j}
+                      emotionLabels={EMOTION_LABELS}
+                      emotionBg={EMOTION_BG}
+                      emotionChartColors={EMOTION_CHART_COLORS}
+                    />
+                  ))}
                 </div>
               </div>
             )}
           </div>
         </div>
-      </div>
+      </div>}
     </section>
   );
 }
