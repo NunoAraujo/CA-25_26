@@ -2,6 +2,7 @@ import { NextFunction, Request, Response, Router } from "express";
 import {
   generateDailyRecommendations,
   listRecommendations,
+  listAllRecommendations,
   storeRecommendationCompletion,
   storeRecommendationFeedback,
 } from "../lib/recommendationService";
@@ -49,11 +50,14 @@ router.post(
 
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const showAll = req.query.all === "true";
     const dayStartRaw = req.query.dayStart;
     const dayStart =
       typeof dayStartRaw === "string" ? new Date(dayStartRaw) : undefined;
 
-    const data = await listRecommendations(dayStart);
+    const data = showAll
+      ? await listAllRecommendations()
+      : await listRecommendations(dayStart);
 
     return res.json(data);
   } catch (error) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { CapturePanel } from "../src/components/home/CapturePanel";
 import { RecommendationsPanel } from "../src/components/home/RecommendationsPanel";
 import { TrendsPanel } from "../src/components/home/TrendsPanel";
@@ -15,37 +15,45 @@ export default function HomePage() {
     [],
   );
 
-  const capture = useAudioCapture(apiBaseUrl);
   const trends = useDailyTrends(apiBaseUrl);
   const timeline = useJournalTimeline(apiBaseUrl);
   const recommendations = useRecommendations(apiBaseUrl);
+
+  const handleAnalysisComplete = useCallback(() => {
+    void trends.loadDailyTrends();
+    void timeline.loadJournals();
+  }, [trends, timeline]);
+
+  const capture = useAudioCapture(apiBaseUrl, handleAnalysisComplete);
 
   useEffect(() => {
     void trends.loadDailyTrends();
     void timeline.loadJournals();
     void recommendations.loadRecommendations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <main className="min-h-screen px-5 py-8 sm:px-8 lg:px-12">
-      <nav className="mx-auto mb-6 flex w-fit justify-center gap-2 rounded-full border border-(--line) bg-(--paper) p-2 shadow-[0_18px_50px_rgba(82,55,31,0.08)]">
+    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+      {/* Navbar */}
+      <nav className="mx-auto mb-8 flex w-fit items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--surface)] px-2 py-2 shadow-lg">
         <a
-          className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
+          className="rounded-full px-4 py-2 text-sm font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
           href="#capture"
         >
           Captura
         </a>
         <a
-          className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
+          className="rounded-full px-4 py-2 text-sm font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
           href="#trends"
         >
-          Tendencias
+          Tendências
         </a>
         <a
-          className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-white"
+          className="rounded-full px-4 py-2 text-sm font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
           href="#recommendations"
         >
-          Recomendacoes
+          Recomendações
         </a>
       </nav>
 
@@ -93,6 +101,7 @@ export default function HomePage() {
         onFeedback={recommendations.submitRecommendationFeedback}
         onGenerate={recommendations.generateDailyRecommendations}
         onRefresh={recommendations.loadRecommendations}
+        onLoadAll={() => recommendations.loadRecommendations({ all: true })}
         onSetEmotionFilter={recommendations.setRecommendationEmotionFilter}
         onSetIntensityFilter={recommendations.setRecommendationIntensityFilter}
         onSetOrderBy={recommendations.setRecommendationOrderBy}

@@ -5,7 +5,7 @@ import { Toaster } from "sonner";
 export const metadata: Metadata = {
   title: "MoodTrackAI",
   description:
-    "Diario em audio com acompanhamento emocional e recomendacoes de regulacao",
+    "Diário em áudio com acompanhamento emocional e recomendações de regulação",
 };
 
 export default function RootLayout({
@@ -15,9 +15,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt">
-      <body className="bg-(--background) text-(--foreground) antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..700;1,14..32,300..700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="antialiased">
         {children}
-        <Toaster position="top-right" richColors />
+        <Toaster
+          position="top-right"
+          richColors
+          toastOptions={{
+            style: {
+              background: "#21262d",
+              border: "1px solid rgba(240,246,252,0.1)",
+              color: "#e6edf3",
+            },
+          }}
+        />
       </body>
     </html>
   );

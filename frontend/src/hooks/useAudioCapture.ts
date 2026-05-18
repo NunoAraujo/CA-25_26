@@ -10,13 +10,21 @@ function isTerminalJournalStatus(status: string) {
 const STATUS_POLL_INTERVAL_MS = 2000;
 const STATUS_POLL_MAX_ATTEMPTS = 120;
 
-export function useAudioCapture(apiBaseUrl: string) {
+export function useAudioCapture(
+  apiBaseUrl: string,
+  onAnalysisComplete?: () => void,
+) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
   const statusPollTimerRef = useRef<number | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  const onAnalysisCompleteRef = useRef(onAnalysisComplete);
+
+  useEffect(() => {
+    onAnalysisCompleteRef.current = onAnalysisComplete;
+  }, [onAnalysisComplete]);
 
   const [isRecording, setIsRecording] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -86,12 +94,18 @@ export function useAudioCapture(apiBaseUrl: string) {
 
       if (isTerminalJournalStatus(nextState.status)) {
         stopJournalStatusPolling();
+
+        // Auto-refresh trends and timeline when analysis is complete
+        if (nextState.status === "complete") {
+          toast.success("Análise concluída! A atualizar gráficos...");
+          onAnalysisCompleteRef.current?.();
+        }
         return;
       }
 
       if (attempt >= STATUS_POLL_MAX_ATTEMPTS) {
         setJournalStatusError(
-          "A analise ainda esta a decorrer. Clica em Atualizar para voltar a verificar.",
+          "A análise ainda está a decorrer. Clica em Atualizar para voltar a verificar.",
         );
         stopJournalStatusPolling();
         return;
@@ -120,7 +134,7 @@ export function useAudioCapture(apiBaseUrl: string) {
 
     if (!("mediaDevices" in navigator) || !("MediaRecorder" in window)) {
       setErrorMessage(
-        "O navegador nao suporta gravacao de audio nesta versao.",
+        "O navegador não suporta gravação de áudio nesta versão.",
       );
       return;
     }
@@ -177,7 +191,7 @@ export function useAudioCapture(apiBaseUrl: string) {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Nao foi possivel iniciar a gravacao.",
+          : "Não foi possível iniciar a gravação.",
       );
     }
   }
@@ -221,7 +235,7 @@ export function useAudioCapture(apiBaseUrl: string) {
 
       if (!response.ok) {
         throw new Error(
-          payload.message ?? payload.error ?? "Falha no envio do audio.",
+          payload.message ?? payload.error ?? "Falha no envio do áudio.",
         );
       }
 
@@ -239,13 +253,13 @@ export function useAudioCapture(apiBaseUrl: string) {
             ? payload.createdAt
             : new Date().toISOString(),
       });
-      toast.success("Entrada enviada para analise.");
+      toast.success("Entrada enviada. A analisar...");
       void pollJournalStatus(payload.id);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Falha no envio do audio.",
+        error instanceof Error ? error.message : "Falha no envio do áudio.",
       );
-      toast.error("Falha no envio do audio.");
+      toast.error("Falha no envio do áudio.");
     } finally {
       setIsUploading(false);
     }

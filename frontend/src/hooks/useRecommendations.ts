@@ -79,33 +79,34 @@ export function useRecommendations(apiBaseUrl: string) {
     recommendations,
   ]);
 
-  async function loadRecommendations() {
+  async function loadRecommendations(options?: { all?: boolean }) {
     setIsLoadingRecommendations(true);
     setRecommendationError(null);
 
     try {
-      const response = await fetch(`${apiBaseUrl}/recommendations`);
+      const url = options?.all
+        ? `${apiBaseUrl}/recommendations?all=true`
+        : `${apiBaseUrl}/recommendations`;
+      const response = await fetch(url);
       const payload = await response.json();
 
       if (!response.ok) {
         throw new Error(
           payload.message ??
             payload.error ??
-            "Falha ao carregar recomendacoes.",
+            "Falha ao carregar recomendações.",
         );
       }
 
       setRecommendations(
         Array.isArray(payload.recommendations) ? payload.recommendations : [],
       );
-      toast.success("Recomendacoes atualizadas.");
     } catch (error) {
       setRecommendationError(
         error instanceof Error
           ? error.message
-          : "Falha ao carregar recomendacoes.",
+          : "Falha ao carregar recomendações.",
       );
-      toast.error("Falha ao carregar recomendacoes.");
     } finally {
       setIsLoadingRecommendations(false);
     }
