@@ -1,0 +1,27 @@
+{
+  "model_name": "qwen2.5:3b-instruct",
+  "selected_strategy": "Advanced_V2",
+  "selection_reason": "Advanced_V2 escolhido: está a <=0.03 F1 do melhor e é mais simples/rápido. F1=0.788.",
+  "confidence_threshold": 0.5,
+  "emotions": [
+    "joy",
+    "sadness",
+    "surprise",
+    "anger",
+    "disgust",
+    "fear",
+    "neutral"
+  ],
+  "metrics": {
+    "strategy": "Advanced_V2",
+    "accuracy": 0.785,
+    "balanced_accuracy": 0.7836030964109783,
+    "f1_macro": 0.7883494439252698,
+    "f1_weighted": 0.7884896154208179,
+    "top2_accuracy": 0.79,
+    "n": 200,
+    "mean_confidence": 0.8614300150412757
+  },
+  "results_file": "ollama_text_outputs/ollama_text_benchmark_results.csv",
+  "summary_file": "ollama_text_outputs/ollama_text_benchmark_summary.csv"
+}

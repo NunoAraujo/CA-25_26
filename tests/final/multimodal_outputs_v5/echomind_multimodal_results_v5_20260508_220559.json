@@ -1,0 +1,1110 @@
+{
+  "batch_collapse_meta": {
+    "applied": true,
+    "counts": {
+      "fear": 7
+    },
+    "top_pred": "fear",
+    "ratio": 1.0,
+    "threshold": 0.6,
+    "reason": "prosody_batch_collapse_detected"
+  },
+  "results": [
+    {
+      "file": "anger.wav",
+      "audio_path": "audios_teste/anger.wav",
+      "expected": "anger",
+      "transcription": "Hoje eu fiquei bastante irritado. Houve uma situação em que senti que fui tratado de frama injusta e estragou-me o resto do dia. Tentei manter a calma, mas quanto mais pensava no assunto, mais frustrado ficava. Senti que o meu esforço não foi respeitado e se deixou-me revoltado. No fim do dia, ainda estava a tentar acalmar-me e esquecer o que aconteceu.",
+      "text_distribution_raw": {
+        "joy": 0.01,
+        "sadness": 0.05,
+        "surprise": 0.02,
+        "fear": 0.03,
+        "anger": 0.76,
+        "disgust": 0.04,
+        "neutral": 0.09
+      },
+      "text_distribution": {
+        "joy": 0.0055,
+        "sadness": 0.0275,
+        "surprise": 0.011,
+        "fear": 0.0165,
+        "anger": 0.868,
+        "disgust": 0.022,
+        "neutral": 0.0495
+      },
+      "text_semantic_meta": {
+        "scores": {
+          "joy": 0.0,
+          "sadness": 0.0,
+          "surprise": 0.0,
+          "fear": 0.0,
+          "anger": 8.1,
+          "disgust": 0.0,
+          "neutral": 0.0
+        },
+        "strongest": "anger",
+        "strength": 8.1,
+        "alpha": 0.45,
+        "applied": true,
+        "base_top": "anger",
+        "corrected_top": "anger"
+      },
+      "prosody_distribution": {
+        "joy": 0.0479,
+        "sadness": 0.0257,
+        "surprise": 0.0886,
+        "fear": 0.652,
+        "anger": 0.1155,
+        "disgust": 0.0451,
+        "neutral": 0.0253
+      },
+      "final_distribution": {
+        "joy": 0.0097,
+        "sadness": 0.0273,
+        "surprise": 0.0188,
+        "fear": 0.08,
+        "anger": 0.7927,
+        "disgust": 0.0243,
+        "neutral": 0.0471
+      },
+      "text_emotion_raw": "anger",
+      "text_emotion": "anger",
+      "prosody_emotion": "fear",
+      "dominant_emotion": "anger",
+      "dominant_confidence": 0.7927,
+      "emotion_ranking": [
+        [
+          "anger",
+          0.7927
+        ],
+        [
+          "fear",
+          0.08
+        ],
+        [
+          "neutral",
+          0.0471
+        ],
+        [
+          "sadness",
+          0.0273
+        ],
+        [
+          "disgust",
+          0.0243
+        ],
+        [
+          "surprise",
+          0.0188
+        ],
+        [
+          "joy",
+          0.0097
+        ]
+      ],
+      "fusion_weights": {
+        "text_weight": 0.9,
+        "prosody_weight": 0.1,
+        "text_confidence": 0.7359,
+        "prosody_confidence": 0.4318,
+        "text_margin": 0.8185,
+        "prosody_margin": 0.5364,
+        "asr_quality": 1.0,
+        "prosody_quality": 1.0,
+        "text_reliability": 0.788,
+        "prosody_reliability_raw": 0.7691,
+        "prosody_reliability_effective": 0.55,
+        "prosody_cap": 0.1,
+        "fusion_mode": "safe_adaptive_late_fusion_v5",
+        "guard_reasons": [
+          "text_protection_conflict",
+          "fear_bias_guard",
+          "semantic_evidence_guard",
+          "batch_collapse_guard",
+          "forced_prosody_cap"
+        ]
+      },
+      "global_uncertainty": 0.4309,
+      "confidence_level": "high",
+      "prosody_meta": {
+        "selected_strategy": "ensemble_manual_ssl",
+        "internal_weights": {
+          "manual": 0.2556,
+          "ssl": 0.7444
+        },
+        "branch_distributions": {
+          "manual": {
+            "joy": 0.10808243323833637,
+            "sadness": 0.05435686117129422,
+            "surprise": 0.13709130532983835,
+            "fear": 0.2509688312226172,
+            "anger": 0.292790819806002,
+            "disgust": 0.1024330031787956,
+            "neutral": 0.054276746053116304
+          },
+          "ssl": {
+            "joy": 0.026187157490755276,
+            "sadness": 0.015684516416007297,
+            "surprise": 0.10778595297448222,
+            "fear": 0.78,
+            "anger": 0.0325268741357726,
+            "disgust": 0.02359318648053202,
+            "neutral": 0.014222312502450618
+          }
+        },
+        "quality_score": 1.0,
+        "quality_meta": {
+          "duration": 19.648,
+          "voiced_ratio": 0.7567127746135069,
+          "rms_mean": 0.21321795366710528,
+          "reasons": []
+        },
+        "prosody_reliability": 0.7691032455591056
+      },
+      "correct_final": true,
+      "correct_text": true,
+      "correct_text_raw": true,
+      "correct_prosody": false
+    },
+    {
+      "file": "disgust.wav",
+      "audio_path": "audios_teste/disgust.wav",
+      "expected": "disgust",
+      "transcription": "Hoje houve uma situação que me deixou o mesmo incomodado. Vi uma atitude que achei profundamente desagradável e senti uma espécie de repulsa. Não foi só irritação, foi mesmo aquela sensação de querer afastar-me da situação e das pessoas envolvidas. Durante o resto do dia, fiquei a pensar no quanto aquilo me pareceu irradi e desconfortável. Foi um dia marcado por nojo e rejeição.",
+      "text_distribution_raw": {
+        "joy": 0.0092,
+        "sadness": 0.0459,
+        "surprise": 0.0183,
+        "fear": 0.0275,
+        "anger": 0.1651,
+        "disgust": 0.6789,
+        "neutral": 0.055
+      },
+      "text_distribution": {
+        "joy": 0.005,
+        "sadness": 0.0252,
+        "surprise": 0.0101,
+        "fear": 0.0151,
+        "anger": 0.0908,
+        "disgust": 0.8234,
+        "neutral": 0.0303
+      },
+      "text_semantic_meta": {
+        "scores": {
+          "joy": 0.0,
+          "sadness": 0.0,
+          "surprise": 0.0,
+          "fear": 0.0,
+          "anger": 0.0,
+          "disgust": 13.049999999999997,
+          "neutral": 0.0
+        },
+        "strongest": "disgust",
+        "strength": 13.05,
+        "alpha": 0.45,
+        "applied": true,
+        "base_top": "disgust",
+        "corrected_top": "disgust"
+      },
+      "prosody_distribution": {
+        "joy": 0.0592,
+        "sadness": 0.0266,
+        "surprise": 0.0886,
+        "fear": 0.6244,
+        "anger": 0.1318,
+        "disgust": 0.0453,
+        "neutral": 0.0241
+      },
+      "final_distribution": {
+        "joy": 0.0104,
+        "sadness": 0.0253,
+        "surprise": 0.018,
+        "fear": 0.076,
+        "anger": 0.0949,
+        "disgust": 0.7457,
+        "neutral": 0.0297
+      },
+      "text_emotion_raw": "disgust",
+      "text_emotion": "disgust",
+      "prosody_emotion": "fear",
+      "dominant_emotion": "disgust",
+      "dominant_confidence": 0.7457,
+      "emotion_ranking": [
+        [
+          "disgust",
+          0.7457
+        ],
+        [
+          "anger",
+          0.0949
+        ],
+        [
+          "fear",
+          0.076
+        ],
+        [
+          "neutral",
+          0.0297
+        ],
+        [
+          "sadness",
+          0.0253
+        ],
+        [
+          "surprise",
+          0.018
+        ],
+        [
+          "joy",
+          0.0104
+        ]
+      ],
+      "fusion_weights": {
+        "text_weight": 0.9,
+        "prosody_weight": 0.1,
+        "text_confidence": 0.6684,
+        "prosody_confidence": 0.3983,
+        "text_margin": 0.7327,
+        "prosody_margin": 0.4926,
+        "asr_quality": 1.0,
+        "prosody_quality": 1.0,
+        "text_reliability": 0.788,
+        "prosody_reliability_raw": 0.7691,
+        "prosody_reliability_effective": 0.55,
+        "prosody_cap": 0.1,
+        "fusion_mode": "safe_adaptive_late_fusion_v5",
+        "guard_reasons": [
+          "text_protection_conflict",
+          "fear_bias_guard",
+          "semantic_evidence_guard",
+          "batch_collapse_guard",
+          "forced_prosody_cap"
+        ]
+      },
+      "global_uncertainty": 0.491,
+      "confidence_level": "high",
+      "prosody_meta": {
+        "selected_strategy": "ensemble_manual_ssl",
+        "internal_weights": {
+          "manual": 0.2644,
+          "ssl": 0.7356
+        },
+        "branch_distributions": {
+          "manual": {
+            "joy": 0.11334173308880492,
+            "sadness": 0.052066188873331504,
+            "surprise": 0.14064832785308712,
+            "fear": 0.23346917839746825,
+            "anger": 0.3124536325037593,
+            "disgust": 0.09714529321355729,
+            "neutral": 0.050875646069991676
+          },
+          "ssl": {
+            "joy": 0.0412283658619326,
+            "sadness": 0.01654786445867129,
+            "surprise": 0.08253555446971413,
+            "fear": 0.7800000000000001,
+            "anger": 0.0461165267617032,
+            "disgust": 0.02273451138589048,
+            "neutral": 0.0108371770620883
+          }
+        },
+        "quality_score": 1.0,
+        "quality_meta": {
+          "duration": 20.544,
+          "voiced_ratio": 0.7867704280155642,
+          "rms_mean": 0.26446989563036466,
+          "reasons": []
+        },
+        "prosody_reliability": 0.7691032455591056
+      },
+      "correct_final": true,
+      "correct_text": true,
+      "correct_text_raw": true,
+      "correct_prosody": false
+    },
+    {
+      "file": "fear.wav",
+      "audio_path": "audios_teste/fear.wav",
+      "expected": "fear",
+      "transcription": "Hoje pensei o dia com bastante ansiedade. Desde manhã que estava preocupado com uma situação que podia correr mal e não consegui relaxar completamente. Mesmo quando estava a tentar pensar em outra coisa, voltava sempre àquela sensação de insegurança. Sentia o corpo tenso e a cabeça cheia de possibilidades negativas. Acabei o dia cansado, como se estivesse estado sempre em alerta.",
+      "text_distribution_raw": {
+        "joy": 0.0096,
+        "sadness": 0.2308,
+        "surprise": 0.0288,
+        "fear": 0.625,
+        "anger": 0.0673,
+        "disgust": 0.0192,
+        "neutral": 0.0192
+      },
+      "text_distribution": {
+        "joy": 0.0053,
+        "sadness": 0.1784,
+        "surprise": 0.0159,
+        "fear": 0.7422,
+        "anger": 0.037,
+        "disgust": 0.0106,
+        "neutral": 0.0106
+      },
+      "text_semantic_meta": {
+        "scores": {
+          "joy": 0.0,
+          "sadness": 0.95,
+          "surprise": 0.0,
+          "fear": 7.35,
+          "anger": 0.0,
+          "disgust": 0.0,
+          "neutral": 0.0
+        },
+        "strongest": "fear",
+        "strength": 7.35,
+        "alpha": 0.45,
+        "applied": true,
+        "base_top": "fear",
+        "corrected_top": "fear"
+      },
+      "prosody_distribution": {
+        "joy": 0.0455,
+        "sadness": 0.0271,
+        "surprise": 0.0576,
+        "fear": 0.6906,
+        "anger": 0.1087,
+        "disgust": 0.0454,
+        "neutral": 0.0251
+      },
+      "final_distribution": {
+        "joy": 0.0093,
+        "sadness": 0.1633,
+        "surprise": 0.0201,
+        "fear": 0.737,
+        "anger": 0.0442,
+        "disgust": 0.0141,
+        "neutral": 0.012
+      },
+      "text_emotion_raw": "fear",
+      "text_emotion": "fear",
+      "prosody_emotion": "fear",
+      "dominant_emotion": "fear",
+      "dominant_confidence": 0.737,
+      "emotion_ranking": [
+        [
+          "fear",
+          0.737
+        ],
+        [
+          "sadness",
+          0.1633
+        ],
+        [
+          "anger",
+          0.0442
+        ],
+        [
+          "surprise",
+          0.0201
+        ],
+        [
+          "disgust",
+          0.0141
+        ],
+        [
+          "neutral",
+          0.012
+        ],
+        [
+          "joy",
+          0.0093
+        ]
+      ],
+      "fusion_weights": {
+        "text_weight": 0.9,
+        "prosody_weight": 0.1,
+        "text_confidence": 0.5665,
+        "prosody_confidence": 0.4754,
+        "text_margin": 0.5638,
+        "prosody_margin": 0.5819,
+        "asr_quality": 1.0,
+        "prosody_quality": 1.0,
+        "text_reliability": 0.788,
+        "prosody_reliability_raw": 0.7691,
+        "prosody_reliability_effective": 0.55,
+        "prosody_cap": 0.1,
+        "fusion_mode": "safe_adaptive_late_fusion_v5",
+        "guard_reasons": [
+          "batch_collapse_guard",
+          "forced_prosody_cap"
+        ]
+      },
+      "global_uncertainty": 0.4594,
+      "confidence_level": "high",
+      "prosody_meta": {
+        "selected_strategy": "ensemble_manual_ssl",
+        "internal_weights": {
+          "manual": 0.2464,
+          "ssl": 0.7536
+        },
+        "branch_distributions": {
+          "manual": {
+            "joy": 0.10820821339463992,
+            "sadness": 0.05495904348544528,
+            "surprise": 0.13458400298272208,
+            "fear": 0.2545842845975305,
+            "anger": 0.28934408596730815,
+            "disgust": 0.10347446749816942,
+            "neutral": 0.05484590207418466
+          },
+          "ssl": {
+            "joy": 0.03535004715445299,
+            "sadness": 0.03662186347287289,
+            "surprise": 0.051996377755398206,
+            "fear": 0.78,
+            "anger": 0.027432775393558848,
+            "disgust": 0.04450706068204198,
+            "neutral": 0.024091875541675058
+          }
+        },
+        "quality_score": 1.0,
+        "quality_meta": {
+          "duration": 26.752,
+          "voiced_ratio": 0.7310221159593544,
+          "rms_mean": 0.13235281596700085,
+          "reasons": []
+        },
+        "prosody_reliability": 0.7691032455591056
+      },
+      "correct_final": true,
+      "correct_text": true,
+      "correct_text_raw": true,
+      "correct_prosody": true
+    },
+    {
+      "file": "joy.wav",
+      "audio_path": "audios_teste/joy.wav",
+      "expected": "joy",
+      "transcription": "Hoje foi um dia muito bom. Acordei com energia e senti que as coisas estavam finalmente a correr no caminho certo. Conseguei terminar uma tarefa que já me estava a preocupar há algum tempo. E isso deixou-me mesmo orgulhoso. Durante a tarde, estive com pessoas de quem gosto e senti-me leve, bem disposto e agradecido. Feito aqueles dias em que acabo com a sensação de que valeu a pena ao esforço.",
+      "text_distribution_raw": {
+        "joy": 0.93,
+        "sadness": 0.02,
+        "surprise": 0.01,
+        "fear": 0.01,
+        "anger": 0.01,
+        "disgust": 0.0,
+        "neutral": 0.02
+      },
+      "text_distribution": {
+        "joy": 0.9028,
+        "sadness": 0.011,
+        "surprise": 0.0055,
+        "fear": 0.0642,
+        "anger": 0.0055,
+        "disgust": 0.0,
+        "neutral": 0.011
+      },
+      "text_semantic_meta": {
+        "scores": {
+          "joy": 7.0,
+          "sadness": 0.0,
+          "surprise": 0.0,
+          "fear": 1.05,
+          "anger": 0.0,
+          "disgust": 0.0,
+          "neutral": 0.0
+        },
+        "strongest": "joy",
+        "strength": 7.0,
+        "alpha": 0.45,
+        "applied": true,
+        "base_top": "joy",
+        "corrected_top": "joy"
+      },
+      "prosody_distribution": {
+        "joy": 0.0556,
+        "sadness": 0.0241,
+        "surprise": 0.0791,
+        "fear": 0.6403,
+        "anger": 0.1354,
+        "disgust": 0.0407,
+        "neutral": 0.0249
+      },
+      "final_distribution": {
+        "joy": 0.8181,
+        "sadness": 0.0123,
+        "surprise": 0.0129,
+        "fear": 0.1218,
+        "anger": 0.0185,
+        "disgust": 0.0041,
+        "neutral": 0.0124
+      },
+      "text_emotion_raw": "joy",
+      "text_emotion": "joy",
+      "prosody_emotion": "fear",
+      "dominant_emotion": "joy",
+      "dominant_confidence": 0.8181,
+      "emotion_ranking": [
+        [
+          "joy",
+          0.8181
+        ],
+        [
+          "fear",
+          0.1218
+        ],
+        [
+          "anger",
+          0.0185
+        ],
+        [
+          "surprise",
+          0.0129
+        ],
+        [
+          "neutral",
+          0.0124
+        ],
+        [
+          "sadness",
+          0.0123
+        ],
+        [
+          "disgust",
+          0.0041
+        ]
+      ],
+      "fusion_weights": {
+        "text_weight": 0.9,
+        "prosody_weight": 0.1,
+        "text_confidence": 0.8015,
+        "prosody_confidence": 0.416,
+        "text_margin": 0.8386,
+        "prosody_margin": 0.5048,
+        "asr_quality": 1.0,
+        "prosody_quality": 1.0,
+        "text_reliability": 0.788,
+        "prosody_reliability_raw": 0.7691,
+        "prosody_reliability_effective": 0.55,
+        "prosody_cap": 0.1,
+        "fusion_mode": "safe_adaptive_late_fusion_v5",
+        "guard_reasons": [
+          "text_protection_conflict",
+          "fear_bias_guard",
+          "semantic_evidence_guard",
+          "batch_collapse_guard",
+          "forced_prosody_cap"
+        ]
+      },
+      "global_uncertainty": 0.3503,
+      "confidence_level": "high",
+      "prosody_meta": {
+        "selected_strategy": "ensemble_manual_ssl",
+        "internal_weights": {
+          "manual": 0.2626,
+          "ssl": 0.7374
+        },
+        "branch_distributions": {
+          "manual": {
+            "joy": 0.11732738363858411,
+            "sadness": 0.05006164932214677,
+            "surprise": 0.13982068540884593,
+            "fear": 0.2206424740390661,
+            "anger": 0.32833678138218214,
+            "disgust": 0.09489249128659155,
+            "neutral": 0.04891853492258332
+          },
+          "ssl": {
+            "joy": 0.038133390927345606,
+            "sadness": 0.014613173624075744,
+            "surprise": 0.08074358885553037,
+            "fear": 0.78,
+            "anger": 0.05154255193282831,
+            "disgust": 0.015975150995846583,
+            "neutral": 0.0189921436643734
+          }
+        },
+        "quality_score": 1.0,
+        "quality_meta": {
+          "duration": 18.912,
+          "voiced_ratio": 0.7658495350803043,
+          "rms_mean": 0.23029216578338904,
+          "reasons": []
+        },
+        "prosody_reliability": 0.7691032455591056
+      },
+      "correct_final": true,
+      "correct_text": true,
+      "correct_text_raw": true,
+      "correct_prosody": false
+    },
+    {
+      "file": "neutral.wav",
+      "audio_path": "audios_teste/neutral.wav",
+      "expected": "neutral",
+      "transcription": "Hoje foi um dia normal. Acordei, fiz as minhas tarefas habituais, trabalhei durante algumas horas e depois tratei de algumas coisas em casa. Não aconteceu nada de muito marcante, nem positivo nem negativo. Foi sobretudo um dia de rotina, com momentos simples e sem grandes alterações. Ao fim da tarde descalsei um pouco e organizei o que tinha para fazer amanhã.",
+      "text_distribution_raw": {
+        "joy": 0.011,
+        "sadness": 0.0275,
+        "surprise": 0.0055,
+        "fear": 0.0165,
+        "anger": 0.0055,
+        "disgust": 0.4066,
+        "neutral": 0.5275
+      },
+      "text_distribution": {
+        "joy": 0.006,
+        "sadness": 0.0151,
+        "surprise": 0.003,
+        "fear": 0.0091,
+        "anger": 0.003,
+        "disgust": 0.2236,
+        "neutral": 0.7401
+      },
+      "text_semantic_meta": {
+        "scores": {
+          "joy": 0.0,
+          "sadness": 0.0,
+          "surprise": 0.0,
+          "fear": 0.0,
+          "anger": 0.0,
+          "disgust": 0.0,
+          "neutral": 6.6
+        },
+        "strongest": "neutral",
+        "strength": 6.6,
+        "alpha": 0.45,
+        "applied": true,
+        "base_top": "neutral",
+        "corrected_top": "neutral"
+      },
+      "prosody_distribution": {
+        "joy": 0.1012,
+        "sadness": 0.0323,
+        "surprise": 0.1193,
+        "fear": 0.5423,
+        "anger": 0.1226,
+        "disgust": 0.0584,
+        "neutral": 0.0239
+      },
+      "final_distribution": {
+        "joy": 0.0155,
+        "sadness": 0.0168,
+        "surprise": 0.0146,
+        "fear": 0.0624,
+        "anger": 0.015,
+        "disgust": 0.2071,
+        "neutral": 0.6685
+      },
+      "text_emotion_raw": "neutral",
+      "text_emotion": "neutral",
+      "prosody_emotion": "fear",
+      "dominant_emotion": "neutral",
+      "dominant_confidence": 0.6685,
+      "emotion_ranking": [
+        [
+          "neutral",
+          0.6685
+        ],
+        [
+          "disgust",
+          0.2071
+        ],
+        [
+          "fear",
+          0.0624
+        ],
+        [
+          "sadness",
+          0.0168
+        ],
+        [
+          "joy",
+          0.0155
+        ],
+        [
+          "anger",
+          0.015
+        ],
+        [
+          "surprise",
+          0.0146
+        ]
+      ],
+      "fusion_weights": {
+        "text_weight": 0.9,
+        "prosody_weight": 0.1,
+        "text_confidence": 0.5872,
+        "prosody_confidence": 0.3157,
+        "text_margin": 0.5166,
+        "prosody_margin": 0.4197,
+        "asr_quality": 1.0,
+        "prosody_quality": 1.0,
+        "text_reliability": 0.788,
+        "prosody_reliability_raw": 0.7691,
+        "prosody_reliability_effective": 0.55,
+        "prosody_cap": 0.1,
+        "fusion_mode": "safe_adaptive_late_fusion_v5",
+        "guard_reasons": [
+          "text_protection_conflict",
+          "fear_bias_guard",
+          "semantic_evidence_guard",
+          "batch_collapse_guard",
+          "forced_prosody_cap"
+        ]
+      },
+      "global_uncertainty": 0.5274,
+      "confidence_level": "high",
+      "prosody_meta": {
+        "selected_strategy": "ensemble_manual_ssl",
+        "internal_weights": {
+          "manual": 0.2813,
+          "ssl": 0.7187
+        },
+        "branch_distributions": {
+          "manual": {
+            "joy": 0.12362145278418775,
+            "sadness": 0.052011545306630526,
+            "surprise": 0.15696086130444248,
+            "fear": 0.22831615854228385,
+            "anger": 0.29710458348524715,
+            "disgust": 0.09444419729769417,
+            "neutral": 0.04754120127951411
+          },
+          "ssl": {
+            "joy": 0.09462637426153128,
+            "sadness": 0.023194134112445267,
+            "surprise": 0.10604416269327513,
+            "fear": 0.69732721458924,
+            "anger": 0.025692629511956278,
+            "disgust": 0.042283981134095115,
+            "neutral": 0.010831503697456987
+          }
+        },
+        "quality_score": 1.0,
+        "quality_meta": {
+          "duration": 19.744,
+          "voiced_ratio": 0.7829959514170041,
+          "rms_mean": 0.19967110335133095,
+          "reasons": []
+        },
+        "prosody_reliability": 0.7691032455591056
+      },
+      "correct_final": true,
+      "correct_text": true,
+      "correct_text_raw": true,
+      "correct_prosody": false
+    },
+    {
+      "file": "sad.wav",
+      "audio_path": "audios_teste/sad.wav",
+      "expected": "sadness",
+      "transcription": "Hoje foi um dia pesado. Acordei sangrando de vontade de fazer nada e senti-me mais em baixo do que o habitual. Tive dificuldade em concentrar-me e várias coisas fizeram-me lembrar momentos menos bons. Mesmo quando tentei distrair-me, ficou sempre uma sensação de tristeza e cansasse emocional. Acabei o dia com a vontade de ficar sozinho e descansar, porque senti que precisava de algum silêncio.",
+      "text_distribution_raw": {
+        "joy": 0.0109,
+        "sadness": 0.9239,
+        "surprise": 0.0217,
+        "fear": 0.0326,
+        "anger": 0.0109,
+        "disgust": 0.0,
+        "neutral": 0.0
+      },
+      "text_distribution": {
+        "joy": 0.006,
+        "sadness": 0.8735,
+        "surprise": 0.012,
+        "fear": 0.0179,
+        "anger": 0.006,
+        "disgust": 0.0,
+        "neutral": 0.0846
+      },
+      "text_semantic_meta": {
+        "scores": {
+          "joy": 0.0,
+          "sadness": 4.75,
+          "surprise": 0.0,
+          "fear": 0.0,
+          "anger": 0.0,
+          "disgust": 0.0,
+          "neutral": 1.1
+        },
+        "strongest": "sadness",
+        "strength": 4.75,
+        "alpha": 0.45,
+        "applied": true,
+        "base_top": "sadness",
+        "corrected_top": "sadness"
+      },
+      "prosody_distribution": {
+        "joy": 0.0582,
+        "sadness": 0.0284,
+        "surprise": 0.0568,
+        "fear": 0.6715,
+        "anger": 0.117,
+        "disgust": 0.0429,
+        "neutral": 0.0253
+      },
+      "final_distribution": {
+        "joy": 0.0112,
+        "sadness": 0.789,
+        "surprise": 0.0165,
+        "fear": 0.0833,
+        "anger": 0.0171,
+        "disgust": 0.0043,
+        "neutral": 0.0787
+      },
+      "text_emotion_raw": "sadness",
+      "text_emotion": "sadness",
+      "prosody_emotion": "fear",
+      "dominant_emotion": "sadness",
+      "dominant_confidence": 0.789,
+      "emotion_ranking": [
+        [
+          "sadness",
+          0.789
+        ],
+        [
+          "fear",
+          0.0833
+        ],
+        [
+          "neutral",
+          0.0787
+        ],
+        [
+          "anger",
+          0.0171
+        ],
+        [
+          "surprise",
+          0.0165
+        ],
+        [
+          "joy",
+          0.0112
+        ],
+        [
+          "disgust",
+          0.0043
+        ]
+      ],
+      "fusion_weights": {
+        "text_weight": 0.9,
+        "prosody_weight": 0.1,
+        "text_confidence": 0.7546,
+        "prosody_confidence": 0.4512,
+        "text_margin": 0.7889,
+        "prosody_margin": 0.5544,
+        "asr_quality": 1.0,
+        "prosody_quality": 1.0,
+        "text_reliability": 0.788,
+        "prosody_reliability_raw": 0.7691,
+        "prosody_reliability_effective": 0.55,
+        "prosody_cap": 0.1,
+        "fusion_mode": "safe_adaptive_late_fusion_v5",
+        "guard_reasons": [
+          "text_protection_conflict",
+          "fear_bias_guard",
+          "semantic_evidence_guard",
+          "batch_collapse_guard",
+          "forced_prosody_cap"
+        ]
+      },
+      "global_uncertainty": 0.4138,
+      "confidence_level": "high",
+      "prosody_meta": {
+        "selected_strategy": "ensemble_manual_ssl",
+        "internal_weights": {
+          "manual": 0.2508,
+          "ssl": 0.7492
+        },
+        "branch_distributions": {
+          "manual": {
+            "joy": 0.10998044833072795,
+            "sadness": 0.05487412952892982,
+            "surprise": 0.13848128949913366,
+            "fear": 0.2501820507522159,
+            "anger": 0.2902475442242641,
+            "disgust": 0.1024820010160799,
+            "neutral": 0.05375253664864869
+          },
+          "ssl": {
+            "joy": 0.06856226958489164,
+            "sadness": 0.03035240474395183,
+            "surprise": 0.026050324389544185,
+            "fear": 0.78,
+            "anger": 0.05452194648996501,
+            "disgust": 0.021005265406765127,
+            "neutral": 0.01950778938488219
+          }
+        },
+        "quality_score": 1.0,
+        "quality_meta": {
+          "duration": 25.344,
+          "voiced_ratio": 0.8113564668769716,
+          "rms_mean": 0.1539783391433148,
+          "reasons": []
+        },
+        "prosody_reliability": 0.7691032455591056
+      },
+      "correct_final": true,
+      "correct_text": true,
+      "correct_text_raw": true,
+      "correct_prosody": false
+    },
+    {
+      "file": "surprise.wav",
+      "audio_path": "audios_teste/surprise.wav",
+      "expected": "surprise",
+      "transcription": "Uma dia começou de forma completamente normal, mas a meio da tarde aconteceu algo que não estava nada à espera. Recebi uma notícia que me apanhou desprevenido e fiquei durante algum tempo sem saber como reagir. Não foi propriamente mal, mas foi tão inspirado que passei o resto do dia a pensar nisso. Sentia uma mistura de espanto, curiosidade e alguma agitação.",
+      "text_distribution_raw": {
+        "joy": 0.0495,
+        "sadness": 0.0198,
+        "surprise": 0.802,
+        "fear": 0.0297,
+        "anger": 0.0099,
+        "disgust": 0.0,
+        "neutral": 0.0891
+      },
+      "text_distribution": {
+        "joy": 0.0272,
+        "sadness": 0.0109,
+        "surprise": 0.8242,
+        "fear": 0.0163,
+        "anger": 0.0054,
+        "disgust": 0.0,
+        "neutral": 0.1159
+      },
+      "text_semantic_meta": {
+        "scores": {
+          "joy": 0.0,
+          "sadness": 0.0,
+          "surprise": 6.3,
+          "fear": 0.0,
+          "anger": 0.0,
+          "disgust": 0.0,
+          "neutral": 1.1
+        },
+        "strongest": "surprise",
+        "strength": 6.3,
+        "alpha": 0.45,
+        "applied": true,
+        "base_top": "surprise",
+        "corrected_top": "surprise"
+      },
+      "prosody_distribution": {
+        "joy": 0.0592,
+        "sadness": 0.0265,
+        "surprise": 0.0806,
+        "fear": 0.6104,
+        "anger": 0.1387,
+        "disgust": 0.0589,
+        "neutral": 0.0258
+      },
+      "final_distribution": {
+        "joy": 0.0304,
+        "sadness": 0.0125,
+        "surprise": 0.7499,
+        "fear": 0.0757,
+        "anger": 0.0187,
+        "disgust": 0.0059,
+        "neutral": 0.1069
+      },
+      "text_emotion_raw": "surprise",
+      "text_emotion": "surprise",
+      "prosody_emotion": "fear",
+      "dominant_emotion": "surprise",
+      "dominant_confidence": 0.7499,
+      "emotion_ranking": [
+        [
+          "surprise",
+          0.7499
+        ],
+        [
+          "neutral",
+          0.1069
+        ],
+        [
+          "fear",
+          0.0757
+        ],
+        [
+          "joy",
+          0.0304
+        ],
+        [
+          "anger",
+          0.0187
+        ],
+        [
+          "sadness",
+          0.0125
+        ],
+        [
+          "disgust",
+          0.0059
+        ]
+      ],
+      "fusion_weights": {
+        "text_weight": 0.9,
+        "prosody_weight": 0.1,
+        "text_confidence": 0.6802,
+        "prosody_confidence": 0.3798,
+        "text_margin": 0.7084,
+        "prosody_margin": 0.4717,
+        "asr_quality": 1.0,
+        "prosody_quality": 1.0,
+        "text_reliability": 0.788,
+        "prosody_reliability_raw": 0.7691,
+        "prosody_reliability_effective": 0.55,
+        "prosody_cap": 0.1,
+        "fusion_mode": "safe_adaptive_late_fusion_v5",
+        "guard_reasons": [
+          "text_protection_conflict",
+          "fear_bias_guard",
+          "semantic_evidence_guard",
+          "batch_collapse_guard",
+          "forced_prosody_cap"
+        ]
+      },
+      "global_uncertainty": 0.4707,
+      "confidence_level": "high",
+      "prosody_meta": {
+        "selected_strategy": "ensemble_manual_ssl",
+        "internal_weights": {
+          "manual": 0.2669,
+          "ssl": 0.7331
+        },
+        "branch_distributions": {
+          "manual": {
+            "joy": 0.11510027195979114,
+            "sadness": 0.0522524886998517,
+            "surprise": 0.14445134579198443,
+            "fear": 0.2326037594403046,
+            "anger": 0.30733691460382884,
+            "disgust": 0.09769002341217042,
+            "neutral": 0.05056519609206894
+          },
+          "ssl": {
+            "joy": 0.03460097767697115,
+            "sadness": 0.01396840424374731,
+            "surprise": 0.055191654792854664,
+            "fear": 0.78,
+            "anger": 0.05760008768223603,
+            "disgust": 0.044901174879561204,
+            "neutral": 0.013737700724629624
+          }
+        },
+        "quality_score": 1.0,
+        "quality_meta": {
+          "duration": 20.256,
+          "voiced_ratio": 0.7592738752959748,
+          "rms_mean": 0.1973818647474912,
+          "reasons": []
+        },
+        "prosody_reliability": 0.7691032455591056
+      },
+      "correct_final": true,
+      "correct_text": true,
+      "correct_text_raw": true,
+      "correct_prosody": false
+    }
+  ]
+}
