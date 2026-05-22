@@ -110,6 +110,26 @@ services:
     stdin_open: true
     tty: true
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: journaling-app-ollama
+    ports:
+      - "11434:11434"
+    environment:
+      OLLAMA_TEXT_MODEL: ${OLLAMA_TEXT_MODEL:-qwen2.5:3b-instruct}
+    volumes:
+      - ollama-models:/root/.ollama
+      - ./infra/ollama-init.sh:/ollama-init.sh
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    entrypoint: ["/bin/sh", "/ollama-init.sh"]
+
   analysis:
     build:
       context: ./analysis-python
@@ -132,10 +152,12 @@ services:
       WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
       ASR_MODEL_KEY: ${ASR_MODEL_KEY:-whisper_small}
       WHISPER_MODEL_ID: ${WHISPER_MODEL_ID:-openai/whisper-small}
-      TEXT_EMOTION_MODEL_ID: ${TEXT_EMOTION_MODEL_ID:-joeddav/xlm-roberta-large-xnli}
       AUDIO_EMOTION_MODEL_ID: ${AUDIO_EMOTION_MODEL_ID:-ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition}
       TORCH_HOME: /tmp/torch-models
       HF_HOME: /tmp/hf-models
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      OLLAMA_TEXT_MODEL: ${OLLAMA_TEXT_MODEL:-qwen2.5:3b-instruct}
+      OLLAMA_TEXT_STRATEGY: ${OLLAMA_TEXT_STRATEGY:-Light_Ensemble}
     volumes:
       - ./analysis-python/app:/app/app
       - torch-cache:/tmp/torch-models
@@ -147,6 +169,8 @@ services:
       postgres:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -247,3 +271,4 @@ volumes:
   torch-cache:
   hf-cache:
   audio-temp:
+  ollama-models:

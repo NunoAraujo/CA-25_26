@@ -9,6 +9,7 @@ type EkmanEmotionVector = {
   fear?: number;
   disgust?: number;
   surprise?: number;
+  neutral?: number;
 };
 
 type LegacyEmotionVector = {

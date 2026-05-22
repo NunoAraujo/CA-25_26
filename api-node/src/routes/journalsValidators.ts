@@ -7,6 +7,7 @@ const emotionSchema = Joi.object({
   fear: Joi.number(),
   disgust: Joi.number(),
   surprise: Joi.number(),
+  neutral: Joi.number(),
   anxiety: Joi.number(),
   calm: Joi.number(),
   energy: Joi.number(),

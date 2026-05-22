@@ -1,0 +1,39 @@
+{
+  "text_models_tested": [
+    "qwen2.5:3b-instruct",
+    "qwen2.5:7b-instruct"
+  ],
+  "final_model_name": "qwen2.5:3b-instruct",
+  "selected_strategy": "Light_Ensemble",
+  "selection_reason": "qwen2.5:3b-instruct + Light_Ensemble escolhido por melhor qualidade: F1-Macro geral=0.765, Accuracy=0.764.",
+  "confidence_threshold": 0.5,
+  "emotions": [
+    "joy",
+    "sadness",
+    "surprise",
+    "anger",
+    "disgust",
+    "fear",
+    "neutral"
+  ],
+  "dataset": {
+    "total_examples": 250,
+    "clean_examples": 200,
+    "ambiguous_examples": 50,
+    "last_50_are_ambiguous": true
+  },
+  "metrics": {
+    "model": "qwen2.5:3b-instruct",
+    "strategy": "Light_Ensemble",
+    "accuracy": 0.764,
+    "balanced_accuracy": 0.7621192621192622,
+    "f1_macro": 0.7654612256798411,
+    "f1_weighted": 0.7668046851814001,
+    "top2_accuracy": 0.976,
+    "n": 250,
+    "mean_confidence": 0.8027911216893818
+  },
+  "results_file": "ollama_text_outputs_v2_250_quality/ollama_text_benchmark_results_250_multi_model.csv",
+  "summary_file": "ollama_text_outputs_v2_250_quality/ollama_text_benchmark_summary_250_multi_model.csv",
+  "difficulty_summary_file": "ollama_text_outputs_v2_250_quality/ollama_text_benchmark_summary_by_difficulty.csv"
+}
