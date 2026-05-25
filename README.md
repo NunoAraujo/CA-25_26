@@ -8,24 +8,24 @@ A Portuguese-first journaling platform where users record short daily audio entr
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  Next.js App Frontend                         │
-│      (Tailwind v4, App Router, audio capture, charts)        │
+│                  Next.js App Frontend                       │
+│      (Tailwind v4, App Router, audio capture, charts)       │
 └────────────────────────┬────────────────────────────────────┘
                          │ HTTPS
 ┌────────────────────────▼────────────────────────────────────┐
-│               Node.js REST API Gateway                       │
-│   (Auth, journal CRUD, upload orchestration, aggregations)   │
-└────┬──────────────────────────────┬──────────────────────────┘
+│               Node.js REST API Gateway                      │
+│   (Auth, journal CRUD, upload orchestration, aggregations)  │
+└────┬──────────────────────────────┬─────────────────────────┘
      │ Task Queue (Bull/Redis)      │ Scheduled Tasks
      │                              │ (Node-cron)
-┌────▼──────────────────────────────▼──────────────────────────┐
-│            Python FastAPI Analysis Engine                    │
-│  (Transcription, prosody extraction, emotion fusion)         │
-└────────────────────────┬──────────────────────────────────────┘
+┌────▼──────────────────────────────▼─────────────────────────┐
+│            Python FastAPI Analysis Engine                   │
+│  (Transcription, prosody extraction, emotion fusion)        │
+└────────────────────────┬────────────────────────────────────┘
                          │
      ┌───────────────────┼───────────────────┐
      │                   │                   │
-┌────▼─────┐      ┌──────▼──────┐    ┌──────▼──────┐
+┌────▼─────┐      ┌──────▼───────┐    ┌──────▼─────┐
 │PostgreSQL│      │   MinIO      │    │   Redis    │
 │ (metadata│      │ (audio store)│    │ (queue)    │
 │ + trends)│      │              │    │            │
@@ -52,40 +52,44 @@ A Portuguese-first journaling platform where users record short daily audio entr
 
 ## Quick Start
 
-### Prerequisites
-
-```bash
-# macOS with Homebrew
-brew install docker node@20 python@3.11
-
-# Ensure Docker Desktop is running
-open /Applications/Docker.app
-```
-
 ### Setup
 
 ```bash
 # 1. Clone and navigate to workspace
-cd /Users/nunoaraujo/MIA/CA/CA-25_26/CA-25_26
+cd .../CA-25_26
 
 # 2. Copy environment template
 cp .env.example .env
 
-# 3. Initialize git
-git init
-git add .
-git commit -m "Initial project skeleton"
-
-# 4. Bring up Docker Compose services
+# 3. Bring up Docker Compose services
 docker compose up --build
 
 # Services will be available at:
 # - Frontend: http://localhost:5173
 # - API: http://localhost:3000/api
+# - API Worker: background service (no public port)
 # - Analysis: http://localhost:8000
+# - Ollama: http://localhost:11434
+# - Redis: redis://localhost:6379
+# - PostgreSQL: postgresql://user:password@localhost:5432/journaling_db
+# - MinIO API: http://localhost:9000
 # - MinIO Console: http://localhost:9001 (user: minioadmin / password: minioadmin)
-# - pgAdmin: http://localhost:5050 (user: admin@example.com / password: admin)
+# - pgAdmin: http://localhost:5051 (user: admin@example.com / password: admin)
 ```
+
+### Docker Compose Services
+
+The `docker-compose.yml` stack includes these services:
+
+- **frontend** (`journaling-app-frontend`) - Next.js UI, port `5173`
+- **api** (`journaling-app-api`) - Node.js REST API, port `3000`
+- **api-worker** (`journaling-app-api-worker`) - Bull queue worker for analysis jobs
+- **analysis** (`journaling-app-analysis`) - Python FastAPI analysis engine, port `8000`
+- **ollama** (`journaling-app-ollama`) - local LLM runtime for text emotion analysis, port `11434`
+- **postgres** (`journaling-app-postgres`) - PostgreSQL database, port `5432`
+- **redis** (`journaling-app-redis`) - Redis queue/cache backend, port `6379`
+- **minio** (`journaling-app-minio`) - object storage API on `9000`, console on `9001`
+- **pgadmin** (`journaling-app-pgadmin`) - DB administration UI, port `5051`
 
 ### Verify Infrastructure
 
@@ -95,7 +99,10 @@ docker compose ps
 
 # View logs for a specific service
 docker compose logs -f api
+docker compose logs -f api-worker
 docker compose logs -f analysis
+docker compose logs -f ollama
+docker compose logs -f redis
 docker compose logs -f postgres
 
 # Stop and clean up
@@ -111,6 +118,11 @@ docker compose down
 │   │   ├── layout.tsx       # Root layout
 │   │   ├── page.tsx         # Home page
 │   │   └── globals.css      # Tailwind styles
+│   ├── src/
+│   │   ├── components/       # UI components
+│   │   ├── hooks/            # React hooks
+│   │   ├── lib/              # Frontend utilities
+│   │   └── types/            # Frontend types
 │   ├── package.json
 │   ├── Dockerfile
 │   └── next.config.ts
@@ -118,7 +130,8 @@ docker compose down
 │   ├── src/
 │   │   ├── routes/          # API endpoints
 │   │   ├── workers/         # Queue consumers
-│   │   ├── services/        # Business logic
+│   │   ├── lib/             # Shared libs (Prisma, Redis, MinIO, etc.)
+│   │   ├── scripts/         # Utility scripts
 │   │   └── index.ts         # Server entrypoint
 │   ├── prisma/
 │   │   └── schema.prisma    # Data model
@@ -127,138 +140,29 @@ docker compose down
 │   └── tsconfig.json
 ├── analysis-python/         # Python FastAPI analysis engine
 │   ├── app/
-│   │   ├── pipelines/       # Transcription, prosody, emotion
-│   │   ├── services/        # Integration with MinIO, DB
+│   │   ├── models/          # Pydantic schemas and task models
+│   │   ├── services/        # Analysis orchestration and callbacks
 │   │   └── main.py          # FastAPI entrypoint
+│   ├── notebooks/           # Analysis and pipeline notebooks
+│   ├── scripts/             # Benchmark/support scripts
 │   ├── requirements.txt
 │   ├── Dockerfile
 │   └── .dockerignore
-├── infra/                   # Infrastructure scripts
-│   └── postgres-init.sql    # Database initialization
+├── infra/                   # Infrastructure bootstrap scripts
+│   ├── ollama-init.sh       # Pull/init Ollama model on startup
+│   └── postgres-init.sql    # Database initialization SQL
 ├── docs/                    # Documentation
 │   ├── contracts/           # API contracts (OpenAPI)
-│   ├── schema.md            # Database schema docs
-│   ├── architecture.md      # Architecture decisions
-│   └── phased-plan.md       # Implementation phases
+│   │   ├── analysis-api.yaml
+│   │   └── node-api.yaml
+│   ├── images/
+│   └── report/
+├── tests/                   # Experiment notebooks and model artifacts
+│   ├── final/
+│   ├── prosody/
+│   ├── text/
+│   └── whisper/
 ├── docker-compose.yml       # Service orchestration
 ├── .env.example             # Environment template
 └── README.md                # This file
 ```
-
-## Implementation Status
-
-All phases complete. See [PHASED_PLAN.md](./docs/PHASED_PLAN.md) for detailed progress.
-
-- ✅ Phase 1: Foundation & Infrastructure
-- ✅ Phase 2: Data Model & API Contracts
-- ✅ Phase 3: Audio Ingestion Pipeline
-- ✅ Phase 4: Python Analysis Engine
-- ✅ Phase 5: Trends & Recommendations
-- ✅ Phase 6: Frontend Dashboard
-- 🚀 Phase 7: Documentation & Deployment (current)
-
-## Core User Workflows
-
-### Workflow 1: Record & Upload Audio
-
-1. Open frontend at `http://localhost:5173`
-2. Click **"Iniciar Gravação"** button
-3. Speak naturally for 5–60 seconds (diary entry, stream-of-consciousness)
-4. Click **"Parar"** to stop recording
-5. Click **"Enviar"** to upload
-6. See status: audio being analyzed (queued → transcribing → analyzing → complete)
-7. Once complete, view transcription and emotion scores (joy, sadness, anger, anxiety, calm, energy)
-
-### Workflow 2: View Daily Trends & Recommendations
-
-1. After completing multiple journal entries (ideally over several days)
-2. Scroll to **"Evolucao Emocional Diaria"** section
-3. Click **"Gerar Recomendacoes Diarias"** button (computes daily average emotions)
-4. System generates 5–10 personalized recommendations based on emotional profile
-5. Each recommendation shows:
-   - Activity name (e.g., "Respiração Caixa 4-4-4-4")
-   - Duration (5–20 min)
-   - Target emotion & intensity
-   - Rationale (why recommended)
-   - Confidence score
-
-### Workflow 3: Interact with Recommendations
-
-1. Click **"Marcar como Feita"** on a completed activity → records completion
-2. Provide feedback: **Positivo** / **Neutro** / **Negativo**
-3. System learns from feedback -> influences next day's recommendations
-4. Filter recommendations by emotion or intensity using sidebar controls
-5. Use quick presets: "Calming", "Energizing", "Short" to prefill filters
-
-### Workflow 4: Explore Journal Timeline
-
-1. Scroll to **"Histórico de Entradas"** section
-2. See all journal entries (newest first) with:
-   - Date/time recorded
-   - Duration in seconds
-   - Primary emotion + secondary emotion
-   - Transcription preview (first 100 chars)
-   - Status badge (complete/failed)
-3. Click entry to expand and view:
-   - Full transcription
-   - 6-dimension emotion breakdown
-   - Prosody metrics (pitch, energy, speech rate, etc.)
-   - Audio metadata
-
-## API Quick Reference
-
-For programmatic access, key endpoints:
-
-```bash
-# Upload audio
-curl -X POST http://localhost:3000/api/journals \
-  -F "audio=@your_audio.wav;type=audio/wav" \
-  -F "durationSeconds=30"
-
-# Check status
-curl http://localhost:3000/api/journals/{id}/status
-
-# Get daily trends
-curl http://localhost:3000/api/trends/daily
-
-# Generate recommendations
-curl -X POST http://localhost:3000/api/recommendations/generate-daily
-
-# Get recommendations
-curl http://localhost:3000/api/recommendations
-
-# Mark recommendation done
-curl -X POST http://localhost:3000/api/recommendations/{id}/complete
-
-# Send feedback
-curl -X POST http://localhost:3000/api/recommendations/{id}/feedback \
-  -H "Content-Type: application/json" \
-  -d '{"feedback": "positive"}'
-```
-
-See [API_DOCUMENTATION.md](./docs/API_DOCUMENTATION.md) for comprehensive endpoint reference.
-
-## Privacy & Compliance
-
-**MVP Policy:**
-
-- Audio storage: MinIO local (unencrypted, acceptable for local MVP)
-- Retention: Keep all audio for MVP (supports re-analysis and debugging)
-- Deletion: Soft-delete endpoint available; hard-delete as admin operation
-- Logs: Structured logs, no audio content logged
-- GDPR/CCPA: Will be addressed in production hardening phase
-
-## Resources
-
-- [Architecture Decisions](/docs/ARCHITECTURE.md)
-- [Database Schema](/docs/schema.md)
-- [API Contracts](/docs/contracts/)
-- [Phased Implementation Plan](/docs/PHASED_PLAN.md)
-
-## License
-
-[To be determined]
-
-## Support
-
-For issues or questions, refer to the documentation or check service logs via Docker Compose.
