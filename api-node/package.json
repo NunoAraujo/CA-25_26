@@ -4,11 +4,12 @@
   "description": "Node.js REST API for audio journaling platform",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node src/index.ts",
+    "prisma:generate": "prisma generate",
+    "dev": "npm run prisma:generate && ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "migrate": "prisma migrate deploy",
-    "worker:analysis": "ts-node src/workers/analysisWorker.ts"
+    "migrate": "npm run prisma:generate && prisma migrate deploy",
+    "worker:analysis": "npm run prisma:generate && ts-node src/workers/analysisWorker.ts"
   },
   "keywords": [
     "journaling",

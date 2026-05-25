@@ -1,4 +1,4 @@
-import { formatClock } from "../../lib/homeUtils";
+import { formatClock, getJournalStatusLabel } from "../../lib/homeUtils";
 import { JournalStatusState, UploadState } from "../../types/home";
 
 type CapturePanelProps = {
@@ -20,19 +20,6 @@ type CapturePanelProps = {
   onPollStatus: (journalId: string) => Promise<void>;
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: "Na fila de espera...",
-  queued: "Na fila de espera...",
-  transcribing: "A transcrever áudio...",
-  analyzing: "A analisar emoções...",
-  complete: "Análise concluída ✓",
-  failed: "Erro na análise",
-};
-
-function getStatusLabel(status: string): string {
-  return STATUS_LABELS[status] ?? status;
-}
-
 export function CapturePanel({
   isRecording,
   isUploading,
@@ -51,15 +38,14 @@ export function CapturePanel({
 }: Readonly<CapturePanelProps>) {
   const currentStatus = journalStatus?.status ?? uploadState?.status ?? null;
   const isAnalysisRunning =
-    isPollingJournalStatus && currentStatus !== "complete" && currentStatus !== "failed";
+    isPollingJournalStatus &&
+    currentStatus !== "complete" &&
+    currentStatus !== "failed";
   const isComplete = currentStatus === "complete";
   const isFailed = currentStatus === "failed";
 
   return (
-    <section
-      className="mx-auto mb-6 max-w-6xl"
-      id="capture"
-    >
+    <section className="mx-auto mb-6 max-w-6xl" id="capture">
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
         {/* Hero text */}
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-8">
@@ -67,7 +53,8 @@ export function CapturePanel({
             🎙 Diário Emocional em Áudio
           </span>
           <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-[var(--text)] lg:text-5xl">
-            Regista o teu dia<br />
+            Regista o teu dia
+            <br />
             <span className="text-[var(--accent-light)]">em voz alta.</span>
           </h1>
           <p className="mt-4 text-base leading-7 text-[var(--text-muted)]">
@@ -77,24 +64,34 @@ export function CapturePanel({
 
           <div className="mt-8 grid grid-cols-3 gap-3">
             <div className="rounded-xl border border-[var(--line-muted)] bg-[var(--surface-2)] p-4">
-              <p className="text-xs font-medium uppercase tracking-widest text-[var(--text-subtle)]">Duração</p>
+              <p className="text-xs font-medium uppercase tracking-widest text-[var(--text-subtle)]">
+                Duração
+              </p>
               <p className="mt-2 text-2xl font-bold tabular-nums text-[var(--text)]">
                 {formatClock(elapsedSeconds)}
               </p>
             </div>
             <div className="rounded-xl border border-[var(--line-muted)] bg-[var(--surface-2)] p-4">
-              <p className="text-xs font-medium uppercase tracking-widest text-[var(--text-subtle)]">Idioma</p>
+              <p className="text-xs font-medium uppercase tracking-widest text-[var(--text-subtle)]">
+                Idioma
+              </p>
               <p className="mt-2 text-2xl font-bold text-[var(--text)]">PT</p>
             </div>
             <div className="rounded-xl border border-[var(--line-muted)] bg-[var(--surface-2)] p-4">
-              <p className="text-xs font-medium uppercase tracking-widest text-[var(--text-subtle)]">Estado</p>
+              <p className="text-xs font-medium uppercase tracking-widest text-[var(--text-subtle)]">
+                Estado
+              </p>
               <p className="mt-2 text-sm font-semibold text-[var(--text)]">
                 {isRecording ? (
                   <span className="text-[var(--danger-text)]">● Gravando</span>
                 ) : isUploading ? (
-                  <span className="text-[var(--warning-text)]">A enviar...</span>
+                  <span className="text-[var(--warning-text)]">
+                    A enviar...
+                  </span>
                 ) : isAnalysisRunning ? (
-                  <span className="text-[var(--accent-light)]">A analisar...</span>
+                  <span className="text-[var(--accent-light)]">
+                    A analisar...
+                  </span>
                 ) : isComplete ? (
                   <span className="text-[var(--success-text)]">Concluído</span>
                 ) : isFailed ? (
@@ -138,8 +135,10 @@ export function CapturePanel({
           <div className="grid grid-cols-3 gap-2">
             <button
               className="rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-              disabled={isRecording || isUploading || isAnalysisRunning}
-              onClick={() => { void onStartRecording(); }}
+              disabled={isRecording || isUploading}
+              onClick={() => {
+                void onStartRecording();
+              }}
               type="button"
             >
               Iniciar
@@ -154,8 +153,10 @@ export function CapturePanel({
             </button>
             <button
               className="rounded-xl border border-[var(--accent)] bg-[var(--accent-soft)] px-4 py-3 text-sm font-semibold text-[var(--accent-light)] transition hover:bg-[var(--accent)]/30 disabled:cursor-not-allowed disabled:opacity-40"
-              disabled={!audioBlob || isRecording || isUploading || isAnalysisRunning}
-              onClick={() => { void onUploadRecording(); }}
+              disabled={!audioBlob || isRecording || isUploading}
+              onClick={() => {
+                void onUploadRecording();
+              }}
               type="button"
             >
               {isUploading ? "A enviar..." : "Enviar"}
@@ -165,9 +166,16 @@ export function CapturePanel({
           {/* Audio preview */}
           {audioUrl ? (
             <div className="rounded-xl border border-[var(--line-muted)] bg-[var(--surface-2)] p-3">
-              <p className="mb-2 text-xs font-medium text-[var(--text-subtle)]">Pré-escuta</p>
+              <p className="mb-2 text-xs font-medium text-[var(--text-subtle)]">
+                Pré-escuta
+              </p>
               <audio className="w-full" controls src={audioUrl}>
-                <track kind="captions" label="Sem legendas" src="data:text/vtt,WEBVTT" srcLang="pt" />
+                <track
+                  kind="captions"
+                  label="Sem legendas"
+                  src="data:text/vtt,WEBVTT"
+                  srcLang="pt"
+                />
               </audio>
             </div>
           ) : null}
@@ -198,13 +206,15 @@ export function CapturePanel({
                   {isAnalysisRunning && (
                     <span className="mr-2 inline-block animate-spin">⟳</span>
                   )}
-                  {getStatusLabel(currentStatus)}
+                  {getJournalStatusLabel(currentStatus)}
                 </p>
                 {!isComplete && !isFailed && (
                   <button
                     className="rounded-full border border-[var(--line)] px-3 py-1 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--text)] disabled:opacity-50"
                     disabled={isPollingJournalStatus}
-                    onClick={() => { void onPollStatus(uploadState.journalId); }}
+                    onClick={() => {
+                      void onPollStatus(uploadState.journalId);
+                    }}
                     type="button"
                   >
                     {isPollingJournalStatus ? "A verificar..." : "Verificar"}

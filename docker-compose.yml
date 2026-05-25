@@ -65,7 +65,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
-    command: sh -c "npm run migrate && npm run dev"
+    command: sh -c "npx prisma generate && npm run migrate && npm run dev"
     stdin_open: true
     tty: true
 
@@ -106,7 +106,7 @@ services:
         condition: service_healthy
       analysis:
         condition: service_healthy
-    command: sh -c "npm run migrate && npm run worker:analysis"
+    command: sh -c "npx prisma generate && npm run migrate && npm run worker:analysis"
     stdin_open: true
     tty: true
 

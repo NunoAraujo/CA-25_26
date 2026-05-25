@@ -1,4 +1,8 @@
-import { statusBadgeClasses } from "../../lib/homeUtils";
+import {
+  getJournalStatusLabel,
+  isJournalInProgress,
+  statusBadgeClasses,
+} from "../../lib/homeUtils";
 import { JournalDetail, JournalTimelineItem } from "../../types/home";
 
 type TimelinePanelProps = {
@@ -70,6 +74,9 @@ export function TimelinePanel({
 
       <div className="mt-6 grid gap-3">
         {visibleJournals.map((journal) => {
+          const journalIsProcessing = isJournalInProgress(journal.status);
+          const journalIsFailed = journal.status === "failed";
+          const journalIsComplete = journal.status === "complete";
           let detailButtonText = "Ver detalhes";
           if (loadingJournalDetailId === journal.id) {
             detailButtonText = "A carregar...";
@@ -89,31 +96,55 @@ export function TimelinePanel({
                 <span
                   className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusBadgeClasses(journal.status)}`}
                 >
-                  {journal.status}
+                  {getJournalStatusLabel(journal.status)}
                 </span>
               </div>
               <p className="mt-2 text-xs text-(--ink-soft)">ID: {journal.id}</p>
               <p className="mt-1 text-sm text-(--ink-soft)">
                 Duracao: {journal.durationSeconds ?? 0}s
               </p>
-              <p className="mt-2 line-clamp-2 text-sm text-slate-700">
-                {journal.transcription && journal.transcription.length > 0
-                  ? journal.transcription
-                  : "Sem transcricao disponivel ainda."}
-              </p>
 
-              <div className="mt-3 flex justify-end">
-                <button
-                  className="rounded-full border border-(--line) px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={loadingJournalDetailId === journal.id}
-                  onClick={() => {
-                    void onToggleDetail(journal.id);
-                  }}
-                  type="button"
-                >
-                  {detailButtonText}
-                </button>
-              </div>
+              {journalIsProcessing ? (
+                <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  A gravação está em análise. Os resultados aparecem
+                  automaticamente quando terminar.
+                </p>
+              ) : null}
+
+              {journalIsFailed ? (
+                <div className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  <p className="font-semibold">
+                    Falha na análise desta gravação.
+                  </p>
+                  <p className="mt-1">
+                    {journal.errorMessage ??
+                      "Sem detalhe adicional sobre a falha."}
+                  </p>
+                </div>
+              ) : null}
+
+              {journalIsComplete ? (
+                <p className="mt-2 line-clamp-2 text-sm text-slate-700">
+                  {journal.transcription && journal.transcription.length > 0
+                    ? journal.transcription
+                    : "Sem transcricao disponivel ainda."}
+                </p>
+              ) : null}
+
+              {journalIsComplete ? (
+                <div className="mt-3 flex justify-end">
+                  <button
+                    className="rounded-full border border-(--line) px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={loadingJournalDetailId === journal.id}
+                    onClick={() => {
+                      void onToggleDetail(journal.id);
+                    }}
+                    type="button"
+                  >
+                    {detailButtonText}
+                  </button>
+                </div>
+              ) : null}
 
               {expandedJournalId === journal.id ? (
                 <div className="mt-3 rounded-2xl border border-(--line) bg-white/60 p-3">
@@ -139,14 +170,14 @@ export function TimelinePanel({
                     </p>
                     <p>
                       Fear:{" "}
-                      {journalDetailsById[journal.id]?.fearScore?.toFixed(
-                        2,
-                      ) ?? "-"}
+                      {journalDetailsById[journal.id]?.fearScore?.toFixed(2) ??
+                        "-"}
                     </p>
                     <p>
                       Disgust:{" "}
-                      {journalDetailsById[journal.id]?.disgustScore?.toFixed(2) ??
-                        "-"}
+                      {journalDetailsById[journal.id]?.disgustScore?.toFixed(
+                        2,
+                      ) ?? "-"}
                     </p>
                     <p>
                       Surprise:{" "}

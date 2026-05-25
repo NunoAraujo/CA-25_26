@@ -38,6 +38,7 @@ export type EmotionScores = Record<EmotionMetricKey, number>;
 export type JournalTimelineItem = {
   id: string;
   status: string;
+  errorMessage: string | null;
   uploadedAt: string;
   recordedAt: string | null;
   durationSeconds: number | null;

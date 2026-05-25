@@ -14,8 +14,9 @@ import {
   emotionMetricKeys,
   formatDayLabel,
   formatFullDateLabel,
+  getJournalStatusLabel,
+  isJournalInProgress,
   formatMonthLabel,
-  monthIdFromDate,
   parseDayKey,
   toDayKey,
 } from "../../lib/homeUtils";
@@ -126,33 +127,70 @@ function JournalEntryCard({
   const [showScores, setShowScores] = useState(false);
 
   const src = j.recordedAt ?? j.uploadedAt;
-  const entryScores = averageEmotionScores([{
-    joy: j.joyScore, sadness: j.sadnessScore, anger: j.angerScore,
-    fear: j.fearScore, disgust: j.disgustScore, surprise: j.surpriseScore,
-  }]);
+  const isProcessing = isJournalInProgress(j.status);
+  const isFailed = j.status === "failed";
+  const isComplete = j.status === "complete";
+  const entryScores = averageEmotionScores([
+    {
+      joy: j.joyScore,
+      sadness: j.sadnessScore,
+      anger: j.angerScore,
+      fear: j.fearScore,
+      disgust: j.disgustScore,
+      surprise: j.surpriseScore,
+    },
+  ]);
   const top = entryScores ? topEmotionKeys(entryScores, 2) : [];
   const hasLongText = (j.transcription?.length ?? 0) > 180;
-  const hasScores = entryScores && emotionMetricKeys.some(k => entryScores[k] > 0);
+  const hasScores =
+    entryScores && emotionMetricKeys.some((k) => entryScores[k] > 0);
 
   return (
     <article className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
       {/* Header row */}
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-[var(--text)]">
-          {new Date(src).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })}
-          <span className="ml-2 text-xs text-[var(--text-subtle)]">· {j.durationSeconds ?? 0}s</span>
+          {new Date(src).toLocaleTimeString("pt-PT", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+          <span className="ml-2 text-xs text-[var(--text-subtle)]">
+            · {j.durationSeconds ?? 0}s
+          </span>
         </p>
+        <span className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-muted)]">
+          {getJournalStatusLabel(j.status)}
+        </span>
         <div className="flex flex-wrap gap-1">
-          {top.map(k => (
-            <span key={k} className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${emotionBg[k]}`}>
+          {top.map((k) => (
+            <span
+              key={k}
+              className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${emotionBg[k]}`}
+            >
               {emotionLabels[k]}
             </span>
           ))}
         </div>
       </div>
 
+      {isProcessing && (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Esta gravação está em análise. Os resultados serão atualizados
+          automaticamente.
+        </div>
+      )}
+
+      {isFailed && (
+        <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="font-semibold">Erro na análise desta gravação.</p>
+          <p className="mt-1">
+            {j.errorMessage ?? "Sem detalhe adicional sobre a falha."}
+          </p>
+        </div>
+      )}
+
       {/* Transcription */}
-      {j.transcription && (
+      {isComplete && j.transcription && (
         <div className="mt-3">
           <p
             className={[
@@ -166,7 +204,7 @@ function JournalEntryCard({
             <button
               type="button"
               className="mt-1 text-xs font-semibold text-[var(--accent-light)] hover:underline"
-              onClick={() => setExpanded(e => !e)}
+              onClick={() => setExpanded((e) => !e)}
             >
               {expanded ? "Ver menos ↑" : "Ver mais ↓"}
             </button>
@@ -175,12 +213,12 @@ function JournalEntryCard({
       )}
 
       {/* Scores toggle */}
-      {hasScores && (
+      {isComplete && hasScores && (
         <div className="mt-3">
           <button
             type="button"
             className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-subtle)] hover:text-[var(--text)]"
-            onClick={() => setShowScores(s => !s)}
+            onClick={() => setShowScores((s) => !s)}
           >
             <span>{showScores ? "▲" : "▼"}</span>
             <span>Resultados desta gravação</span>
@@ -188,10 +226,15 @@ function JournalEntryCard({
 
           {showScores && entryScores && (
             <div className="mt-2 space-y-1.5 rounded-lg border border-[var(--line-muted)] bg-[var(--surface-2)] p-3">
-              {emotionMetricKeys.map(k => (
+              {emotionMetricKeys.map((k) => (
                 <div key={k} className="flex items-center gap-2">
-                  <span className="w-16 text-[11px] text-[var(--text-muted)]">{emotionLabels[k]}</span>
-                  <div className="flex-1 rounded-full bg-[var(--surface-3)]" style={{ height: 5 }}>
+                  <span className="w-16 text-[11px] text-[var(--text-muted)]">
+                    {emotionLabels[k]}
+                  </span>
+                  <div
+                    className="flex-1 rounded-full bg-[var(--surface-3)]"
+                    style={{ height: 5 }}
+                  >
                     <div
                       className="rounded-full transition-all duration-500"
                       style={{
@@ -201,13 +244,17 @@ function JournalEntryCard({
                       }}
                     />
                   </div>
-                  <span className="w-9 text-right text-[11px] font-bold" style={{ color: emotionChartColors[k] }}>
+                  <span
+                    className="w-9 text-right text-[11px] font-bold"
+                    style={{ color: emotionChartColors[k] }}
+                  >
                     {(entryScores[k] * 100).toFixed(0)}%
                   </span>
                 </div>
               ))}
               <p className="mt-1 text-[10px] text-[var(--text-subtle)]">
-                Scores desta gravação individualmente — a média do dia aparece na barra lateral.
+                Scores desta gravação individualmente — a média do dia aparece
+                na barra lateral.
               </p>
             </div>
           )}
@@ -228,7 +275,8 @@ export function TrendsPanel({
   onRefresh,
   onRefreshTimeline,
 }: Readonly<TrendsPanelProps>) {
-  const [calendarViewMode, setCalendarViewMode] = useState<CalendarViewMode>("month");
+  const [calendarViewMode, setCalendarViewMode] =
+    useState<CalendarViewMode>("month");
   const [mounted, setMounted] = useState(false);
   const [selectedDayKey, setSelectedDayKey] = useState<string>("");
   const [visibleMonthDate, setVisibleMonthDate] = useState<Date>(
@@ -243,85 +291,107 @@ export function TrendsPanel({
     setMounted(true);
   }, []);
 
-  const dailyTrendByDay = useMemo(() =>
-    dailyTrends.reduce<Record<string, DailyTrendPoint>>((acc, item) => {
-      const k = toDayKey(item.dayStart);
-      if (k) acc[k] = item;
-      return acc;
-    }, {}),
+  const dailyTrendByDay = useMemo(
+    () =>
+      dailyTrends.reduce<Record<string, DailyTrendPoint>>((acc, item) => {
+        const k = toDayKey(item.dayStart);
+        if (k) acc[k] = item;
+        return acc;
+      }, {}),
     [dailyTrends],
   );
 
   const journalsByDay = useMemo(() => {
-    const grouped = journals.reduce<Record<string, JournalTimelineItem[]>>((acc, j) => {
-      const k = toDayKey(j.recordedAt ?? j.uploadedAt);
-      if (!k) return acc;
-      acc[k] = [...(acc[k] ?? []), j];
-      return acc;
-    }, {});
+    const grouped = journals.reduce<Record<string, JournalTimelineItem[]>>(
+      (acc, j) => {
+        const k = toDayKey(j.recordedAt ?? j.uploadedAt);
+        if (!k) return acc;
+        acc[k] = [...(acc[k] ?? []), j];
+        return acc;
+      },
+      {},
+    );
     for (const k of Object.keys(grouped)) {
-      grouped[k].sort((a, b) =>
-        new Date(b.recordedAt ?? b.uploadedAt).getTime() -
-        new Date(a.recordedAt ?? a.uploadedAt).getTime(),
+      grouped[k].sort(
+        (a, b) =>
+          new Date(b.recordedAt ?? b.uploadedAt).getTime() -
+          new Date(a.recordedAt ?? a.uploadedAt).getTime(),
       );
     }
     return grouped;
   }, [journals]);
 
-  const availableDayKeys = useMemo(() =>
-    Array.from(new Set([...Object.keys(dailyTrendByDay), ...Object.keys(journalsByDay)])).sort(),
+  const availableDayKeys = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...Object.keys(dailyTrendByDay),
+          ...Object.keys(journalsByDay),
+        ]),
+      ).sort(),
     [dailyTrendByDay, journalsByDay],
   );
 
   useEffect(() => {
     if (!availableDayKeys.length) return;
-    setSelectedDayKey(k => availableDayKeys.includes(k) ? k : availableDayKeys[availableDayKeys.length - 1]);
-  }, [availableDayKeys]);
-
-  useEffect(() => {
-    if (!availableDayKeys.length) return;
-    setVisibleMonthDate(cur => {
-      const curId = monthIdFromDate(cur);
-      const hasData = availableDayKeys.some(k => monthIdFromDate(parseDayKey(k)) === curId);
-      if (hasData) return cur;
-      const fallback = parseDayKey(availableDayKeys[availableDayKeys.length - 1]);
-      return new Date(fallback.getFullYear(), fallback.getMonth(), 1);
-    });
+    setSelectedDayKey((k) =>
+      availableDayKeys.includes(k)
+        ? k
+        : availableDayKeys[availableDayKeys.length - 1],
+    );
   }, [availableDayKeys]);
 
   const selectedDayEntries = journalsByDay[selectedDayKey] ?? [];
   const selectedDailyTrend = dailyTrendByDay[selectedDayKey] ?? null;
 
   const selectedDayScores = useMemo(() => {
-    if (selectedDailyTrend) return buildEmotionScoresFromTrend(selectedDailyTrend);
-    return averageEmotionScores(selectedDayEntries.map(j => ({
-      joy: j.joyScore, sadness: j.sadnessScore, anger: j.angerScore,
-      fear: j.fearScore, disgust: j.disgustScore, surprise: j.surpriseScore,
-    })));
+    if (selectedDailyTrend)
+      return buildEmotionScoresFromTrend(selectedDailyTrend);
+    return averageEmotionScores(
+      selectedDayEntries.map((j) => ({
+        joy: j.joyScore,
+        sadness: j.sadnessScore,
+        anger: j.angerScore,
+        fear: j.fearScore,
+        disgust: j.disgustScore,
+        surprise: j.surpriseScore,
+      })),
+    );
   }, [selectedDailyTrend, selectedDayEntries]);
 
-  const selectedDayDominant = selectedDayScores ? dominantEmotionFromScores(selectedDayScores) : null;
-  const selectedDayTopEmotions = selectedDayScores ? topEmotionKeys(selectedDayScores, 3) : [];
+  const selectedDayDominant = selectedDayScores
+    ? dominantEmotionFromScores(selectedDayScores)
+    : null;
+  const selectedDayTopEmotions = selectedDayScores
+    ? topEmotionKeys(selectedDayScores, 3)
+    : [];
 
-  const monthGridDays = useMemo(() =>
-    buildMonthGrid(visibleMonthDate).map(date => {
-      const k = toDayKey(date.toISOString());
-      const trend = dailyTrendByDay[k] ?? null;
-      const entries = journalsByDay[k] ?? [];
-      const scores = trend
-        ? buildEmotionScoresFromTrend(trend)
-        : averageEmotionScores(entries.map(j => ({
-            joy: j.joyScore, sadness: j.sadnessScore, anger: j.angerScore,
-            fear: j.fearScore, disgust: j.disgustScore, surprise: j.surpriseScore,
-          })));
-      return {
-        dayKey: k,
-        date,
-        isCurrentMonth: date.getMonth() === visibleMonthDate.getMonth(),
-        entryCount: trend?.entryCount ?? entries.length,
-        dominant: scores ? dominantEmotionFromScores(scores) : null,
-      };
-    }),
+  const monthGridDays = useMemo(
+    () =>
+      buildMonthGrid(visibleMonthDate).map((date) => {
+        const k = toDayKey(date.toISOString());
+        const trend = dailyTrendByDay[k] ?? null;
+        const entries = journalsByDay[k] ?? [];
+        const scores = trend
+          ? buildEmotionScoresFromTrend(trend)
+          : averageEmotionScores(
+              entries.map((j) => ({
+                joy: j.joyScore,
+                sadness: j.sadnessScore,
+                anger: j.angerScore,
+                fear: j.fearScore,
+                disgust: j.disgustScore,
+                surprise: j.surpriseScore,
+              })),
+            );
+        return {
+          dayKey: k,
+          date,
+          isCurrentMonth: date.getMonth() === visibleMonthDate.getMonth(),
+          entryCount: trend?.entryCount ?? entries.length,
+          dominant: scores ? dominantEmotionFromScores(scores) : null,
+        };
+      }),
     [dailyTrendByDay, journalsByDay, visibleMonthDate],
   );
 
@@ -338,12 +408,19 @@ export function TrendsPanel({
       const entries = journalsByDay[k] ?? [];
       const scores = trend
         ? buildEmotionScoresFromTrend(trend)
-        : averageEmotionScores(entries.map(j => ({
-            joy: j.joyScore, sadness: j.sadnessScore, anger: j.angerScore,
-            fear: j.fearScore, disgust: j.disgustScore, surprise: j.surpriseScore,
-          })));
+        : averageEmotionScores(
+            entries.map((j) => ({
+              joy: j.joyScore,
+              sadness: j.sadnessScore,
+              anger: j.angerScore,
+              fear: j.fearScore,
+              disgust: j.disgustScore,
+              surprise: j.surpriseScore,
+            })),
+          );
       return {
-        dayKey: k, date: d,
+        dayKey: k,
+        date: d,
         entryCount: trend?.entryCount ?? entries.length,
         dominant: scores ? dominantEmotionFromScores(scores) : null,
       };
@@ -371,7 +448,9 @@ export function TrendsPanel({
           <button
             className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text)] disabled:opacity-40"
             disabled={isLoadingJournals}
-            onClick={() => { void onRefreshTimeline(); }}
+            onClick={() => {
+              void onRefreshTimeline();
+            }}
             type="button"
           >
             {isLoadingJournals ? "..." : "Atualizar"}
@@ -379,7 +458,9 @@ export function TrendsPanel({
           <button
             className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-[var(--surface-3)] hover:text-[var(--text)] disabled:opacity-40"
             disabled={isLoadingDailyTrends}
-            onClick={() => { void onRefresh(); }}
+            onClick={() => {
+              void onRefresh();
+            }}
             type="button"
           >
             {isLoadingDailyTrends ? "..." : "Gráfico"}
@@ -397,17 +478,42 @@ export function TrendsPanel({
       {chartData.length > 0 ? (
         <div className="mt-6 h-64 rounded-xl border border-[var(--line-muted)] bg-[var(--surface-2)] p-4">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(240,246,252,0.06)" />
-              <XAxis dataKey="dayStart" tickFormatter={formatDayLabel} tick={{ fill: "#6e7681", fontSize: 11 }} />
+            <LineChart
+              data={chartData}
+              margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="rgba(240,246,252,0.06)"
+              />
+              <XAxis
+                dataKey="dayStart"
+                tickFormatter={formatDayLabel}
+                tick={{ fill: "#6e7681", fontSize: 11 }}
+              />
               <YAxis domain={[0, 1]} tick={{ fill: "#6e7681", fontSize: 11 }} />
               <Tooltip
-                contentStyle={{ background: "#161b22", border: "1px solid rgba(240,246,252,0.1)", borderRadius: "12px", color: "#e6edf3" }}
-                formatter={(v: number | null) => typeof v === "number" ? v.toFixed(2) : "—"}
+                contentStyle={{
+                  background: "#161b22",
+                  border: "1px solid rgba(240,246,252,0.1)",
+                  borderRadius: "12px",
+                  color: "#e6edf3",
+                }}
+                formatter={(value: unknown) =>
+                  typeof value === "number" ? value.toFixed(2) : "—"
+                }
                 labelFormatter={(v: string) => `Dia: ${formatDayLabel(v)}`}
               />
-              {emotionMetricKeys.map(k => (
-                <Line key={k} type="monotone" dataKey={k} stroke={EMOTION_CHART_COLORS[k]} dot={false} connectNulls strokeWidth={2} />
+              {emotionMetricKeys.map((k) => (
+                <Line
+                  key={k}
+                  type="monotone"
+                  dataKey={k}
+                  stroke={EMOTION_CHART_COLORS[k]}
+                  dot={false}
+                  connectNulls
+                  strokeWidth={2}
+                />
               ))}
             </LineChart>
           </ResponsiveContainer>
@@ -423,8 +529,11 @@ export function TrendsPanel({
       {/* Emotion legend chips */}
       {chartData.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {emotionMetricKeys.map(k => (
-            <span key={k} className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${EMOTION_BG[k]}`}>
+          {emotionMetricKeys.map((k) => (
+            <span
+              key={k}
+              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${EMOTION_BG[k]}`}
+            >
               {EMOTION_LABELS[k]}
             </span>
           ))}
@@ -432,221 +541,256 @@ export function TrendsPanel({
       )}
 
       {/* Calendar section — only rendered client-side to avoid date hydration mismatch */}
-      {mounted && <div className="mt-8 rounded-xl border border-[var(--line-muted)] bg-[var(--surface-2)] p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-subtle)]">
-              Calendário Emocional
-            </p>
-            <h3 className="mt-1 text-lg font-bold text-[var(--text)]">
-              Leitura mensal
-            </h3>
-          </div>
-          <div className="flex gap-1 rounded-xl border border-[var(--line)] bg-[var(--surface-3)] p-1">
-            {(["month", "week"] as const).map(mode => (
-              <button
-                key={mode}
-                className={[
-                  "rounded-lg px-4 py-1.5 text-sm font-semibold transition",
-                  calendarViewMode === mode
-                    ? "bg-[var(--accent)] text-white"
-                    : "text-[var(--text-muted)] hover:text-[var(--text)]",
-                ].join(" ")}
-                onClick={() => setCalendarViewMode(mode)}
-                type="button"
-              >
-                {mode === "month" ? "Mês" : "Semana"}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-4 xl:grid-cols-[280px_1fr]">
-          {/* Sidebar */}
-          <aside className="space-y-3">
-            {/* Month nav */}
-            <div className="flex items-center justify-between rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3">
-              <button
-                className="rounded-lg border border-[var(--line)] px-3 py-1 text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text)]"
-                onClick={() => setVisibleMonthDate(d => addMonths(d, -1))}
-                type="button"
-              >
-                ←
-              </button>
-              <p className="text-sm font-semibold capitalize text-[var(--text)]">
-                {formatMonthLabel(visibleMonthDate)}
-              </p>
-              <button
-                className="rounded-lg border border-[var(--line)] px-3 py-1 text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text)]"
-                onClick={() => setVisibleMonthDate(d => addMonths(d, 1))}
-                type="button"
-              >
-                →
-              </button>
-            </div>
-
-            {/* Selected day info */}
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
+      {mounted && (
+        <div className="mt-8 rounded-xl border border-[var(--line-muted)] bg-[var(--surface-2)] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-subtle)]">
-                Dia selecionado
+                Calendário Emocional
               </p>
-              <p className="mt-2 text-sm font-semibold capitalize text-[var(--text)]">
-                {formatFullDateLabel(parseDayKey(selectedDayKey).toISOString())}
-              </p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">
-                {selectedDayEntries.length} entrada(s)
-              </p>
-              {selectedDayDominant && (
-                <span className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${EMOTION_BG[selectedDayDominant]}`}>
-                  {EMOTION_LABELS[selectedDayDominant]}
-                </span>
-              )}
+              <h3 className="mt-1 text-lg font-bold text-[var(--text)]">
+                Leitura mensal
+              </h3>
             </div>
+            <div className="flex gap-1 rounded-xl border border-[var(--line)] bg-[var(--surface-3)] p-1">
+              {(["month", "week"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  className={[
+                    "rounded-lg px-4 py-1.5 text-sm font-semibold transition",
+                    calendarViewMode === mode
+                      ? "bg-[var(--accent)] text-white"
+                      : "text-[var(--text-muted)] hover:text-[var(--text)]",
+                  ].join(" ")}
+                  onClick={() => setCalendarViewMode(mode)}
+                  type="button"
+                >
+                  {mode === "month" ? "Mês" : "Semana"}
+                </button>
+              ))}
+            </div>
+          </div>
 
-            {/* Emotion scores for selected day */}
-            {selectedDayScores && (
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--text-subtle)]">
-                  Scores do dia
+          <div className="mt-5 grid gap-4 xl:grid-cols-[280px_1fr]">
+            {/* Sidebar */}
+            <aside className="space-y-3">
+              {/* Month nav */}
+              <div className="flex items-center justify-between rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3">
+                <button
+                  className="rounded-lg border border-[var(--line)] px-3 py-1 text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text)]"
+                  onClick={() => setVisibleMonthDate((d) => addMonths(d, -1))}
+                  type="button"
+                >
+                  ←
+                </button>
+                <p className="text-sm font-semibold capitalize text-[var(--text)]">
+                  {formatMonthLabel(visibleMonthDate)}
                 </p>
-                <div className="space-y-2">
-                  {emotionMetricKeys.map(k => (
-                    <div key={k} className="flex items-center gap-2">
-                      <span className="w-16 text-xs text-[var(--text-muted)]">{EMOTION_LABELS[k]}</span>
-                      <div className="flex-1 rounded-full bg-[var(--surface-3)]" style={{ height: 6 }}>
-                        <div
-                          className="rounded-full"
-                          style={{
-                            width: `${Math.round(selectedDayScores[k] * 100)}%`,
-                            height: 6,
-                            background: EMOTION_CHART_COLORS[k],
-                          }}
-                        />
-                      </div>
-                      <span className="w-8 text-right text-xs font-semibold text-[var(--text-muted)]">
-                        {selectedDayScores[k].toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <button
+                  className="rounded-lg border border-[var(--line)] px-3 py-1 text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text)]"
+                  onClick={() => setVisibleMonthDate((d) => addMonths(d, 1))}
+                  type="button"
+                >
+                  →
+                </button>
               </div>
-            )}
-          </aside>
 
-          {/* Calendar grid */}
-          <div>
-            {availableDayKeys.length === 0 ? (
-              <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-[var(--line)] text-sm text-[var(--text-subtle)]">
-                Assim que existirem entradas analisadas, o calendário vai preencher-se.
+              {/* Selected day info */}
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-subtle)]">
+                  Dia selecionado
+                </p>
+                <p className="mt-2 text-sm font-semibold capitalize text-[var(--text)]">
+                  {formatFullDateLabel(
+                    parseDayKey(selectedDayKey).toISOString(),
+                  )}
+                </p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  {selectedDayEntries.length} entrada(s)
+                </p>
+                {selectedDayDominant && (
+                  <span
+                    className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${EMOTION_BG[selectedDayDominant]}`}
+                  >
+                    {EMOTION_LABELS[selectedDayDominant]}
+                  </span>
+                )}
               </div>
-            ) : calendarViewMode === "month" ? (
-              <>
-                <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-widest text-[var(--text-subtle)]">
-                  {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map(l => (
-                    <div key={l} className="py-2">{l}</div>
-                  ))}
+
+              {/* Emotion scores for selected day */}
+              {selectedDayScores && (
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--text-subtle)]">
+                    Scores do dia
+                  </p>
+                  <div className="space-y-2">
+                    {emotionMetricKeys.map((k) => (
+                      <div key={k} className="flex items-center gap-2">
+                        <span className="w-16 text-xs text-[var(--text-muted)]">
+                          {EMOTION_LABELS[k]}
+                        </span>
+                        <div
+                          className="flex-1 rounded-full bg-[var(--surface-3)]"
+                          style={{ height: 6 }}
+                        >
+                          <div
+                            className="rounded-full"
+                            style={{
+                              width: `${Math.round(selectedDayScores[k] * 100)}%`,
+                              height: 6,
+                              background: EMOTION_CHART_COLORS[k],
+                            }}
+                          />
+                        </div>
+                        <span className="w-8 text-right text-xs font-semibold text-[var(--text-muted)]">
+                          {selectedDayScores[k].toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="mt-1 grid grid-cols-7 gap-1">
-                  {monthGridDays.map(day => {
+              )}
+            </aside>
+
+            {/* Calendar grid */}
+            <div>
+              {availableDayKeys.length === 0 ? (
+                <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-[var(--line)] text-sm text-[var(--text-subtle)]">
+                  Assim que existirem entradas analisadas, o calendário vai
+                  preencher-se.
+                </div>
+              ) : calendarViewMode === "month" ? (
+                <>
+                  <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-widest text-[var(--text-subtle)]">
+                    {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map(
+                      (l) => (
+                        <div key={l} className="py-2">
+                          {l}
+                        </div>
+                      ),
+                    )}
+                  </div>
+                  <div className="mt-1 grid grid-cols-7 gap-1">
+                    {monthGridDays.map((day) => {
+                      const isSelected = day.dayKey === selectedDayKey;
+                      const bgClass = day.dominant
+                        ? EMOTION_BG[day.dominant]
+                        : day.isCurrentMonth
+                          ? "border-[var(--line)] bg-[var(--surface-3)] text-[var(--text)]"
+                          : "border-transparent bg-transparent text-[var(--text-subtle)] opacity-40";
+
+                      return (
+                        <button
+                          key={day.dayKey}
+                          className={[
+                            "min-h-16 rounded-xl border p-2 text-left transition hover:-translate-y-0.5",
+                            bgClass,
+                            isSelected
+                              ? "ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--surface-2)]"
+                              : "",
+                          ].join(" ")}
+                          onClick={() => setSelectedDayKey(day.dayKey)}
+                          type="button"
+                        >
+                          <div className="flex items-start justify-between">
+                            <span className="text-xs font-bold">
+                              {day.date.getDate()}
+                            </span>
+                            {day.entryCount > 0 && (
+                              <span className="rounded-full bg-white/20 px-1 text-[10px] font-bold">
+                                {day.entryCount}
+                              </span>
+                            )}
+                          </div>
+                          {day.dominant && (
+                            <p className="mt-1 text-[10px] font-semibold uppercase leading-tight tracking-wide">
+                              {EMOTION_LABELS[day.dominant]}
+                            </p>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div className="grid gap-2">
+                  {weekDays.map((day) => {
                     const isSelected = day.dayKey === selectedDayKey;
                     const bgClass = day.dominant
                       ? EMOTION_BG[day.dominant]
-                      : day.isCurrentMonth
-                        ? "border-[var(--line)] bg-[var(--surface-3)] text-[var(--text)]"
-                        : "border-transparent bg-transparent text-[var(--text-subtle)] opacity-40";
-
+                      : "border-[var(--line)] bg-[var(--surface-3)] text-[var(--text)]";
                     return (
                       <button
                         key={day.dayKey}
                         className={[
-                          "min-h-16 rounded-xl border p-2 text-left transition hover:-translate-y-0.5",
+                          "grid grid-cols-[120px_1fr_60px] items-center gap-4 rounded-xl border px-5 py-4 text-left transition hover:brightness-110",
                           bgClass,
-                          isSelected ? "ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--surface-2)]" : "",
+                          isSelected ? "ring-2 ring-[var(--accent)]" : "",
                         ].join(" ")}
-                        onClick={() => setSelectedDayKey(day.dayKey)}
+                        onClick={() => {
+                          setSelectedDayKey(day.dayKey);
+                          const d = parseDayKey(day.dayKey);
+                          setVisibleMonthDate(
+                            new Date(d.getFullYear(), d.getMonth(), 1),
+                          );
+                        }}
                         type="button"
                       >
-                        <div className="flex items-start justify-between">
-                          <span className="text-xs font-bold">{day.date.getDate()}</span>
-                          {day.entryCount > 0 && (
-                            <span className="rounded-full bg-white/20 px-1 text-[10px] font-bold">
-                              {day.entryCount}
-                            </span>
-                          )}
-                        </div>
-                        {day.dominant && (
-                          <p className="mt-1 text-[10px] font-semibold uppercase leading-tight tracking-wide">
-                            {EMOTION_LABELS[day.dominant]}
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-[var(--text-subtle)]">
+                            {day.date.toLocaleDateString("pt-PT", {
+                              weekday: "long",
+                            })}
                           </p>
-                        )}
+                          <p className="mt-1 text-2xl font-bold">
+                            {day.date.getDate()}
+                          </p>
+                        </div>
+                        <p className="text-sm font-semibold">
+                          {day.dominant
+                            ? EMOTION_LABELS[day.dominant]
+                            : "Sem dados"}
+                        </p>
+                        <p className="text-right text-xl font-bold">
+                          {day.entryCount}
+                        </p>
                       </button>
                     );
                   })}
                 </div>
-              </>
-            ) : (
-              <div className="grid gap-2">
-                {weekDays.map(day => {
-                  const isSelected = day.dayKey === selectedDayKey;
-                  const bgClass = day.dominant
-                    ? EMOTION_BG[day.dominant]
-                    : "border-[var(--line)] bg-[var(--surface-3)] text-[var(--text)]";
-                  return (
-                    <button
-                      key={day.dayKey}
-                      className={[
-                        "grid grid-cols-[120px_1fr_60px] items-center gap-4 rounded-xl border px-5 py-4 text-left transition hover:brightness-110",
-                        bgClass,
-                        isSelected ? "ring-2 ring-[var(--accent)]" : "",
-                      ].join(" ")}
-                      onClick={() => {
-                        setSelectedDayKey(day.dayKey);
-                        const d = parseDayKey(day.dayKey);
-                        setVisibleMonthDate(new Date(d.getFullYear(), d.getMonth(), 1));
-                      }}
-                      type="button"
-                    >
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-[var(--text-subtle)]">
-                          {day.date.toLocaleDateString("pt-PT", { weekday: "long" })}
-                        </p>
-                        <p className="mt-1 text-2xl font-bold">{day.date.getDate()}</p>
-                      </div>
-                      <p className="text-sm font-semibold">
-                        {day.dominant ? EMOTION_LABELS[day.dominant] : "Sem dados"}
-                      </p>
-                      <p className="text-right text-xl font-bold">{day.entryCount}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+              )}
 
-            {/* Entries for selected day */}
-            {selectedDayEntries.length > 0 && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-subtle)]">
-                    Entradas — {formatFullDateLabel(parseDayKey(selectedDayKey).toISOString())}
-                  </p>
-                  <p className="text-xs text-[var(--text-subtle)]">{selectedDayEntries.length} entrada(s)</p>
+              {/* Entries for selected day */}
+              {selectedDayEntries.length > 0 && (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-subtle)]">
+                      Entradas —{" "}
+                      {formatFullDateLabel(
+                        parseDayKey(selectedDayKey).toISOString(),
+                      )}
+                    </p>
+                    <p className="text-xs text-[var(--text-subtle)]">
+                      {selectedDayEntries.length} entrada(s)
+                    </p>
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    {selectedDayEntries.map((j) => (
+                      <JournalEntryCard
+                        key={j.id}
+                        journal={j}
+                        emotionLabels={EMOTION_LABELS}
+                        emotionBg={EMOTION_BG}
+                        emotionChartColors={EMOTION_CHART_COLORS}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="mt-3 space-y-3">
-                  {selectedDayEntries.map(j => (
-                    <JournalEntryCard
-                      key={j.id}
-                      journal={j}
-                      emotionLabels={EMOTION_LABELS}
-                      emotionBg={EMOTION_BG}
-                      emotionChartColors={EMOTION_CHART_COLORS}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>}
+      )}
     </section>
   );
 }

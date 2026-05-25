@@ -55,6 +55,39 @@ export function statusBadgeClasses(status: string) {
   return "border-slate-300 bg-slate-50 text-slate-700";
 }
 
+export function getJournalStatusLabel(status: string) {
+  if (status === "pending" || status === "queued") {
+    return "Na fila de espera...";
+  }
+
+  if (status === "transcribing") {
+    return "A transcrever áudio...";
+  }
+
+  if (status === "analyzing") {
+    return "A analisar emoções...";
+  }
+
+  if (status === "complete") {
+    return "Análise concluída ✓";
+  }
+
+  if (status === "failed") {
+    return "Erro na análise";
+  }
+
+  return status;
+}
+
+export function isJournalInProgress(status: string) {
+  return (
+    status === "pending" ||
+    status === "queued" ||
+    status === "transcribing" ||
+    status === "analyzing"
+  );
+}
+
 export function formatDayLabel(rawDate: string) {
   const plainDayMatch = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (plainDayMatch) {
@@ -153,7 +186,9 @@ export function monthIdFromDate(date: Date) {
   return `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, "0")}`;
 }
 
-export function hasEmotionScores(scores: Partial<Record<EmotionMetricKey, number | null>>) {
+export function hasEmotionScores(
+  scores: Partial<Record<EmotionMetricKey, number | null>>,
+) {
   return emotionMetricKeys.some((key) => typeof scores[key] === "number");
 }
 
@@ -179,7 +214,7 @@ export function averageEmotionScores(
 
   for (const scores of validList) {
     for (const key of emotionMetricKeys) {
-      totals[key] += typeof scores[key] === "number" ? scores[key] ?? 0 : 0;
+      totals[key] += typeof scores[key] === "number" ? (scores[key] ?? 0) : 0;
     }
   }
 

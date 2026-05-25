@@ -59,6 +59,19 @@ export function useAudioCapture(
     setIsPollingJournalStatus(false);
   }
 
+  function clearDraftRecording() {
+    setElapsedSeconds(0);
+    setAudioBlob(null);
+    setAudioUrl((currentUrl: string | null) => {
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl);
+      }
+
+      audioUrlRef.current = null;
+      return null;
+    });
+  }
+
   async function pollJournalStatus(journalId: string, attempt = 1) {
     setIsPollingJournalStatus(true);
     setStatusPollAttempt(attempt);
@@ -126,11 +139,6 @@ export function useAudioCapture(
 
   async function startRecording() {
     setErrorMessage(null);
-    setUploadState(null);
-    setJournalStatus(null);
-    setJournalStatusError(null);
-    setStatusPollAttempt(0);
-    stopJournalStatusPolling();
 
     if (!("mediaDevices" in navigator) || !("MediaRecorder" in window)) {
       setErrorMessage(
@@ -146,16 +154,7 @@ export function useAudioCapture(
       streamRef.current = stream;
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
-      setElapsedSeconds(0);
-      setAudioBlob(null);
-      setAudioUrl((currentUrl: string | null) => {
-        if (currentUrl) {
-          URL.revokeObjectURL(currentUrl);
-        }
-
-        audioUrlRef.current = null;
-        return null;
-      });
+      clearDraftRecording();
       setRecordedAt(new Date().toISOString());
 
       recorder.ondataavailable = (event) => {
@@ -253,7 +252,8 @@ export function useAudioCapture(
             ? payload.createdAt
             : new Date().toISOString(),
       });
-      toast.success("Entrada enviada. A analisar...");
+      clearDraftRecording();
+      toast.success("Entrada enviada para análise.");
       void pollJournalStatus(payload.id);
     } catch (error) {
       setErrorMessage(
