@@ -34,6 +34,7 @@ pylint==3.0.0
 
 # Late fusion / prosody artifact compatibility
 numpy>=2.0,<2.2
+pandas>=2.2,<2.4
 scipy>=1.11,<1.15
 scikit-learn>=1.5,<1.7
 joblib>=1.3
