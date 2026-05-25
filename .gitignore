@@ -74,3 +74,12 @@ htmlcov/
 .turbo/
 tmp/
 tests/prosody/prosody_outputs_v5/
+
+# Large model/data files (too big for GitHub — keep locally only)
+tests/final/prosody_outputs_v5/*.joblib
+tests/final/prosody_outputs_v5/*.npz
+tests/final/prosody_outputs_v5/*.csv
+tests/final/late_fusion_outputs/
+tests/final/echomind_test_audios/
+tests/prosody/Emotions.zip
+tests/whisper/

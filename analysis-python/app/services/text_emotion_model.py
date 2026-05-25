@@ -14,6 +14,7 @@ import os
 import re
 import time
 import threading
+import unicodedata
 from typing import Dict
 
 import requests
@@ -226,8 +227,10 @@ def _post_process(dist: Dict[str, float], text: str) -> Dict[str, float]:
         "fear":     ["medo", "assust", "ameaç", "pânico", "ansios", "perigo", "tremia", "aperto no peito"],
         "anger":    ["furioso", "revolt", "irrit", "enganado", "injust", "raiva", "falta de respeito"],
         "disgust":  ["nojo", "nojento", "repulsa", "enoj", "nauseabundo", "vomit"],
+        "sadness":  ["faleceu", "morreu", "luto", "perda", "saudades", "triste", "difícil", "sofrimento"],
+        "joy":      ["feliz", "contente", "alegre", "ótimo", "maravilhoso", "espetacular"]
     }
-    amounts = {"surprise": 0.08, "fear": 0.08, "anger": 0.06, "disgust": 0.06}
+    amounts = {"surprise": 0.08, "fear": 0.08, "anger": 0.06, "disgust": 0.06, "sadness": 0.15, "joy": 0.10}
 
     for emotion, markers in boosts.items():
         if any(m in t for m in markers):
@@ -252,6 +255,70 @@ def _light_ensemble(text: str, model: str) -> Dict[str, float]:
 
 
 # ---------------------------------------------------------------------------
+# Semantic Disambiguation — corrige sadness vs anger/fear (do notebook v2)
+# ---------------------------------------------------------------------------
+
+def _strip_accents_lower(s: str) -> str:
+    """Remove acentos e coloca em minúsculas para comparação robusta."""
+    s = str(s).lower()
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', s)
+        if unicodedata.category(c) != 'Mn'
+    )
+
+
+def _semantic_disambiguation(dist: Dict[str, float], text: str) -> Dict[str, float]:
+    """
+    Refinamento conservador para sadness vs anger/fear.
+
+    Só atua quando:
+    - sadness vem em primeiro;
+    - anger ou fear já têm peso relevante (>= 0.12);
+    - existem marcadores linguísticos fortes no texto.
+
+    Estratégia copiada exatamente do notebook v2 (Cell 5B).
+    """
+    dist = _normalize(dist)
+    d = dict(dist)
+    t = _strip_accents_lower(text)
+
+    anger_markers = [
+        'irrit', 'frustr', 'revolt', 'injust', 'raiva',
+        'falta de respeito', 'nao foi respeitado', 'tratado de forma injust',
+    ]
+    fear_markers = [
+        'ansiedad', 'preocup', 'insegur', 'alerta', 'perigo',
+        'ameac', 'panico', 'correr mal', 'corpo tenso', 'tenso',
+    ]
+
+    def has_any(markers):
+        return any(m in t for m in markers)
+
+    top = max(d, key=d.get)
+
+    # Texto fala de injustiça/revolta, mas o LLM escolheu tristeza
+    if top == 'sadness' and has_any(anger_markers) and d.get('anger', 0.0) >= 0.12:
+        d['anger'] = max(d['anger'], d['sadness'] + 0.45)
+        d['sadness'] *= 0.75
+
+    # Texto fala de ansiedade/ameaça, mas o LLM escolheu tristeza
+    if top == 'sadness' and has_any(fear_markers) and d.get('fear', 0.0) >= 0.12:
+        d['fear'] = max(d['fear'], d['sadness'] + 0.50)
+        d['sadness'] *= 0.70
+
+    return _normalize(d)
+
+
+def _light_ensemble_disambiguated(text: str, model: str) -> Dict[str, float]:
+    """
+    Light_Ensemble + desambiguação semântica conservadora.
+    Estratégia final usada no benchmark com casos ambíguos (notebook v2).
+    """
+    base = _light_ensemble(text, model)
+    return _semantic_disambiguation(base, text)
+
+
+# ---------------------------------------------------------------------------
 # Fallback — devolve zeros se o Ollama não estiver disponível
 # ---------------------------------------------------------------------------
 
@@ -265,6 +332,7 @@ def _fallback_scores() -> Dict[str, float]:
 
 _STRATEGIES = {
     "Light_Ensemble": _light_ensemble,
+    "Light_Ensemble_Disambiguated": _light_ensemble_disambiguated,
     "Advanced_V2": _query_advanced_v2,
     "ZeroShot": lambda text, model: _query_advanced_v2(text, model),  # alias simples
 }

@@ -13,16 +13,22 @@ from app.services.transcription import transcribe_audio
 
 SEMANTIC_WEIGHT = 0.7
 PROSODY_WEIGHT = 0.3
-MODEL_VERSION = "0.4.0-ekman-multi-asr"
+MODEL_VERSION = "0.5.0-ekman-late-fusion-wavlm"
+
+# All 7 canonical emotions (matches notebook CANONICAL_EMOTIONS)
+_CANONICAL_EMOTIONS = ["joy", "sadness", "surprise", "anger", "disgust", "fear", "neutral"]
 
 
 def _fuse_emotion_scores(
     semantic_scores: dict[str, float],
     prosody_scores: dict[str, float],
 ) -> dict[str, float]:
-    labels = ["joy", "sadness", "anger", "fear", "disgust", "surprise"]
+    """
+    Fixed-weight late fusion: 0.7 × text + 0.3 × prosody.
+    Matches the base weights from the notebook benchmark.
+    """
     result: dict[str, float] = {}
-    for label in labels:
+    for label in _CANONICAL_EMOTIONS:
         semantic = float(semantic_scores.get(label, 0.0))
         prosody = float(prosody_scores.get(label, 0.0))
         result[label] = max(0.0, min(1.0, (semantic * SEMANTIC_WEIGHT) + (prosody * PROSODY_WEIGHT)))

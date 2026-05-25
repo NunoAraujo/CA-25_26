@@ -149,17 +149,19 @@ services:
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
       MINIO_BUCKET: ${MINIO_BUCKET:-journals}
       DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@postgres:5432/journaling_db}
-      WHISPER_MODEL: ${WHISPER_MODEL:-tiny}
-      ASR_MODEL_KEY: ${ASR_MODEL_KEY:-whisper_small}
-      WHISPER_MODEL_ID: ${WHISPER_MODEL_ID:-openai/whisper-small}
+      WHISPER_MODEL: ${WHISPER_MODEL:-large_v3_turbo}
+      ASR_MODEL_KEY: ${ASR_MODEL_KEY:-whisper_large_v3_turbo}
+      WHISPER_MODEL_ID: ${WHISPER_MODEL_ID:-openai/whisper-large-v3-turbo}
       AUDIO_EMOTION_MODEL_ID: ${AUDIO_EMOTION_MODEL_ID:-ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition}
       TORCH_HOME: /tmp/torch-models
       HF_HOME: /tmp/hf-models
       OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
       OLLAMA_TEXT_MODEL: ${OLLAMA_TEXT_MODEL:-qwen2.5:3b-instruct}
-      OLLAMA_TEXT_STRATEGY: ${OLLAMA_TEXT_STRATEGY:-Light_Ensemble}
+      OLLAMA_TEXT_STRATEGY: ${OLLAMA_TEXT_STRATEGY:-Light_Ensemble_Disambiguated}
+      PROSODY_ARTIFACT_PATH: ${PROSODY_ARTIFACT_PATH:-/app/prosody_artifact/prosody_final_artifact_v5_SSL_WAVLM_RBF_RECOVERED.joblib}
     volumes:
       - ./analysis-python/app:/app/app
+      - ./tests/final/prosody_outputs_v5/prosody_final_artifact_v5_SSL_WAVLM_RBF_RECOVERED.joblib:/app/prosody_artifact/prosody_final_artifact_v5_SSL_WAVLM_RBF_RECOVERED.joblib:ro
       - torch-cache:/tmp/torch-models
       - hf-cache:/tmp/hf-models
       - audio-temp:/tmp/audio-temp

@@ -1,200 +1,286 @@
+"""
+Prosody emotion classification using WavLM embeddings + trained SVC artifact.
+
+Pipeline (mirrors late_fusion_echomind_LOCAL_v2_disambiguated.ipynb):
+  audio → safe_load_audio → trim_silence → chunked WavLM embeddings
+        → mean+std per chunk → average → SVC (joblib artifact) → distribution
+
+The artifact (prosody_final_artifact_v5_SSL_WAVLM_RBF_RECOVERED.joblib) was
+trained by the project author and is the same model used in the benchmark.
+"""
 import os
 import threading
-from typing import Any
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
+import joblib
 import librosa
 import numpy as np
 
 from app.services.logging_config import logger
 
-_AUDIO_EMOTION_PIPELINE = None
-_AUDIO_EMOTION_LOCK = threading.Lock()
-_AUDIO_EMOTION_FAILED = False
+# ---------------------------------------------------------------------------
+# Constants (match the notebook)
+# ---------------------------------------------------------------------------
+
+CANONICAL_EMOTIONS: List[str] = ["joy", "sadness", "surprise", "anger", "disgust", "fear", "neutral"]
+
+SSL_MAX_SECONDS_PER_CHUNK = 12.0
+SSL_CHUNK_OVERLAP_SECONDS = 1.0
+
+# ---------------------------------------------------------------------------
+# Artifact & model caches (loaded once, thread-safe)
+# ---------------------------------------------------------------------------
+
+_ARTIFACT: Optional[Dict] = None
+_ARTIFACT_FAILED: bool = False
+_ARTIFACT_LOCK = threading.Lock()
+
+_SSL_CACHE: Dict = {}
+_SSL_LOCK = threading.Lock()
 
 
-def _clamp01(value: float) -> float:
-    return float(max(0.0, min(1.0, value)))
+def _normalize_distribution(dist: Dict[str, float]) -> Dict[str, float]:
+    out = {e: max(0.0, float(dist.get(e, 0.0))) for e in CANONICAL_EMOTIONS}
+    total = sum(out.values())
+    if total <= 0:
+        return {e: (1.0 if e == "neutral" else 0.0) for e in CANONICAL_EMOTIONS}
+    return {e: out[e] / total for e in CANONICAL_EMOTIONS}
 
 
-def _load_audio_emotion_pipeline():
-    global _AUDIO_EMOTION_PIPELINE, _AUDIO_EMOTION_FAILED
+# ---------------------------------------------------------------------------
+# Artifact loading
+# ---------------------------------------------------------------------------
 
-    if _AUDIO_EMOTION_PIPELINE is not None or _AUDIO_EMOTION_FAILED:
-        return _AUDIO_EMOTION_PIPELINE
+def _get_artifact() -> Optional[Dict]:
+    global _ARTIFACT, _ARTIFACT_FAILED
 
-    with _AUDIO_EMOTION_LOCK:
-        if _AUDIO_EMOTION_PIPELINE is not None or _AUDIO_EMOTION_FAILED:
-            return _AUDIO_EMOTION_PIPELINE
+    if _ARTIFACT is not None or _ARTIFACT_FAILED:
+        return _ARTIFACT
+
+    with _ARTIFACT_LOCK:
+        if _ARTIFACT is not None or _ARTIFACT_FAILED:
+            return _ARTIFACT
+
+        artifact_path = Path(
+            os.getenv(
+                "PROSODY_ARTIFACT_PATH",
+                "/app/prosody_artifact/prosody_final_artifact_v5_SSL_WAVLM_RBF_RECOVERED.joblib",
+            )
+        )
+
+        if not artifact_path.exists():
+            logger.warning(
+                "Prosody artifact not found at %s — audio emotion will return zeros.",
+                artifact_path,
+            )
+            _ARTIFACT_FAILED = True
+            return None
 
         try:
-            from transformers import pipeline
-
-            model_id = os.getenv(
-                "AUDIO_EMOTION_MODEL_ID",
-                "ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition",
+            _ARTIFACT = joblib.load(artifact_path)
+            logger.info(
+                "Prosody artifact loaded: model=%s  feature_set=%s  emotions=%s",
+                _ARTIFACT.get("model_name") or _ARTIFACT.get("final_model_name"),
+                _ARTIFACT.get("feature_set") or _ARTIFACT.get("selected_strategy"),
+                _ARTIFACT.get("emotions"),
             )
-            _AUDIO_EMOTION_PIPELINE = pipeline(
-                task="audio-classification",
-                model=model_id,
-                top_k=8,
-                device=-1,
-            )
-            logger.info("Loaded audio emotion model: %s", model_id)
-        except Exception as error:
-            _AUDIO_EMOTION_FAILED = True
-            logger.warning(
-                "Failed to initialize audio emotion model, fallback enabled: %s",
-                str(error),
-            )
+        except Exception as exc:
+            logger.warning("Failed to load prosody artifact: %s", exc)
+            _ARTIFACT_FAILED = True
 
-    return _AUDIO_EMOTION_PIPELINE
+    return _ARTIFACT
 
 
-def _map_audio_label(label: str) -> str | None:
-    normalized = label.strip().lower()
+# ---------------------------------------------------------------------------
+# WavLM embedding extraction (mirrors notebook Cell 12)
+# ---------------------------------------------------------------------------
 
-    if any(key in normalized for key in ["happy", "joy", "positive"]):
-        return "joy"
-    if any(key in normalized for key in ["sad", "sadness"]):
-        return "sadness"
-    if any(key in normalized for key in ["angry", "anger", "frustrat"]):
-        return "anger"
-    if any(key in normalized for key in ["fear", "anx", "nerv", "stress", "scared"]):
-        return "fear"
-    if any(key in normalized for key in ["disgust", "disgusted", "aversion"]):
-        return "disgust"
-    if any(key in normalized for key in ["surprise", "surprised", "astonish"]):
-        return "surprise"
-    if any(key in normalized for key in ["excited"]):
-        return "surprise"
+def _safe_load_audio(path: str, sr: int = 16000):
+    y, sr_out = librosa.load(path, sr=sr, mono=True)
+    y = np.asarray(y, dtype=np.float32)
+    y = np.nan_to_num(y, nan=0.0, posinf=0.0, neginf=0.0)
+    if len(y) == 0:
+        raise ValueError(f"Loaded audio is empty: {path}")
+    return y, sr_out
 
+
+def _trim_silence(y: np.ndarray, top_db: int = 30) -> np.ndarray:
+    try:
+        yt, _ = librosa.effects.trim(y, top_db=top_db)
+        return yt.astype(np.float32) if len(yt) else y.astype(np.float32)
+    except Exception:
+        return y.astype(np.float32)
+
+
+def _iter_chunks(y: np.ndarray, sr: int):
+    max_len = int(SSL_MAX_SECONDS_PER_CHUNK * sr)
+    overlap = int(SSL_CHUNK_OVERLAP_SECONDS * sr)
+
+    if len(y) <= max_len:
+        yield y
+        return
+
+    step = max(1, max_len - overlap)
+    start = 0
+    while start < len(y):
+        end = min(len(y), start + max_len)
+        chunk = y[start:end]
+        if len(chunk) > int(0.25 * sr):
+            yield chunk
+        if end >= len(y):
+            break
+        start += step
+
+
+def _load_ssl_model(model_name: str = "microsoft/wavlm-base"):
+    with _SSL_LOCK:
+        if model_name in _SSL_CACHE:
+            return _SSL_CACHE[model_name]
+
+        import torch
+        from transformers import AutoFeatureExtractor, AutoModel
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        logger.info("Loading WavLM model %s on %s", model_name, device)
+
+        feature_extractor = AutoFeatureExtractor.from_pretrained(model_name)
+        model = AutoModel.from_pretrained(model_name).to(device)
+        model.eval()
+
+        _SSL_CACHE[model_name] = (feature_extractor, model, device)
+        return _SSL_CACHE[model_name]
+
+
+def _extract_ssl_embedding(
+    audio_path: str,
+    model_name: str = "microsoft/wavlm-base",
+    target_sr: int = 16000,
+) -> np.ndarray:
+    import torch
+
+    feature_extractor, model, device = _load_ssl_model(model_name)
+
+    y, sr = _safe_load_audio(audio_path, sr=target_sr)
+    y = _trim_silence(y)
+
+    embs = []
+    for chunk in _iter_chunks(y, sr):
+        inputs = feature_extractor(chunk, sampling_rate=sr, return_tensors="pt", padding=True)
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+
+        with torch.no_grad():
+            out = model(**inputs)
+            h = out.last_hidden_state.squeeze(0)
+            mean = h.mean(dim=0).detach().cpu().numpy()
+            std = h.std(dim=0).detach().cpu().numpy()
+
+        # wavlm-base: 768 mean + 768 std = 1536 dims
+        embs.append(np.concatenate([mean, std]).astype(np.float32))
+
+    if not embs:
+        raise RuntimeError(f"Could not extract SSL embedding from {audio_path}")
+
+    return np.vstack(embs).mean(axis=0).astype(np.float32)
+
+
+# ---------------------------------------------------------------------------
+# SVC classification using artifact (mirrors notebook Cell 12)
+# ---------------------------------------------------------------------------
+
+def _get_model_classes(model):
+    if hasattr(model, "classes_"):
+        return model.classes_
+    if hasattr(model, "named_steps") and "clf" in model.named_steps:
+        clf = model.named_steps["clf"]
+        if hasattr(clf, "classes_"):
+            return clf.classes_
     return None
 
 
-def extract_prosody_features(audio_path: str) -> dict[str, Any]:
-    y, sr = librosa.load(audio_path, sr=16000, mono=True)
-    if y.size == 0:
-        raise ValueError("Loaded audio is empty")
+def _classify_with_artifact(audio_path: str, artifact: Dict) -> Dict[str, float]:
+    svc_model = artifact.get("model") or artifact.get("final_model")
+    if svc_model is None:
+        raise RuntimeError("Prosody artifact missing 'model'/'final_model'")
 
-    duration = max(0.001, float(librosa.get_duration(y=y, sr=sr)))
+    ssl_model_name = artifact.get("ssl_model_name", "microsoft/wavlm-base")
+    ssl_sample_rate = int(artifact.get("ssl_sample_rate", 16000))
 
-    rms = librosa.feature.rms(y=y)[0]
-    mean_energy = float(np.mean(rms))
-    energy_std = float(np.std(rms))
-    pause_threshold = max(0.02, mean_energy * 0.5)
-    pause_ratio = float(np.mean(rms < pause_threshold))
+    emb = _extract_ssl_embedding(
+        audio_path,
+        model_name=ssl_model_name,
+        target_sr=ssl_sample_rate,
+    ).reshape(1, -1)
 
-    onset_frames = librosa.onset.onset_detect(y=y, sr=sr, units="frames")
-    speech_rate = float(len(onset_frames) / duration)
+    if not hasattr(svc_model, "predict_proba"):
+        raise RuntimeError("Prosody SVC model does not support predict_proba")
 
-    f0, _, _ = librosa.pyin(
-        y,
-        fmin=librosa.note_to_hz("C2"),
-        fmax=librosa.note_to_hz("C7"),
-    )
-    voiced_f0 = f0[~np.isnan(f0)] if f0 is not None else np.array([])
+    proba = svc_model.predict_proba(emb)[0]
 
-    if voiced_f0.size > 0:
-        mean_pitch = float(np.mean(voiced_f0))
-        pitch_std = float(np.std(voiced_f0))
-        min_pitch = float(np.min(voiced_f0))
-        max_pitch = float(np.max(voiced_f0))
-        pitch_diffs = np.diff(voiced_f0)
-        if pitch_diffs.size:
-            pitch_contour_reg = float(1.0 / (1.0 + np.std(pitch_diffs)))
-        else:
-            pitch_contour_reg = 1.0
-
-        periods = 1.0 / np.clip(voiced_f0, a_min=1e-6, a_max=None)
-        if periods.size > 1:
-            jitter = float(np.mean(np.abs(np.diff(periods))) / np.mean(periods))
-        else:
-            jitter = 0.0
-        voiced_ratio = float(voiced_f0.size / max(1, len(f0)))
-    else:
-        mean_pitch = 0.0
-        pitch_std = 0.0
-        min_pitch = 0.0
-        max_pitch = 0.0
-        pitch_contour_reg = 0.0
-        jitter = 0.0
-        voiced_ratio = 0.0
-
-    if rms.size > 1 and np.mean(rms) > 0:
-        shimmer = float(np.mean(np.abs(np.diff(rms))) / np.mean(rms))
-    else:
-        shimmer = 0.0
-
-    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
-    mfcc_mean = [float(value) for value in np.mean(mfcc, axis=1).tolist()]
-
-    spectral_centroid = float(np.mean(librosa.feature.spectral_centroid(y=y, sr=sr)))
-    spectral_spread = float(np.mean(librosa.feature.spectral_bandwidth(y=y, sr=sr)))
-
-    return {
-        "meanPitchHz": mean_pitch,
-        "pitchStdDev": pitch_std,
-        "minPitchHz": min_pitch,
-        "maxPitchHz": max_pitch,
-        "pitchContourReg": pitch_contour_reg,
-        "meanEnergy": mean_energy,
-        "energyStdDev": energy_std,
-        "speechRate": speech_rate,
-        "pauseRatio": pause_ratio,
-        "mfccMean": mfcc_mean,
-        "spectralCentroid": spectral_centroid,
-        "spectralSpread": spectral_spread,
-        "jitter": jitter,
-        "shimmer": shimmer,
-        "voicedRatio": voiced_ratio,
+    # Map class indices → emotion labels using artifact's idx_to_label
+    idx_to_label: Dict[int, str] = {
+        int(k): v for k, v in artifact.get("idx_to_label", {}).items()
     }
+    artifact_emotions: List[str] = artifact.get("emotions", CANONICAL_EMOTIONS)
+    classes = _get_model_classes(svc_model)
 
+    dist: Dict[str, float] = {e: 0.0 for e in CANONICAL_EMOTIONS}
+
+    if classes is not None:
+        for cls, p in zip(classes, proba):
+            cls_int = int(cls)
+            emo = idx_to_label.get(cls_int)
+            if emo is None and 0 <= cls_int < len(artifact_emotions):
+                emo = artifact_emotions[cls_int]
+            if emo in dist:
+                dist[emo] += float(p)
+    else:
+        for i, p in enumerate(proba):
+            if i < len(artifact_emotions):
+                emo = artifact_emotions[i]
+                if emo in dist:
+                    dist[emo] += float(p)
+
+    return _normalize_distribution(dist)
+
+
+# ---------------------------------------------------------------------------
+# Public API — called by analysis_tasks.py
+# ---------------------------------------------------------------------------
 
 def classify_audio_emotions(
     audio_path: str,
-    prosody_features: dict[str, Any],
-) -> dict[str, float]:
-    model = _load_audio_emotion_pipeline()
-    scores = {
-        "joy": 0.0,
-        "sadness": 0.0,
-        "anger": 0.0,
-        "fear": 0.0,
-        "disgust": 0.0,
-        "surprise": 0.0,
-    }
+    prosody_features: dict[str, Any],  # kept for API compat, not used by WavLM path
+) -> Dict[str, float]:
+    """
+    Classifies audio emotion using WavLM embeddings + trained SVC artifact.
 
-    if model is not None:
-        try:
-            predictions = model(audio_path)
-            for prediction in predictions:
-                label = _map_audio_label(str(prediction.get("label", "")))
-                if not label:
-                    continue
-                score = _clamp01(float(prediction.get("score", 0.0)))
-                scores[label] = max(scores[label], score)
-        except Exception as error:
-            logger.warning("Audio emotion inference failed, using fallback: %s", str(error))
+    Falls back to zeros if the artifact is unavailable.
+    The prosody_features arg is kept for backward API compatibility.
+    """
+    artifact = _get_artifact()
 
-    mean_energy = float(prosody_features.get("meanEnergy", 0.0))
-    speech_rate = float(prosody_features.get("speechRate", 0.0))
-    pause_ratio = float(prosody_features.get("pauseRatio", 0.0))
-    pitch_std = float(prosody_features.get("pitchStdDev", 0.0))
-    jitter = float(prosody_features.get("jitter", 0.0))
-    shimmer = float(prosody_features.get("shimmer", 0.0))
+    if artifact is None:
+        logger.warning("Prosody artifact not available — returning zero scores.")
+        return {e: 0.0 for e in CANONICAL_EMOTIONS}
 
-    fallback_joy = _clamp01(0.15 + mean_energy * 1.4 + (1.0 - pause_ratio) * 0.15)
-    fallback_sadness = _clamp01(0.1 + pause_ratio * 0.55 + max(0.0, 0.08 - mean_energy) * 2.5)
-    fallback_anger = _clamp01(0.08 + pitch_std / 300.0 + mean_energy * 1.0)
-    fallback_fear = _clamp01(0.1 + pause_ratio * 0.75 + pitch_std / 260.0)
-    fallback_disgust = _clamp01(0.05 + jitter * 1.4 + shimmer * 0.9)
-    fallback_surprise = _clamp01(0.08 + speech_rate / 8.0 + pitch_std / 280.0)
+    try:
+        return _classify_with_artifact(audio_path, artifact)
+    except Exception as exc:
+        logger.warning("Prosody WavLM classification failed: %s — returning zeros.", exc)
+        return {e: 0.0 for e in CANONICAL_EMOTIONS}
 
-    scores["joy"] = max(scores["joy"], fallback_joy * 0.45)
-    scores["sadness"] = max(scores["sadness"], fallback_sadness * 0.6)
-    scores["anger"] = max(scores["anger"], fallback_anger * 0.55)
-    scores["fear"] = max(scores["fear"], fallback_fear * 0.6)
-    scores["disgust"] = max(scores["disgust"], fallback_disgust * 0.5)
-    scores["surprise"] = max(scores["surprise"], fallback_surprise * 0.55)
 
-    return {key: _clamp01(value) for key, value in scores.items()}
+def extract_prosody_features(audio_path: str) -> dict[str, Any]:
+    """
+    Kept for API compatibility. Returns minimal metadata.
+    The actual feature extraction now happens inside classify_audio_emotions
+    via WavLM embeddings fed to the SVC artifact.
+    """
+    try:
+        y, sr = librosa.load(audio_path, sr=16000, mono=True)
+        duration = float(librosa.get_duration(y=y, sr=sr))
+    except Exception:
+        duration = 0.0
+
+    return {"duration": duration}

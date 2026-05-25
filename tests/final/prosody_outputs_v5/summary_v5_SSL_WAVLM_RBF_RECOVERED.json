@@ -1,0 +1,19 @@
+{
+  "best_model": {
+    "feature_set": "ssl_wavlm",
+    "model": "rbf_svc_balanced",
+    "f1_macro_cv_observed": 0.6152
+  },
+  "n_samples": 12788,
+  "class_distribution": {
+    "anger": 2167,
+    "joy": 2167,
+    "sadness": 2166,
+    "fear": 2047,
+    "disgust": 1863,
+    "neutral": 1786,
+    "surprise": 592
+  },
+  "artifact_path": "/content/drive/MyDrive/prosody_outputs_v5/prosody_final_artifact_v5_SSL_WAVLM_RBF_RECOVERED.joblib",
+  "warning": "Ensemble OOF não usado porque o kernel foi desligado e o oof_store perdeu-se."
+}

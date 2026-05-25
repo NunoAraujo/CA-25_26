@@ -1,0 +1,30 @@
+{
+  "audio1.wav": {
+    "whisper small": {
+      "transcricao": "Hoje acordei por volta das 8 da manhã e comecei o dia com alguma calma. Tomei um pequeno almoço, organizei a mochila e depois fui tratar de algumas tarefas da faculdade. Durante a manhã estive a fazer apontamentos. Respondi a algumas mensagens e tentei adiantar trabalho que tinha pendente. A tarde fui dar uma volta para espair ser, beber um café e ainda aproveitei para pensar melhor no que tenho de fazer nos próximos dias. No geral, foi um dia normal, mas senti que consegui ser produtivo e manter alguma organização.",
+      "tempo_segundos": 3.73
+    },
+    "whisper medium": {
+      "transcricao": "Hoje acordei por volta das 8 da manhã e comecei o dia com alguma calma. Tomei pequeno almoço, organizei a mochila e depois fui tratar de algumas tarefas da faculdade. Durante a manhã, estive a fazer apontamentos. Respondi a algumas mensagens e tentei adiantar trabalho que tinha pendente. À tarde, fui dar uma volta para espirecer, bebi um café e ainda aproveitei para pensar melhor no que tenho de fazer nos próximos dias. No geral, foi um dia normal, mas senti que consegui ser produtivo e manter alguma organização.",
+      "tempo_segundos": 9.12
+    },
+    "whisper large-v3-turbo": {
+      "transcricao": "Hoje acordei por volta das 8 da manhã e comecei o dia com alguma calma. Tomei o pequeno almoço, organizei a mochila e depois fui tratar de algumas tarefas da faculdade. Durante a manhã estive a fazer apontamentos. Respondi a algumas mensagens e tentei adiantar o trabalho que tinha pendente. À tarde fui dar uma volta para espairecer, bebi um café e ainda aproveitei para pensar melhor no que tenho de fazer nos próximos dias. No geral, foi um dia normal, mas senti que consegui ser produtivo e manter alguma organização.",
+      "tempo_segundos": 6.71
+    }
+  },
+  "audio2.wav": {
+    "whisper small": {
+      "transcricao": "O meu dia foi um bocado mais cheio do que eu estava à espera. Comecei por tentar resolver umas coisas no computador, mas acabei por perder mais tempo do que queria porque apareceram alguns erros. Depois almoçei, voltei ao trabalho e tentei focar-me outra vez. Há tarde gravei alguns olhos para testar modelos de transcrição automática e perceber qual deles consegue reconhecer melhor a minha fala em português. No fim do dia senti-me um pouco cansado, mas mas também satisfeito porque consegui avançar em várias coisas importantes.",
+      "tempo_segundos": 3.19
+    },
+    "whisper medium": {
+      "transcricao": "O meu dia foi um bocado mais cheio do que eu estava à espera. Comecei por tentar resolver umas coisas no computador, mas acabei por perder mais tempo do que queria porque apareceram alguns erros. Depois almocei, voltei ao trabalho e tentei focar-me outra vez. À tarde gravei alguns áudios para testar modelos de transcrição automática e perceber qual deles consegue reconhecer melhor a minha fala em português. No fim do dia senti-me um pouco cansado, mas também satisfeito porque consegui avançar várias coisas importantes.",
+      "tempo_segundos": 7.96
+    },
+    "whisper large-v3-turbo": {
+      "transcricao": "O meu dia foi um bocado mais cheio do que eu estava à espera. Comecei por tentar resolver umas coisas no computador, mas acabei por perder mais tempo do que queria porque apareceram alguns erros. Depois almocei, voltei ao trabalho e tentei focar-me outra vez. À tarde gravei alguns áudios para testar modelos de transcrição automática e perceber qual deles consegue reconhecer melhor a minha fala em português. No fim do dia senti-me um pouco cansado, mas mas também satisfeito porque consegui avançar em várias coisas importantes.",
+      "tempo_segundos": 6.18
+    }
+  }
+}

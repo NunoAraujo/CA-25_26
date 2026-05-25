@@ -1,0 +1,1353 @@
+[
+  {
+    "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/anger.wav",
+    "transcript": "Hoje fiquei bastante irritado Houve uma situação em que senti que fui tratado de forma injusta E isso estragou-me o resto do dia Tentei manter a calma Mas quanto mais pensava no assunto Mais frustrado ficava Senti que o meu esforço não foi respeitado E isso deixou-me revoltado No fim do dia ainda estava a tentar acalmar-me E esquecer o que aconteceu",
+    "stt": {
+      "source": "whisper",
+      "language": "pt",
+      "model_size": "turbo"
+    },
+    "text": {
+      "emotion": "sadness",
+      "emotion_pt": "tristeza",
+      "confidence": 0.5755582482257227,
+      "distribution": {
+        "joy": 0.01413651837747389,
+        "sadness": 0.5755582482257227,
+        "surprise": 0.01413651837747389,
+        "anger": 0.3537591598869079,
+        "disgust": 0.01413651837747389,
+        "fear": 0.01413651837747389,
+        "neutral": 0.01413651837747389
+      },
+      "ranking": [
+        [
+          "sadness",
+          0.5755582482257228
+        ],
+        [
+          "anger",
+          0.353759159886908
+        ],
+        [
+          "joy",
+          0.014136518377473891
+        ],
+        [
+          "surprise",
+          0.014136518377473891
+        ],
+        [
+          "disgust",
+          0.014136518377473891
+        ],
+        [
+          "fear",
+          0.014136518377473891
+        ],
+        [
+          "neutral",
+          0.014136518377473891
+        ]
+      ],
+      "needs_review": false,
+      "model_name": "qwen2.5:3b-instruct",
+      "strategy": "Light_Ensemble"
+    },
+    "audio": {
+      "emotion": "sadness",
+      "emotion_pt": "tristeza",
+      "confidence": 0.3087796205823498,
+      "distribution": {
+        "joy": 0.2381468330034699,
+        "sadness": 0.3087796205823498,
+        "surprise": 0.005089183413391415,
+        "anger": 0.17898030314808466,
+        "disgust": 0.04677610647050939,
+        "fear": 0.19435395385338125,
+        "neutral": 0.02787399952881363
+      },
+      "ranking": [
+        [
+          "sadness",
+          0.3087796205823498
+        ],
+        [
+          "joy",
+          0.2381468330034699
+        ],
+        [
+          "fear",
+          0.19435395385338125
+        ],
+        [
+          "anger",
+          0.17898030314808466
+        ],
+        [
+          "disgust",
+          0.04677610647050939
+        ],
+        [
+          "neutral",
+          0.02787399952881363
+        ],
+        [
+          "surprise",
+          0.005089183413391415
+        ]
+      ],
+      "strategy": "ssl_wavlm",
+      "model_name": "rbf_svc_balanced",
+      "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/anger.wav"
+    },
+    "fusion": {
+      "emotion": "sadness",
+      "emotion_pt": "tristeza",
+      "confidence": 0.5048396193561735,
+      "distribution": {
+        "joy": 0.07351797049350986,
+        "sadness": 0.5048396193561735,
+        "surprise": 0.011738218598982102,
+        "anger": 0.30742815798791084,
+        "disgust": 0.022788736649965894,
+        "fear": 0.0619091981000776,
+        "neutral": 0.017778098813380123
+      },
+      "ranking": [
+        [
+          "sadness",
+          0.5048396193561736
+        ],
+        [
+          "anger",
+          0.3074281579879109
+        ],
+        [
+          "joy",
+          0.07351797049350987
+        ],
+        [
+          "fear",
+          0.06190919810007761
+        ],
+        [
+          "disgust",
+          0.022788736649965897
+        ],
+        [
+          "neutral",
+          0.017778098813380126
+        ],
+        [
+          "surprise",
+          0.011738218598982105
+        ]
+      ],
+      "weights": {
+        "text": 0.7349164380435861,
+        "audio": 0.2650835619564139
+      },
+      "entropy_confidence": {
+        "text": 0.49299377326319993,
+        "audio": 0.17736494797744173,
+        "final": 0.34128059528130683
+      }
+    },
+    "top_n": [
+      {
+        "emotion": "sadness",
+        "emotion_pt": "tristeza",
+        "probability": 0.5048
+      },
+      {
+        "emotion": "anger",
+        "emotion_pt": "raiva",
+        "probability": 0.3074
+      },
+      {
+        "emotion": "joy",
+        "emotion_pt": "alegria",
+        "probability": 0.0735
+      },
+      {
+        "emotion": "fear",
+        "emotion_pt": "medo",
+        "probability": 0.0619
+      },
+      {
+        "emotion": "disgust",
+        "emotion_pt": "nojo/repulsa",
+        "probability": 0.0228
+      },
+      {
+        "emotion": "neutral",
+        "emotion_pt": "neutro",
+        "probability": 0.0178
+      },
+      {
+        "emotion": "surprise",
+        "emotion_pt": "surpresa",
+        "probability": 0.0117
+      }
+    ]
+  },
+  {
+    "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/disgust.wav",
+    "transcript": "Hoje houve uma situação que me deixou mesmo incomodado. Vi uma atitude que achei profundamente desagradável e senti uma espécie de repulsa. Não foi só irritação, foi mesmo aquela sensação de querer afastar-me da situação e das pessoas envolvidas. Durante o resto do dia fiquei a pensar no quanto aquilo me pareceu errado e desconfortável. Foi um dia marcado por nojo e rejeição.",
+    "stt": {
+      "source": "whisper",
+      "language": "pt",
+      "model_size": "turbo"
+    },
+    "text": {
+      "emotion": "disgust",
+      "emotion_pt": "nojo/repulsa",
+      "confidence": 0.8589285714285715,
+      "distribution": {
+        "joy": 0.014583333333333337,
+        "sadness": 0.014583333333333337,
+        "surprise": 0.014583333333333337,
+        "anger": 0.06815476190476191,
+        "disgust": 0.8589285714285715,
+        "fear": 0.014583333333333337,
+        "neutral": 0.014583333333333337
+      },
+      "ranking": [
+        [
+          "disgust",
+          0.8589285714285713
+        ],
+        [
+          "anger",
+          0.0681547619047619
+        ],
+        [
+          "joy",
+          0.014583333333333334
+        ],
+        [
+          "sadness",
+          0.014583333333333334
+        ],
+        [
+          "surprise",
+          0.014583333333333334
+        ],
+        [
+          "fear",
+          0.014583333333333334
+        ],
+        [
+          "neutral",
+          0.014583333333333334
+        ]
+      ],
+      "needs_review": false,
+      "model_name": "qwen2.5:3b-instruct",
+      "strategy": "Light_Ensemble"
+    },
+    "audio": {
+      "emotion": "joy",
+      "emotion_pt": "alegria",
+      "confidence": 0.3534552303517981,
+      "distribution": {
+        "joy": 0.3534552303517981,
+        "sadness": 0.3340874526210422,
+        "surprise": 0.0037568009796393716,
+        "anger": 0.09662764588451322,
+        "disgust": 0.027718857554467752,
+        "fear": 0.15584955644358536,
+        "neutral": 0.028504456164953992
+      },
+      "ranking": [
+        [
+          "joy",
+          0.3534552303517981
+        ],
+        [
+          "sadness",
+          0.3340874526210422
+        ],
+        [
+          "fear",
+          0.15584955644358536
+        ],
+        [
+          "anger",
+          0.09662764588451322
+        ],
+        [
+          "neutral",
+          0.028504456164953992
+        ],
+        [
+          "disgust",
+          0.027718857554467752
+        ],
+        [
+          "surprise",
+          0.0037568009796393716
+        ]
+      ],
+      "strategy": "ssl_wavlm",
+      "model_name": "rbf_svc_balanced",
+      "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/disgust.wav"
+    },
+    "fusion": {
+      "emotion": "disgust",
+      "emotion_pt": "nojo/repulsa",
+      "confidence": 0.6467344479516451,
+      "distribution": {
+        "joy": 0.10109173663826324,
+        "sadness": 0.09614746258723098,
+        "surprise": 0.011819498280950117,
+        "anger": 0.07542341933031582,
+        "disgust": 0.6467344479516451,
+        "fear": 0.05064626894324612,
+        "neutral": 0.018137166268348562
+      },
+      "ranking": [
+        [
+          "disgust",
+          0.6467344479516451
+        ],
+        [
+          "joy",
+          0.10109173663826324
+        ],
+        [
+          "sadness",
+          0.09614746258723098
+        ],
+        [
+          "anger",
+          0.07542341933031582
+        ],
+        [
+          "fear",
+          0.05064626894324612
+        ],
+        [
+          "neutral",
+          0.018137166268348562
+        ],
+        [
+          "surprise",
+          0.011819498280950117
+        ]
+      ],
+      "weights": {
+        "text": 0.7447165018224685,
+        "audio": 0.2552834981775315
+      },
+      "entropy_confidence": {
+        "text": 0.6803750637948585,
+        "audio": 0.24397299993682842,
+        "final": 0.37823702110521495
+      }
+    },
+    "top_n": [
+      {
+        "emotion": "disgust",
+        "emotion_pt": "nojo/repulsa",
+        "probability": 0.6467
+      },
+      {
+        "emotion": "joy",
+        "emotion_pt": "alegria",
+        "probability": 0.1011
+      },
+      {
+        "emotion": "sadness",
+        "emotion_pt": "tristeza",
+        "probability": 0.0961
+      },
+      {
+        "emotion": "anger",
+        "emotion_pt": "raiva",
+        "probability": 0.0754
+      },
+      {
+        "emotion": "fear",
+        "emotion_pt": "medo",
+        "probability": 0.0506
+      },
+      {
+        "emotion": "neutral",
+        "emotion_pt": "neutro",
+        "probability": 0.0181
+      },
+      {
+        "emotion": "surprise",
+        "emotion_pt": "surpresa",
+        "probability": 0.0118
+      }
+    ]
+  },
+  {
+    "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/fear.wav",
+    "transcript": "Hoje passei o dia com bastante ansiedade. Desde manhã que estava preocupado com uma situação que podia correr mal e não consegui relaxar completamente. Mesmo quando estava a tentar pensar noutra coisa, voltava sempre àquela sensação de insegurança. Sentia o corpo tenso e a cabeça cheia de possibilidades negativas. Acabei o dia cansado, como se estivesse sempre em alerta.",
+    "stt": {
+      "source": "whisper",
+      "language": "pt",
+      "model_size": "turbo"
+    },
+    "text": {
+      "emotion": "sadness",
+      "emotion_pt": "tristeza",
+      "confidence": 0.6020000000000001,
+      "distribution": {
+        "joy": 0.01633333333333334,
+        "sadness": 0.6020000000000001,
+        "surprise": 0.01633333333333334,
+        "anger": 0.01633333333333334,
+        "disgust": 0.01633333333333334,
+        "fear": 0.31633333333333336,
+        "neutral": 0.01633333333333334
+      },
+      "ranking": [
+        [
+          "sadness",
+          0.6020000000000001
+        ],
+        [
+          "fear",
+          0.31633333333333336
+        ],
+        [
+          "joy",
+          0.01633333333333334
+        ],
+        [
+          "surprise",
+          0.01633333333333334
+        ],
+        [
+          "anger",
+          0.01633333333333334
+        ],
+        [
+          "disgust",
+          0.01633333333333334
+        ],
+        [
+          "neutral",
+          0.01633333333333334
+        ]
+      ],
+      "needs_review": false,
+      "model_name": "qwen2.5:3b-instruct",
+      "strategy": "Light_Ensemble"
+    },
+    "audio": {
+      "emotion": "sadness",
+      "emotion_pt": "tristeza",
+      "confidence": 0.5795314373492144,
+      "distribution": {
+        "joy": 0.1739792571784733,
+        "sadness": 0.5795314373492144,
+        "surprise": 0.0004682922363095752,
+        "anger": 0.022538784441764607,
+        "disgust": 0.025267559936773248,
+        "fear": 0.1451355813036888,
+        "neutral": 0.05307908755377607
+      },
+      "ranking": [
+        [
+          "sadness",
+          0.5795314373492144
+        ],
+        [
+          "joy",
+          0.1739792571784733
+        ],
+        [
+          "fear",
+          0.1451355813036888
+        ],
+        [
+          "neutral",
+          0.05307908755377607
+        ],
+        [
+          "disgust",
+          0.025267559936773248
+        ],
+        [
+          "anger",
+          0.022538784441764607
+        ],
+        [
+          "surprise",
+          0.0004682922363095752
+        ]
+      ],
+      "strategy": "ssl_wavlm",
+      "model_name": "rbf_svc_balanced",
+      "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/fear.wav"
+    },
+    "fusion": {
+      "emotion": "sadness",
+      "emotion_pt": "tristeza",
+      "confidence": 0.5955492639026593,
+      "distribution": {
+        "joy": 0.06159356058293514,
+        "sadness": 0.5955492639026593,
+        "surprise": 0.011778471730435605,
+        "anger": 0.01811492159456735,
+        "disgust": 0.018898354467456333,
+        "fear": 0.26718236911877985,
+        "neutral": 0.026883058603166407
+      },
+      "ranking": [
+        [
+          "sadness",
+          0.5955492639026593
+        ],
+        [
+          "fear",
+          0.26718236911877985
+        ],
+        [
+          "joy",
+          0.06159356058293514
+        ],
+        [
+          "neutral",
+          0.026883058603166407
+        ],
+        [
+          "disgust",
+          0.018898354467456333
+        ],
+        [
+          "anger",
+          0.01811492159456735
+        ],
+        [
+          "surprise",
+          0.011778471730435605
+        ]
+      ],
+      "weights": {
+        "text": 0.7128994765886734,
+        "audio": 0.28710052341132664
+      },
+      "entropy_confidence": {
+        "text": 0.48321268551632635,
+        "audio": 0.36359598195236265,
+        "final": 0.4192157773389642
+      }
+    },
+    "top_n": [
+      {
+        "emotion": "sadness",
+        "emotion_pt": "tristeza",
+        "probability": 0.5955
+      },
+      {
+        "emotion": "fear",
+        "emotion_pt": "medo",
+        "probability": 0.2672
+      },
+      {
+        "emotion": "joy",
+        "emotion_pt": "alegria",
+        "probability": 0.0616
+      },
+      {
+        "emotion": "neutral",
+        "emotion_pt": "neutro",
+        "probability": 0.0269
+      },
+      {
+        "emotion": "disgust",
+        "emotion_pt": "nojo/repulsa",
+        "probability": 0.0189
+      },
+      {
+        "emotion": "anger",
+        "emotion_pt": "raiva",
+        "probability": 0.0181
+      },
+      {
+        "emotion": "surprise",
+        "emotion_pt": "surpresa",
+        "probability": 0.0118
+      }
+    ]
+  },
+  {
+    "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/joy.wav",
+    "transcript": "Hoje foi um dia muito bom. Acordei com energia e senti que as coisas estavam finalmente a correr no caminho certo. Consegui terminar uma tarefa que já me estava a preocupar há algum tempo. E isso deixou-me mesmo orgulhoso. Durante a tarde estive com pessoas de quem gosto e senti-me leve, bem disposto e agradecido. Foi daqueles dias em que acabo com a sensação de que valeu a pena o esforço.",
+    "stt": {
+      "source": "whisper",
+      "language": "pt",
+      "model_size": "turbo"
+    },
+    "text": {
+      "emotion": "joy",
+      "emotion_pt": "alegria",
+      "confidence": 0.9758620689655173,
+      "distribution": {
+        "joy": 0.9758620689655173,
+        "sadness": 0.012068965517241383,
+        "surprise": 0.004827586206896552,
+        "anger": 0.0024137931034482764,
+        "disgust": 0.0024137931034482764,
+        "fear": 0.0012068965517241382,
+        "neutral": 0.0012068965517241382
+      },
+      "ranking": [
+        [
+          "joy",
+          0.9758620689655173
+        ],
+        [
+          "sadness",
+          0.012068965517241383
+        ],
+        [
+          "surprise",
+          0.004827586206896552
+        ],
+        [
+          "anger",
+          0.0024137931034482764
+        ],
+        [
+          "disgust",
+          0.0024137931034482764
+        ],
+        [
+          "fear",
+          0.0012068965517241382
+        ],
+        [
+          "neutral",
+          0.0012068965517241382
+        ]
+      ],
+      "needs_review": false,
+      "model_name": "qwen2.5:3b-instruct",
+      "strategy": "Light_Ensemble"
+    },
+    "audio": {
+      "emotion": "joy",
+      "emotion_pt": "alegria",
+      "confidence": 0.43134063857460747,
+      "distribution": {
+        "joy": 0.43134063857460747,
+        "sadness": 0.13414336593462403,
+        "surprise": 0.002979516287103911,
+        "anger": 0.1098393030269435,
+        "disgust": 0.008311244382080996,
+        "fear": 0.0855826288020469,
+        "neutral": 0.22780330299259324
+      },
+      "ranking": [
+        [
+          "joy",
+          0.43134063857460747
+        ],
+        [
+          "neutral",
+          0.22780330299259324
+        ],
+        [
+          "sadness",
+          0.13414336593462403
+        ],
+        [
+          "anger",
+          0.1098393030269435
+        ],
+        [
+          "fear",
+          0.0855826288020469
+        ],
+        [
+          "disgust",
+          0.008311244382080996
+        ],
+        [
+          "surprise",
+          0.002979516287103911
+        ]
+      ],
+      "strategy": "ssl_wavlm",
+      "model_name": "rbf_svc_balanced",
+      "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/joy.wav"
+    },
+    "fusion": {
+      "emotion": "joy",
+      "emotion_pt": "alegria",
+      "confidence": 0.847761304452733,
+      "distribution": {
+        "joy": 0.847761304452733,
+        "sadness": 0.04078743856187462,
+        "surprise": 0.004392820637746109,
+        "anger": 0.02768605821796592,
+        "disgust": 0.0038011912393258697,
+        "fear": 0.021056612659009186,
+        "neutral": 0.054514574231345383
+      },
+      "ranking": [
+        [
+          "joy",
+          0.847761304452733
+        ],
+        [
+          "neutral",
+          0.054514574231345383
+        ],
+        [
+          "sadness",
+          0.04078743856187462
+        ],
+        [
+          "anger",
+          0.02768605821796592
+        ],
+        [
+          "fear",
+          0.021056612659009186
+        ],
+        [
+          "surprise",
+          0.004392820637746109
+        ],
+        [
+          "disgust",
+          0.0038011912393258697
+        ]
+      ],
+      "weights": {
+        "text": 0.7647461470509594,
+        "audio": 0.23525385294904055
+      },
+      "entropy_confidence": {
+        "text": 0.9238323188090989,
+        "audio": 0.23979790927688505,
+        "final": 0.663537238476116
+      }
+    },
+    "top_n": [
+      {
+        "emotion": "joy",
+        "emotion_pt": "alegria",
+        "probability": 0.8478
+      },
+      {
+        "emotion": "neutral",
+        "emotion_pt": "neutro",
+        "probability": 0.0545
+      },
+      {
+        "emotion": "sadness",
+        "emotion_pt": "tristeza",
+        "probability": 0.0408
+      },
+      {
+        "emotion": "anger",
+        "emotion_pt": "raiva",
+        "probability": 0.0277
+      },
+      {
+        "emotion": "fear",
+        "emotion_pt": "medo",
+        "probability": 0.0211
+      },
+      {
+        "emotion": "surprise",
+        "emotion_pt": "surpresa",
+        "probability": 0.0044
+      },
+      {
+        "emotion": "disgust",
+        "emotion_pt": "nojo/repulsa",
+        "probability": 0.0038
+      }
+    ]
+  },
+  {
+    "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/neutral.wav",
+    "transcript": "Hoje foi um dia normal. Acordei, fiz as minhas tarefas habituais, trabalhei durante algumas horas e depois tratei de algumas coisas em casa. Não aconteceu nada de muito marcante, nem positivo nem negativo. Foi sobretudo um dia de rotina, com momentos simples e sem grandes alterações. Ao fim da tarde descansei um pouco e organizei o que tinha para fazer amanhã.",
+    "stt": {
+      "source": "whisper",
+      "language": "pt",
+      "model_size": "turbo"
+    },
+    "text": {
+      "emotion": "neutral",
+      "emotion_pt": "neutro",
+      "confidence": 0.9081250000000001,
+      "distribution": {
+        "joy": 0.0153125,
+        "sadness": 0.0153125,
+        "surprise": 0.0153125,
+        "anger": 0.0153125,
+        "disgust": 0.0153125,
+        "fear": 0.0153125,
+        "neutral": 0.9081250000000001
+      },
+      "ranking": [
+        [
+          "neutral",
+          0.9081250000000001
+        ],
+        [
+          "joy",
+          0.0153125
+        ],
+        [
+          "sadness",
+          0.0153125
+        ],
+        [
+          "surprise",
+          0.0153125
+        ],
+        [
+          "anger",
+          0.0153125
+        ],
+        [
+          "disgust",
+          0.0153125
+        ],
+        [
+          "fear",
+          0.0153125
+        ]
+      ],
+      "needs_review": false,
+      "model_name": "qwen2.5:3b-instruct",
+      "strategy": "Light_Ensemble"
+    },
+    "audio": {
+      "emotion": "joy",
+      "emotion_pt": "alegria",
+      "confidence": 0.5019079267259053,
+      "distribution": {
+        "joy": 0.5019079267259053,
+        "sadness": 0.26262332337372246,
+        "surprise": 0.0019799909562414507,
+        "anger": 0.05550259693082375,
+        "disgust": 0.01618067031647584,
+        "fear": 0.09015593008021816,
+        "neutral": 0.07164956161661301
+      },
+      "ranking": [
+        [
+          "joy",
+          0.5019079267259053
+        ],
+        [
+          "sadness",
+          0.26262332337372246
+        ],
+        [
+          "fear",
+          0.09015593008021816
+        ],
+        [
+          "neutral",
+          0.07164956161661301
+        ],
+        [
+          "anger",
+          0.05550259693082375
+        ],
+        [
+          "disgust",
+          0.01618067031647584
+        ],
+        [
+          "surprise",
+          0.0019799909562414507
+        ]
+      ],
+      "strategy": "ssl_wavlm",
+      "model_name": "rbf_svc_balanced",
+      "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/neutral.wav"
+    },
+    "fusion": {
+      "emotion": "neutral",
+      "emotion_pt": "neutro",
+      "confidence": 0.6942093496567344,
+      "distribution": {
+        "joy": 0.13975175115518154,
+        "sadness": 0.07855841636684814,
+        "surprise": 0.011902917109777837,
+        "anger": 0.02559049541721343,
+        "disgust": 0.015534521124991513,
+        "fear": 0.03445254916925313,
+        "neutral": 0.6942093496567344
+      },
+      "ranking": [
+        [
+          "neutral",
+          0.6942093496567344
+        ],
+        [
+          "joy",
+          0.13975175115518154
+        ],
+        [
+          "sadness",
+          0.07855841636684814
+        ],
+        [
+          "fear",
+          0.03445254916925313
+        ],
+        [
+          "anger",
+          0.02559049541721343
+        ],
+        [
+          "disgust",
+          0.015534521124991513
+        ],
+        [
+          "surprise",
+          0.011902917109777837
+        ]
+      ],
+      "weights": {
+        "text": 0.7442654732855165,
+        "audio": 0.2557345267144835
+      },
+      "entropy_confidence": {
+        "text": 0.7577110844236276,
+        "audio": 0.31011698759200457,
+        "final": 0.4575709783434777
+      }
+    },
+    "top_n": [
+      {
+        "emotion": "neutral",
+        "emotion_pt": "neutro",
+        "probability": 0.6942
+      },
+      {
+        "emotion": "joy",
+        "emotion_pt": "alegria",
+        "probability": 0.1398
+      },
+      {
+        "emotion": "sadness",
+        "emotion_pt": "tristeza",
+        "probability": 0.0786
+      },
+      {
+        "emotion": "fear",
+        "emotion_pt": "medo",
+        "probability": 0.0345
+      },
+      {
+        "emotion": "anger",
+        "emotion_pt": "raiva",
+        "probability": 0.0256
+      },
+      {
+        "emotion": "disgust",
+        "emotion_pt": "nojo/repulsa",
+        "probability": 0.0155
+      },
+      {
+        "emotion": "surprise",
+        "emotion_pt": "surpresa",
+        "probability": 0.0119
+      }
+    ]
+  },
+  {
+    "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/sad.wav",
+    "transcript": "Hoje foi um dia pesado. Acordei sem grande vontade de fazer nada e senti-me mais em baixo do que o habitual. Tive dificuldade em concentrar-me e várias coisas fizeram-me lembrar momentos menos bons. Mesmo quando tentei distrair-me, ficou sempre uma sensação de tristeza e cansaço emocional. Acabei o dia com vontade de ficar sozinho e descansar, porque senti que precisava de algum silêncio.",
+    "stt": {
+      "source": "whisper",
+      "language": "pt",
+      "model_size": "turbo"
+    },
+    "text": {
+      "emotion": "sadness",
+      "emotion_pt": "tristeza",
+      "confidence": 0.9020000000000001,
+      "distribution": {
+        "joy": 0.01633333333333334,
+        "sadness": 0.9020000000000001,
+        "surprise": 0.01633333333333334,
+        "anger": 0.01633333333333334,
+        "disgust": 0.01633333333333334,
+        "fear": 0.01633333333333334,
+        "neutral": 0.01633333333333334
+      },
+      "ranking": [
+        [
+          "sadness",
+          0.9020000000000001
+        ],
+        [
+          "joy",
+          0.01633333333333334
+        ],
+        [
+          "surprise",
+          0.01633333333333334
+        ],
+        [
+          "anger",
+          0.01633333333333334
+        ],
+        [
+          "disgust",
+          0.01633333333333334
+        ],
+        [
+          "fear",
+          0.01633333333333334
+        ],
+        [
+          "neutral",
+          0.01633333333333334
+        ]
+      ],
+      "needs_review": false,
+      "model_name": "qwen2.5:3b-instruct",
+      "strategy": "Light_Ensemble"
+    },
+    "audio": {
+      "emotion": "sadness",
+      "emotion_pt": "tristeza",
+      "confidence": 0.3476204581648571,
+      "distribution": {
+        "joy": 0.3270626886102903,
+        "sadness": 0.3476204581648571,
+        "surprise": 0.0024135104185438023,
+        "anger": 0.05050538877143315,
+        "disgust": 0.011193213201576508,
+        "fear": 0.07293298487438835,
+        "neutral": 0.18827175595891088
+      },
+      "ranking": [
+        [
+          "sadness",
+          0.3476204581648571
+        ],
+        [
+          "joy",
+          0.3270626886102903
+        ],
+        [
+          "neutral",
+          0.18827175595891088
+        ],
+        [
+          "fear",
+          0.07293298487438835
+        ],
+        [
+          "anger",
+          0.05050538877143315
+        ],
+        [
+          "disgust",
+          0.011193213201576508
+        ],
+        [
+          "surprise",
+          0.0024135104185438023
+        ]
+      ],
+      "strategy": "ssl_wavlm",
+      "model_name": "rbf_svc_balanced",
+      "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/sad.wav"
+    },
+    "fusion": {
+      "emotion": "sadness",
+      "emotion_pt": "tristeza",
+      "confidence": 0.7630005743112992,
+      "distribution": {
+        "joy": 0.09424241667566413,
+        "sadness": 0.7630005743112992,
+        "surprise": 0.012843220071867544,
+        "anger": 0.024901283125951783,
+        "disgust": 0.015044552466853251,
+        "fear": 0.030524547952011965,
+        "neutral": 0.059443405396352234
+      },
+      "ranking": [
+        [
+          "sadness",
+          0.7630005743112992
+        ],
+        [
+          "joy",
+          0.09424241667566413
+        ],
+        [
+          "neutral",
+          0.059443405396352234
+        ],
+        [
+          "fear",
+          0.030524547952011965
+        ],
+        [
+          "anger",
+          0.024901283125951783
+        ],
+        [
+          "disgust",
+          0.015044552466853251
+        ],
+        [
+          "surprise",
+          0.012843220071867544
+        ]
+      ],
+      "weights": {
+        "text": 0.7492702829029801,
+        "audio": 0.25072971709701986
+      },
+      "entropy_confidence": {
+        "text": 0.744973529635113,
+        "audio": 0.25289261909118077,
+        "final": 0.530140540620663
+      }
+    },
+    "top_n": [
+      {
+        "emotion": "sadness",
+        "emotion_pt": "tristeza",
+        "probability": 0.763
+      },
+      {
+        "emotion": "joy",
+        "emotion_pt": "alegria",
+        "probability": 0.0942
+      },
+      {
+        "emotion": "neutral",
+        "emotion_pt": "neutro",
+        "probability": 0.0594
+      },
+      {
+        "emotion": "fear",
+        "emotion_pt": "medo",
+        "probability": 0.0305
+      },
+      {
+        "emotion": "anger",
+        "emotion_pt": "raiva",
+        "probability": 0.0249
+      },
+      {
+        "emotion": "disgust",
+        "emotion_pt": "nojo/repulsa",
+        "probability": 0.015
+      },
+      {
+        "emotion": "surprise",
+        "emotion_pt": "surpresa",
+        "probability": 0.0128
+      }
+    ]
+  },
+  {
+    "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/surprise.wav",
+    "transcript": "O meu dia começou de forma completamente normal, mas a meio da tarde aconteceu algo que eu não estava nada à espera. Recebi uma notícia que me apanhou desprevenido e fiquei durante algum tempo sem saber como reagir. Não foi propriamente mal, mas foi tão inesperado que passei o resto do dia a pensar nisso. Sentia uma mistura de espanto, curiosidade e alguma agitação.",
+    "stt": {
+      "source": "whisper",
+      "language": "pt",
+      "model_size": "turbo"
+    },
+    "text": {
+      "emotion": "surprise",
+      "emotion_pt": "surpresa",
+      "confidence": 0.8166666666666665,
+      "distribution": {
+        "joy": 0.015123456790123457,
+        "sadness": 0.015123456790123457,
+        "surprise": 0.8166666666666665,
+        "anger": 0.015123456790123457,
+        "disgust": 0.015123456790123457,
+        "fear": 0.015123456790123457,
+        "neutral": 0.10771604938271603
+      },
+      "ranking": [
+        [
+          "surprise",
+          0.8166666666666665
+        ],
+        [
+          "neutral",
+          0.10771604938271603
+        ],
+        [
+          "joy",
+          0.015123456790123457
+        ],
+        [
+          "sadness",
+          0.015123456790123457
+        ],
+        [
+          "anger",
+          0.015123456790123457
+        ],
+        [
+          "disgust",
+          0.015123456790123457
+        ],
+        [
+          "fear",
+          0.015123456790123457
+        ]
+      ],
+      "needs_review": false,
+      "model_name": "qwen2.5:3b-instruct",
+      "strategy": "Light_Ensemble"
+    },
+    "audio": {
+      "emotion": "joy",
+      "emotion_pt": "alegria",
+      "confidence": 0.6138148055981714,
+      "distribution": {
+        "joy": 0.6138148055981714,
+        "sadness": 0.15623859852967098,
+        "surprise": 0.001697152037609269,
+        "anger": 0.07147186884208984,
+        "disgust": 0.014845127147934203,
+        "fear": 0.07486644343142036,
+        "neutral": 0.06706600441310416
+      },
+      "ranking": [
+        [
+          "joy",
+          0.6138148055981713
+        ],
+        [
+          "sadness",
+          0.15623859852967095
+        ],
+        [
+          "fear",
+          0.07486644343142035
+        ],
+        [
+          "anger",
+          0.07147186884208982
+        ],
+        [
+          "neutral",
+          0.06706600441310415
+        ],
+        [
+          "disgust",
+          0.0148451271479342
+        ],
+        [
+          "surprise",
+          0.0016971520376092685
+        ]
+      ],
+      "strategy": "ssl_wavlm",
+      "model_name": "rbf_svc_balanced",
+      "audio_path": "/home/tomas/MIA/1ANO/2SEM/CA/CA-25_26/tests/final/echomind_test_audios/surprise.wav"
+    },
+    "fusion": {
+      "emotion": "surprise",
+      "emotion_pt": "surpresa",
+      "confidence": 0.5938064117862675,
+      "distribution": {
+        "joy": 0.1788406317212387,
+        "sadness": 0.05371257686276023,
+        "surprise": 0.5938064117862675,
+        "anger": 0.030532403071657454,
+        "disgust": 0.015047345213082073,
+        "fear": 0.03146067798821438,
+        "neutral": 0.09659995335677962
+      },
+      "ranking": [
+        [
+          "surprise",
+          0.5938064117862675
+        ],
+        [
+          "joy",
+          0.1788406317212387
+        ],
+        [
+          "neutral",
+          0.09659995335677962
+        ],
+        [
+          "sadness",
+          0.05371257686276023
+        ],
+        [
+          "fear",
+          0.03146067798821438
+        ],
+        [
+          "anger",
+          0.030532403071657454
+        ],
+        [
+          "disgust",
+          0.015047345213082073
+        ]
+      ],
+      "weights": {
+        "text": 0.7265416056920405,
+        "audio": 0.2734583943079595
+      },
+      "entropy_confidence": {
+        "text": 0.6287781851381025,
+        "audio": 0.3695537959012418,
+        "final": 0.3429021267130635
+      }
+    },
+    "top_n": [
+      {
+        "emotion": "surprise",
+        "emotion_pt": "surpresa",
+        "probability": 0.5938
+      },
+      {
+        "emotion": "joy",
+        "emotion_pt": "alegria",
+        "probability": 0.1788
+      },
+      {
+        "emotion": "neutral",
+        "emotion_pt": "neutro",
+        "probability": 0.0966
+      },
+      {
+        "emotion": "sadness",
+        "emotion_pt": "tristeza",
+        "probability": 0.0537
+      },
+      {
+        "emotion": "fear",
+        "emotion_pt": "medo",
+        "probability": 0.0315
+      },
+      {
+        "emotion": "anger",
+        "emotion_pt": "raiva",
+        "probability": 0.0305
+      },
+      {
+        "emotion": "disgust",
+        "emotion_pt": "nojo/repulsa",
+        "probability": 0.015
+      }
+    ]
+  }
+]
