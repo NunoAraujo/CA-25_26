@@ -157,7 +157,7 @@ services:
       HF_HOME: /tmp/hf-models
       OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
       OLLAMA_TEXT_MODEL: ${OLLAMA_TEXT_MODEL:-qwen2.5:3b-instruct}
-      OLLAMA_TEXT_STRATEGY: ${OLLAMA_TEXT_STRATEGY:-Light_Ensemble}
+      OLLAMA_TEXT_STRATEGY: ${OLLAMA_TEXT_STRATEGY:-Light_Ensemble_Disambiguated}
     volumes:
       - ./analysis-python/app:/app/app
       - torch-cache:/tmp/torch-models

@@ -55,6 +55,7 @@ const EMOTION_LABELS: Record<EmotionMetricKey, string> = {
   fear: "Medo",
   disgust: "Nojo",
   surprise: "Surpresa",
+  neutral: "Neutro",
 };
 
 const EMOTION_CHART_COLORS: Record<EmotionMetricKey, string> = {
@@ -64,6 +65,7 @@ const EMOTION_CHART_COLORS: Record<EmotionMetricKey, string> = {
   fear: "#fbbf24",
   disgust: "#a3e635",
   surprise: "#fb923c",
+  neutral: "#94a3b8",
 };
 
 const EMOTION_BG: Record<EmotionMetricKey, string> = {
@@ -73,6 +75,7 @@ const EMOTION_BG: Record<EmotionMetricKey, string> = {
   fear: "bg-amber-500/20 border-amber-500/30 text-amber-400",
   disgust: "bg-lime-500/20 border-lime-500/30 text-lime-400",
   surprise: "bg-orange-500/20 border-orange-500/30 text-orange-400",
+  neutral: "bg-slate-500/20 border-slate-500/30 text-slate-300",
 };
 
 function addMonths(date: Date, delta: number) {
@@ -87,6 +90,7 @@ function buildEmotionScoresFromTrend(trend: DailyTrendPoint): EmotionScores {
     fear: trend.fear,
     disgust: trend.disgust,
     surprise: trend.surprise,
+    neutral: trend.neutral,
   };
 }
 
@@ -104,8 +108,17 @@ function buildMonthGrid(viewDate: Date) {
 
 function topEmotionKeys(scores: EmotionScores, limit = 2): EmotionMetricKey[] {
   return [...emotionMetricKeys]
-    .sort((a, b) => scores[b] - scores[a])
+    .sort((a, b) => safeScore(scores, b) - safeScore(scores, a))
     .slice(0, limit);
+}
+
+function safeScore(
+  scores: Partial<Record<EmotionMetricKey, number | null | undefined>>,
+  key: EmotionMetricKey,
+) {
+  const value = scores[key];
+
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
 // ─── JournalEntryCard ─────────────────────────────────────────────────────────
@@ -138,12 +151,13 @@ function JournalEntryCard({
       fear: j.fearScore,
       disgust: j.disgustScore,
       surprise: j.surpriseScore,
+      neutral: j.neutralScore,
     },
   ]);
   const top = entryScores ? topEmotionKeys(entryScores, 2) : [];
   const hasLongText = (j.transcription?.length ?? 0) > 180;
   const hasScores =
-    entryScores && emotionMetricKeys.some((k) => entryScores[k] > 0);
+    entryScores && emotionMetricKeys.some((k) => safeScore(entryScores, k) > 0);
 
   return (
     <article className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
@@ -238,7 +252,7 @@ function JournalEntryCard({
                     <div
                       className="rounded-full transition-all duration-500"
                       style={{
-                        width: `${Math.round(entryScores[k] * 100)}%`,
+                        width: `${Math.round(safeScore(entryScores, k) * 100)}%`,
                         height: 5,
                         background: emotionChartColors[k],
                       }}
@@ -248,7 +262,7 @@ function JournalEntryCard({
                     className="w-9 text-right text-[11px] font-bold"
                     style={{ color: emotionChartColors[k] }}
                   >
-                    {(entryScores[k] * 100).toFixed(0)}%
+                    {(safeScore(entryScores, k) * 100).toFixed(0)}%
                   </span>
                 </div>
               ))}
@@ -355,6 +369,7 @@ export function TrendsPanel({
         fear: j.fearScore,
         disgust: j.disgustScore,
         surprise: j.surpriseScore,
+        neutral: j.neutralScore,
       })),
     );
   }, [selectedDailyTrend, selectedDayEntries]);
@@ -362,9 +377,6 @@ export function TrendsPanel({
   const selectedDayDominant = selectedDayScores
     ? dominantEmotionFromScores(selectedDayScores)
     : null;
-  const selectedDayTopEmotions = selectedDayScores
-    ? topEmotionKeys(selectedDayScores, 3)
-    : [];
 
   const monthGridDays = useMemo(
     () =>
@@ -382,6 +394,7 @@ export function TrendsPanel({
                 fear: j.fearScore,
                 disgust: j.disgustScore,
                 surprise: j.surpriseScore,
+                neutral: j.neutralScore,
               })),
             );
         return {
@@ -416,6 +429,7 @@ export function TrendsPanel({
               fear: j.fearScore,
               disgust: j.disgustScore,
               surprise: j.surpriseScore,
+              neutral: j.neutralScore,
             })),
           );
       return {
@@ -636,14 +650,14 @@ export function TrendsPanel({
                           <div
                             className="rounded-full"
                             style={{
-                              width: `${Math.round(selectedDayScores[k] * 100)}%`,
+                              width: `${Math.round(safeScore(selectedDayScores, k) * 100)}%`,
                               height: 6,
                               background: EMOTION_CHART_COLORS[k],
                             }}
                           />
                         </div>
                         <span className="w-8 text-right text-xs font-semibold text-[var(--text-muted)]">
-                          {selectedDayScores[k].toFixed(2)}
+                          {safeScore(selectedDayScores, k).toFixed(2)}
                         </span>
                       </div>
                     ))}

@@ -2,35 +2,45 @@ import asyncio
 import os
 from typing import Annotated
 
+import torch
 from fastapi import FastAPI, Path
 
 from app.models.schemas import AnalysisRequest, AnalysisResponse, StatusResponse
 from app.models.task_store import running_tasks
-from app.services.analysis_tasks import get_task_status, queue_task, run_analysis_task
+from app.services.analysis_tasks import MODEL_VERSION, get_task_status, queue_task, run_analysis_task
 from app.services.logging_config import logger
+from app.services.prosody import get_prosody_model_info
+from app.services.text_emotion_model import get_text_model_info
 from app.services.transcription import get_selected_asr_model, list_available_asr_models
 
 app = FastAPI(
     title="Audio Journaling Analysis Engine",
-    description="Portuguese-first audio analysis service for emotion detection",
-    version="0.3.0",
+    description="Portuguese-first audio analysis service for multimodal emotion detection",
+    version="0.5.0",
 )
 
 
 @app.get("/health")
 async def health():
     selected_asr = get_selected_asr_model()
+    text_model = get_text_model_info()
+    prosody_model = get_prosody_model_info()
     return {
         "status": "ready",
+        "version": "0.5.0",
+        "modelVersion": MODEL_VERSION,
         "models_loaded": [
             f"asr:{selected_asr['key']}",
-            "prosody-extractor",
-            "heuristic-emotion",
+            f"text:{text_model['model']}+{text_model['strategy']}",
+            "prosody:microsoft/wavlm-base+svc-rbf",
+            "fusion:adaptive-weighted-late-fusion",
         ],
         "selected_asr_model": selected_asr,
         "available_asr_models": list_available_asr_models(),
+        "text_model": text_model,
+        "prosody_model": prosody_model,
         "minio_configured": bool(os.getenv("MINIO_ENDPOINT")),
-        "gpu_available": False,
+        "gpu_available": torch.cuda.is_available(),
     }
 
 
@@ -61,7 +71,7 @@ async def analyze(request: AnalysisRequest):
     return AnalysisResponse(
         taskId=task_id,
         status="queued",
-        estimatedSeconds=30,
+        estimatedSeconds=60,
     )
 
 
@@ -86,7 +96,8 @@ async def get_status(taskId: Annotated[str, Path()]):  # noqa: N803
 async def root():
     return {
         "service": "Audio Journaling Analysis Engine",
-        "version": "0.3.0",
+        "version": "0.5.0",
+        "modelVersion": MODEL_VERSION,
         "endpoints": {
             "health": "/health",
             "asr_models": "/api/v1/asr/models",

@@ -31,7 +31,8 @@ export type EmotionMetricKey =
   | "anger"
   | "fear"
   | "disgust"
-  | "surprise";
+  | "surprise"
+  | "neutral";
 
 export type EmotionScores = Record<EmotionMetricKey, number>;
 
@@ -49,6 +50,9 @@ export type JournalTimelineItem = {
   fearScore: number | null;
   disgustScore: number | null;
   surpriseScore: number | null;
+  neutralScore: number | null;
+  finalEmotion?: string | null;
+  finalConfidence?: number | null;
 };
 
 export type JournalDetail = {
@@ -60,6 +64,9 @@ export type JournalDetail = {
   fearScore: number | null;
   disgustScore: number | null;
   surpriseScore: number | null;
+  neutralScore: number | null;
+  finalEmotion?: string | null;
+  finalConfidence?: number | null;
 };
 
 export type DailyTrendPoint = {
@@ -70,6 +77,7 @@ export type DailyTrendPoint = {
   fear: number;
   disgust: number;
   surprise: number;
+  neutral: number;
   entryCount: number;
   emotionalVolatility: number;
 };

@@ -94,6 +94,12 @@ export function useJournalTimeline(apiBaseUrl: string) {
               fearScore: fearValue(item),
               disgustScore: disgustValue(item),
               surpriseScore: surpriseValue(item),
+              neutralScore: numberOrNull(item.neutralScore),
+              finalEmotion:
+                typeof item.finalEmotion === "string"
+                  ? item.finalEmotion
+                  : null,
+              finalConfidence: numberOrNull(item.finalConfidence),
             }))
           : [];
 
@@ -157,6 +163,12 @@ export function useJournalTimeline(apiBaseUrl: string) {
         fearScore: fearValue(payload),
         disgustScore: disgustValue(payload),
         surpriseScore: surpriseValue(payload),
+        neutralScore: numberOrNull(payload.neutralScore),
+        finalEmotion:
+          typeof payload.finalEmotion === "string"
+            ? payload.finalEmotion
+            : null,
+        finalConfidence: numberOrNull(payload.finalConfidence),
       };
 
       setJournalDetailsById((current) => ({

@@ -11,6 +11,7 @@ export const emotionMetricKeys: EmotionMetricKey[] = [
   "fear",
   "disgust",
   "surprise",
+  "neutral",
 ];
 
 export function formatClock(totalSeconds: number) {
@@ -48,7 +49,7 @@ export function statusBadgeClasses(status: string) {
     return "border-rose-300 bg-rose-50 text-rose-700";
   }
 
-  if (status === "analyzing" || status === "transcribing") {
+  if (status === "analyzing" || status === "transcribing" || status === "processing") {
     return "border-amber-300 bg-amber-50 text-amber-700";
   }
 

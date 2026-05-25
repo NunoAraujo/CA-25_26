@@ -10,7 +10,7 @@ class AnalysisRequest(BaseModel):
     audioObjectKey: str | None = None
     audioFormat: str = "wav"
     duration: float
-    language: str = "pt-BR"
+    language: str = "pt-PT"
     transcriptionModelKey: str | None = None
     callbackUrl: str | None = None
 
@@ -32,6 +32,12 @@ class StatusResponse(BaseModel):
     semanticScores: dict | None = None
     prosodyScores: dict | None = None
     prosodyFeatures: dict | None = None
+    finalEmotion: str | None = None
+    finalConfidence: float | None = None
+    topEmotions: list[dict[str, Any]] | None = None
+    fusionWeights: dict | None = None
+    fusionDetails: dict | None = None
+    modelVersion: str | None = None
     errorMessage: str | None = None
 
 

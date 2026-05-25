@@ -19,6 +19,7 @@ type JournalTrendSource = {
   fearScore?: unknown;
   disgustScore?: unknown;
   surpriseScore?: unknown;
+  neutralScore?: unknown;
   anxietyScore?: unknown;
   calmScore?: unknown;
   energyScore?: unknown;
@@ -32,6 +33,7 @@ type DailyAccumulator = {
   fear: number[];
   disgust: number[];
   surprise: number[];
+  neutral: number[];
   entryCount: number;
 };
 
@@ -106,6 +108,7 @@ function buildDailyTrendsFromJournals(journals: JournalTrendSource[]) {
       fear: [],
       disgust: [],
       surprise: [],
+      neutral: [],
       entryCount: 0,
     };
 
@@ -115,6 +118,7 @@ function buildDailyTrendsFromJournals(journals: JournalTrendSource[]) {
     const fear = emotionValue(journal, "fearScore", "anxietyScore");
     const disgust = emotionValue(journal, "disgustScore", "calmScore");
     const surprise = emotionValue(journal, "surpriseScore", "energyScore");
+    const neutral = emotionValue(journal, "neutralScore");
 
     if (isFiniteNumber(joy)) current.joy.push(joy);
     if (isFiniteNumber(sadness)) current.sadness.push(sadness);
@@ -122,6 +126,7 @@ function buildDailyTrendsFromJournals(journals: JournalTrendSource[]) {
     if (isFiniteNumber(fear)) current.fear.push(fear);
     if (isFiniteNumber(disgust)) current.disgust.push(disgust);
     if (isFiniteNumber(surprise)) current.surprise.push(surprise);
+    if (isFiniteNumber(neutral)) current.neutral.push(neutral);
 
     current.entryCount += 1;
     days.set(dayStart, current);
@@ -136,6 +141,7 @@ function buildDailyTrendsFromJournals(journals: JournalTrendSource[]) {
       fear: average(day.fear),
       disgust: average(day.disgust),
       surprise: average(day.surprise),
+      neutral: average(day.neutral),
       entryCount: day.entryCount,
       emotionalVolatility: stdDev([
         ...day.joy,
@@ -144,6 +150,7 @@ function buildDailyTrendsFromJournals(journals: JournalTrendSource[]) {
         ...day.fear,
         ...day.disgust,
         ...day.surprise,
+        ...day.neutral,
       ]),
     }))
     .sort((a, b) => a.dayStart.localeCompare(b.dayStart));
@@ -206,6 +213,13 @@ export function useDailyTrends(apiBaseUrl: string) {
         current: latestTrendPoint.surprise,
         delta: latestTrendPoint.surprise - previousTrendPoint.surprise,
         color: "text-orange-700",
+      },
+      {
+        key: "neutral",
+        label: "Neutral",
+        current: latestTrendPoint.neutral,
+        delta: latestTrendPoint.neutral - previousTrendPoint.neutral,
+        color: "text-slate-700",
       },
     ];
   }, [dailyTrends]);
