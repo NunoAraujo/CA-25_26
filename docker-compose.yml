@@ -161,7 +161,7 @@ services:
       PROSODY_ARTIFACT_PATH: ${PROSODY_ARTIFACT_PATH:-/app/prosody_artifact/prosody_final_artifact_v5_SSL_WAVLM_RBF_RECOVERED.joblib}
     volumes:
       - ./analysis-python/app:/app/app
-      - ./tests/final/prosody_outputs_v5/prosody_final_artifact_v5_SSL_WAVLM_RBF_RECOVERED.joblib:/app/prosody_artifact/prosody_final_artifact_v5_SSL_WAVLM_RBF_RECOVERED.joblib:ro
+      - ./models/prosody_final_artifact_v5_SSL_WAVLM_RBF_RECOVERED.joblib:/app/prosody_artifact/prosody_final_artifact_v5_SSL_WAVLM_RBF_RECOVERED.joblib:ro
       - torch-cache:/tmp/torch-models
       - hf-cache:/tmp/hf-models
       - audio-temp:/tmp/audio-temp
